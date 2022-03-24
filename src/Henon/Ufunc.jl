@@ -1,11 +1,12 @@
 
+"""u_potential_rpra
 
+Q(s) \equiv (1/vr)*(dr/ds) where s\in[-1,1].
+
+
+"""
 function u_potential_rpra(potential::Function,dpotential::Function,ddpotential::Function,
                           u::Float64,r_peri::Float64,r_apo::Float64,EDGETOL::Float64=1.e-5)
-    #= Q(s) \equiv (1/vr)*(dr/ds) where s\in[-1,1].
-
-
-    =#
 
     J = L_from_rpra_pot(potential,dpotential,ddpotential,r_peri,r_apo,0.5*EDGETOL)
 

@@ -1,8 +1,15 @@
-# what is the optimal spacing to build an interpolation table?
-# definitely log radius, with some base,
-# but what about eccentricity? does it help to pile near the edges?
 
 
+"""make_frequency_grid
+
+make the interpolation table for frequencies
+
+If interpolating:
+- what is the optimal spacing to build an interpolation table?
+- definitely log radius, with some base,
+- but what about eccentricity? does it help to pile near the edges?
+
+"""
 function make_frequency_grid(potential::Function,dpotential::Function,ddpotential::Function,zerofreq::Float64,
                              amin::Float64,amax::Float64,res::Int64)
     avals = LinRange(amin,amax, res)
@@ -60,4 +67,34 @@ function make_frequency_grid(potential::Function,dpotential::Function,ddpotentia
     end
 
     return avals,evals,agrid,egrid,O1grid,O2grid,dO1dagrid,dO1degrid,dO2dagrid,dO2degrid
+end
+
+
+"""ae_from_omega1omega2
+
+basic interpolation version to find (a,e) from (omega1,omega2) grid.
+
+@IMPROVE Do the efficient search by defining circular a and only searching below that
+@IMPROVE Solve the integrals efficiently
+
+"""
+function ae_from_omega1omega2(omega1::Float64,omega2::Float64,O1grid,O2grid,agrid,egrid)
+    #
+
+
+    diffomega1 = omega1 .- O1grid
+    diffomega2 = omega2 .- O2grid
+    totaldiff  = sqrt.(diffomega1.*diffomega1 + diffomega2.*diffomega2)
+
+    # this is a nearest neighbour search right now; can refine from here?
+    minpos = argmin(totaldiff)
+    o1loc,o2loc = minpos[1],minpos[2]
+
+    o1sep = omega1 - O1grid[o1loc,o2loc]
+    o2sep = omega2 - O2grid[o1loc,o2loc]
+    #print(o1sep," ",o2sep,"\n")
+
+
+    aguess,eguess = agrid[o1loc,o2loc],egrid[o1loc,o2loc]
+    return aguess,eguess
 end

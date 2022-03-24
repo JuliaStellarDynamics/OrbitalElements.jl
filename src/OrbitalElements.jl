@@ -23,7 +23,6 @@ include("CircularRadial/SpecialCases.jl")
 # bring in the generic frequency solver
 include("Frequencies.jl")
 
-
 # anything to IO?
 include("IO.jl")
 

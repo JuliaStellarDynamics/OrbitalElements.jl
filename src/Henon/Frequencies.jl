@@ -1,24 +1,26 @@
 
+"""henon_anomaly_frequencies
+
+use the henon anomaly mapping to compute orbit frequencies
+
+inputs
+-------------
+- potential   : (Function) the potential function
+- r_apo       : (Float64) the orbit apocentre
+- r_peri      : (Float64) the orbit pericentre
+- ee          : (Float64) the orbit energy
+- jj          : (Float64) the orbit angular momentum
+- NINT        : (Int64) number of integration steps
+
+returns
+-------------
+- freq1       : (Float64) frequency 1, radial
+- freq2       : (Float64) frequency 2, azimuthal
+
+
+"""
 function henon_anomaly_frequencies(potential::Function,r_apo::Float64,r_peri::Float64,ee::Float64,jj::Float64,NINT::Int64=64)
-    #=henon_anomaly_frequencies
 
-    use the henon anomaly mapping to compute orbit frequencies
-
-    inputs
-    -------------
-    potential   : (Function) the potential function
-    r_apo       : (Float64) the orbit apocentre
-    r_peri      : (Float64) the orbit pericentre
-    ee          : (Float64) the orbit energy
-    jj          : (Float64) the orbit angular momentum
-    NINT        : (Int64) number of integration steps
-
-    returns
-    -------------
-    freq1       : (Float64) frequency 1, radial
-    freq2       : (Float64) frequency 2, azimuthal
-
-    =#
 
 
     # set the integration width

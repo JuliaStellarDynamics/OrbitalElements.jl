@@ -119,6 +119,8 @@ end
 
 do a high-resolution interpolation to get \beta_c(alpha), the frequency O2/O1 frequency ratio as a function of O1.
 
+@IMPROVE: find Omega0 adaptively
+
 """
 function make_betac(dpotential::Function,ddpotential::Function,numr::Int64=2000,Omega0::Float64=1.)
 
