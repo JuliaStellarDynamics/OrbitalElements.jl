@@ -20,7 +20,7 @@ As `OrbitalElements` is unregistered, if you would like to add it to your Julia 
 Example for matching against isochrone:
 ```
 rp,ra = 0.9,1.1
-compute_frequencies(OrbitalElements.isochrone_psi,OrbitalElements.isochrone_dpsi_dr,OrbitalElements.isochrone_ddpsi_ddr,0.9,1.1)
+compute_frequencies_rpra(OrbitalElements.isochrone_psi,OrbitalElements.isochrone_dpsi_dr,OrbitalElements.isochrone_ddpsi_ddr,rp,ra)
 ```
 
 -----------------------------

@@ -39,12 +39,12 @@ function henon_anomaly_frequencies(potential::Function,r_apo::Float64,r_peri::Fl
     accum2 = 0.0
 
     # keep track of how many steps we actually use
-    uFREQS = 0.0
+    uNINT = 0.0
 
     # proceed as centred rectangle integration: starting point
     u = 0.5*(du-integration_distance)
 
-    for i=1:FRECS
+    for i=1:NINT
 
         fu = u*(3/2 - u*u/2)
         r  = ap*(1+ecc*fu)
@@ -65,7 +65,7 @@ function henon_anomaly_frequencies(potential::Function,r_apo::Float64,r_peri::Fl
         if (tmp>0) & (tmp2>0)
 
             accum1 += dr / sqrt(tmp);
-            uFREQS += 1.0
+            uNINT += 1.0
 
             accum2 += dr/sqrt(tmp2);
 
@@ -78,11 +78,12 @@ function henon_anomaly_frequencies(potential::Function,r_apo::Float64,r_peri::Fl
 
 
     #freq1 = integration_distance/(accum1*dt);
-    freq1 = (pi/2)*uFREQS/(accum1)
-    freq2 = freq1/(pi/2) * jj * (sm/am) * accum2 / uFREQS;
+    freq1 = (pi/2)*uNINT/(accum1)
+    freq2 = freq1/(pi/2) * jj * (sm/am) * accum2 / uNINT;
 
+    # @IMPROVE
     # note that we could also return the actions if we wanted:
-    #action1 = (pi/2)*uFREQS*accum0
+    #action1 = (pi/2)*uNINT*accum0
     #action2 = jj;
 
     # @IMPROVE: we may want to force never allowing an overshoot (i.e. freq1 is capped at 1 no matter what)
