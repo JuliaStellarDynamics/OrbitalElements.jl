@@ -1,8 +1,29 @@
+#=
+RadialFrequencies.jl
+
+Special treatment for radial orbits
+
+
+=#
+
 function make_o2r(potential::Function,dpotential::Function,ddpotential::Function,numr::Int64=2000)
-    # do a high-resolution interpolation to get frequency curves for radial orbits
-    # recall that o1 for radial orbits is 2*o2
+    #=
 
+    do a high-resolution interpolation to get frequency curves for radial orbits
+    recall that o1 for radial orbits is 2*o2
 
+    inputs
+    ----------------
+    potential
+    dpotential
+    ddpotential
+    numr          : (Int64) number of interpolation points
+
+    
+
+    =#
+
+    # @IMPROVE the potential range is not adaptive.
     testu = 10 .^ LinRange(-5.,5.,numr)
 
 

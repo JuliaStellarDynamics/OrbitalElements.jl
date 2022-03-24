@@ -42,14 +42,6 @@ function u_potential_rpra(potential::Function,dpotential::Function,ddpotential::
 
     best = dr/sqrt(maximum([1.e-16,tmp]))
 
-    # do an interpolation:
-    #if (edge>0) & (u>0)
-    #    dr1 = 1 - u
-    #    dr2 = u - 0.8
-    #    #print(dr1," ",dr2)
-    #    return best*dr2 + edge*dr1
-    #end
-
     if isnan(best)
         return 0.0
     else
@@ -73,12 +65,12 @@ function u_potential_aecc(potential::Function,dpotential::Function,ddpotential::
     edge = 0.
 
     if u<-1+EDGETOL
-        edge = g_minus1(isochrone_psi,isochrone_dpsi_dr,isochrone_ddpsi_ddr,a,ecc)
+        edge = g_minus1(potential,dpotential,ddpotential,a,ecc)
         return edge
     end
 
     if u>1-EDGETOL
-        edge = g_plus1(isochrone_psi,isochrone_dpsi_dr,isochrone_ddpsi_ddr,a,ecc)
+        edge = g_plus1(potential,dpotential,ddpotential,a,ecc)
         return edge
     end
 

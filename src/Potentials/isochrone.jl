@@ -10,12 +10,14 @@ The isochrone potential definitions
 POTENTIAL AND DERIVATIVES
 
 =#
+
+"""isochrone_psi
+
+the isochrone potential
+
+"""
 function isochrone_psi(r::Float64,bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
-    #=isochrone_psi
 
-    the isochrone potential
-
-    =#
     rbc = r^2 + bc^2
     return -astronomicalG*M*(bc+sqrt(rbc))^(-1)
 end
