@@ -15,13 +15,20 @@ As `OrbitalElements` is unregistered, if you would like to add it to your Julia 
 
 ## Obtaining Orbital Frequencies
 
-`compute_frequencies(potential,dpotential,ddpotential,rp,ra)` will compute frequencies give a potential plus two derivatives, for an orbit described by pericentre (rp) and apocentre (ra).
+`compute_frequencies(ψ,dψ/dr,d²ψ/dr²,rp,ra)` will compute frequencies give a potential plus two derivatives, for an orbit described by pericentre (rp) and apocentre (ra).
 
 Example for matching against isochrone:
 ```
 rp,ra = 0.9,1.1
 compute_frequencies_rpra(OrbitalElements.isochrone_psi,OrbitalElements.isochrone_dpsi_dr,OrbitalElements.isochrone_ddpsi_ddr,rp,ra)
 ```
+
+-----------------------------
+
+## Mapping to Resonance Space
+
+For a given potential, one can also compute the resonance mappings, called (u,v).
+`uv_from_alphabeta(α,β,n₁,n₂,dψ/dr,d²ψ/dr²)` will compute the resonant mappings (u,v) for a given frequency pair (α,β), resonance vector (n₁,n₂), and potential derivatives.
 
 -----------------------------
 

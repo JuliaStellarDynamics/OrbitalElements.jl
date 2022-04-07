@@ -10,16 +10,6 @@ Special treatment for circular orbits
 
 radial frequency for circular orbits, from the epicyclic approximation
 
-inputs
--------------
-- dpotential   : (Function) the potential
-- ddpotential  : (Function) the potential derivative
-- r            : (Float64)  the radius at which to evaluate
-
-returns
--------------
-- freq1        : (Float64) the radial frequency from the epicyclic approximation
-
 """
 function Omega1_circular(dpotential::Function,ddpotential::Function,r::Float64)
 
@@ -31,15 +21,6 @@ Omega2_circular
 
 azimuthal frequency for circular orbits, from the epicyclic approximation
 
-inputs
--------------
-- ddpotential  : (Function) the potential derivative
-- r            : (Float64)  the radius at which to evaluate
-
-returns
--------------
-- freq2        : (Float64) the azimuthal frequency from the epicyclic approximation
-
 """
 function Omega2_circular(dpotential::Function,r::Float64)
 
@@ -50,7 +31,6 @@ end
 Omega1_expansion
 
 first-order Taylor expansion for the radial frequency
-
 
 """
 function Omega1_expansion(dpotential::Function,ddpotential::Function,
@@ -76,7 +56,6 @@ end
 Omega2_expansion
 
 first-order Taylor expansion for the azimuthal frequency
-
 
 """
 function Omega2_expansion(dpotential::Function,ddpotential::Function,
@@ -120,6 +99,8 @@ end
 do a high-resolution interpolation to get \beta_c(alpha), the frequency O2/O1 frequency ratio as a function of O1.
 
 @IMPROVE: find Omega0 adaptively
+@IMPROVE: make the interpolation range adaptive in radius
+@IMPROVE: decide on best mapping for interplation range (currently log)
 
 """
 function make_betac(dpotential::Function,ddpotential::Function,numr::Int64=2000,Omega0::Float64=1.)

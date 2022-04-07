@@ -134,9 +134,11 @@ end
 
 Partial derivative of Q w.r.t. r
 
+@IMPROVE, watch for switch when L==0
+
 """
 function dQdr(potential::Function,dpotential::Function,ddpotential::Function,u::Float64,rp::Float64,ra::Float64)
-    #Qval = Q(potential,dpotential,ddpotential,u,rp,ra)
+
     r   = ru(u,rp,ra)
     L = L_from_rpra_pot(potential,dpotential,ddpotential,rp,ra)
 
@@ -145,7 +147,7 @@ function dQdr(potential::Function,dpotential::Function,ddpotential::Function,u::
     else
         return  ((2*(L^2)/(r^3)) - 2*dpotential(r))
     end
-    #return  max(0.0,((2*(L^2)/(r^3)) - 2*dpotential(r)))
+
 end
 
 """dThetadu

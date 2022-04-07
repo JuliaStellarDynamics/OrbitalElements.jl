@@ -1,11 +1,29 @@
+"""
+
+@ IMPROVE, tabulate wmin,wmax once for all resonances of interest
+"""
 
 
-function find_w_min_max(n1::Int64,n2::Int64,dpotential::Function,ddpotential::Function,rmax::Float64=1000.,Omega0::Float64=1.)
+"""find_w_min_max
 
+for a given resonance, find the maximum frequencies
+must have Omega1_circular, Omega2_circular defined (CircularRadial/CircularFrequencies.jl)
 
+@IMPROVE: specific to the cored cluster with infinite extent
+
+OrbitalElements.find_w_min_max(-3,4,OrbitalElements.isochrone_dpsi_dr,OrbitalElements.isochrone_ddpsi_ddr)
+"""
+function find_w_min_max(n1::Int64,n2::Int64,
+                        dpotential::Function,
+                        ddpotential::Function,
+                        rmax::Float64=1000.,
+                        Omega0::Float64=1.)
+
+    # define the function to extremise
     extreme(x) = n1*Omega1_circular(dpotential,ddpotential,x) + n2*Omega2_circular(dpotential,x)
 
-    m = extremise_function(extreme,24,0.,rmax,false) # return a min/max flag?
+    # hard-coded to 24 iterations on extremise_function, but this could be a parameter for hyper accuracy
+    m = extremise_function(extreme,24,0.,rmax,false)
 
     # for the problem of a cored cluster with an infinite extent, the w minima and maxima are either
     # in the very centre
@@ -15,9 +33,15 @@ function find_w_min_max(n1::Int64,n2::Int64,dpotential::Function,ddpotential::Fu
     return w_min,w_max
 end
 
+"""get_varpi
 
+translate a complex frequency into a rescale frequency.
+maps ``\\omega \\to [-1,1]``
+
+Fouvry & Prunet B3
+
+"""
 function get_varpi(omg::Complex{Float64},n1::Int64,n2::Int64,dpotential::Function,ddpotential::Function,rmax::Float64=1000.,Omega0::Float64=1.)
-
 
     w_min,w_max = find_w_min_max(n1,n2,dpotential,ddpotential,rmax,Omega0)
 
@@ -25,46 +49,25 @@ function get_varpi(omg::Complex{Float64},n1::Int64,n2::Int64,dpotential::Functio
 
 end
 
+"""hu
 
-#w1,w2 = find_w_min_max(3,-4,isochrone_dpsi_dr,isochrone_ddpsi_ddr)
-#print(w1," ",w2,"\n")
+return h, a helper quantity
 
+Fouvry & Prunet B8
 
-
-function make_betac(dpotential::Function,ddpotential::Function,numr::Int64=2000,Omega0::Float64=1.)
-    # in epicycle.jl
-    # do a high-resolution interpolation to get \beta_c(alpha)
-
-    alpha_c(x) = Omega1_circular(dpotential,ddpotential,x)    # alpha_c(r)
-    beta_c(x)  = Omega2_circular(dpotential,x)/alpha_c(x)                   # beta_c(r)
-    # so we need to invert g(x) to find x, then use to solve f (when n2!=0)
-    # when n2 = 0, we need beta_c as a function of beta
-
-    testu = 10 .^ LinRange(5.,-5.,numr)
-
-    garr = Array{Float64}(undef, (numr))
-    farr = Array{Float64}(undef, (numr))
-
-    for u = 1:numr
-        garr[u] = alpha_c(testu[u])/Omega0
-        farr[u] = beta_c(testu[u])
-    end
-
-    beta_c = LinearInterpolation(garr,farr)
-
-    return beta_c
-end
-
-
+"""
 function hu(u::Float64,wmin::Float64,wmax::Float64)
     return 0.5*(wmax+wmin + u*(wmax-wmin))
 end
 
+"""root_of_h_omega
 
+solve for roots of the h(u) equation
+Fouvry & Prunet B10 (term 3)
+
+"""
 function root_of_h_omega(u::Float64,wmin::Float64,wmax::Float64,n1::Int64,n2::Int64,vbound::Float64,beta_c)
-    #=
-    requires beta_c, should pass this.
-    =#
+
     hval = hu(u,wmin,wmax)
     rootequation(x) = hval - n1*x - n2*x*beta_c[x]
     # two roots to try: bounded by [0,v(u=1)] and [v(u=1),1]
@@ -104,6 +107,13 @@ function constraint_three(u::Float64,wmin::Float64,wmax::Float64,n1::Int64,n2::I
     return hval/(n2/2 + n1)
 end
 
+"""vmin_vmax
+
+for a given resonance, at a specific value of u, find the v coordinate boundaries.
+
+@IMPROVE, put in guards for the edges in beta_c
+
+"""
 function vmin_vmax(u::Float64,wmin::Float64,wmax::Float64,n1::Int64,n2::Int64,vbound::Float64,beta_c)
     # this function works for n2 != 0
 
@@ -142,16 +152,19 @@ function vmin_vmax(u::Float64,wmin::Float64,wmax::Float64,n1::Int64,n2::Int64,vb
     return vmin,vmax
 end
 
-# test this transformation, set up the bilinear interpolation in alpha, beta
 
+"""alphabeta_from_uv
+
+mapping from (alpha,beta) to (u,v)
+
+Fouvry & Prunet B5
+
+@IMPROVE, this has rounding error: concern?
+
+"""
 function alphabeta_from_uv(u::Float64,v::Float64,
                            n1::Int64,n2::Int64,dpotential::Function,ddpotential::Function,rmax::Float64=1000.)
-    #=
-    the inverse mapping from (u,v) -> (alpha,beta)
 
-    weirdly imperfect: why?
-
-    =#
 
     wmin,wmax = find_w_min_max(n1,n2,dpotential,ddpotential,rmax)
 
@@ -166,12 +179,18 @@ function alphabeta_from_uv(u::Float64,v::Float64,
     return alpha,beta
 end
 
+"""uv_from_alphabeta
+
+mapping from  (u,v) to (alpha,beta)
+
+@IMPROVE, this has rounding error: concern?
+
+OrbitalElements.uv_from_alphabeta(0.5,0.7,-3,4,OrbitalElements.isochrone_dpsi_dr,OrbitalElements.isochrone_ddpsi_ddr)
+
+"""
 function uv_from_alphabeta(alpha::Float64,beta::Float64,
                            n1::Int64,n2::Int64,dpotential::Function,ddpotential::Function,rmax::Float64=1000.)
-    #=
-    the mapping from (alpha,beta) -> (u,v)
 
-    =#
     wmin,wmax = find_w_min_max(n1,n2,dpotential,ddpotential,rmax)
 
     wval = n1*alpha + n2*beta*alpha

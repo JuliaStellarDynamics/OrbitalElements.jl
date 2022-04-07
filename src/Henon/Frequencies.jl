@@ -3,23 +3,18 @@
 
 use the henon anomaly mapping to compute orbit frequencies
 
-inputs
--------------
-- potential   : (Function) the potential function
-- r_apo       : (Float64) the orbit apocentre
-- r_peri      : (Float64) the orbit pericentre
-- ee          : (Float64) the orbit energy
-- jj          : (Float64) the orbit angular momentum
-- NINT        : (Int64) number of integration steps
-
-returns
--------------
-- freq1       : (Float64) frequency 1, radial
-- freq2       : (Float64) frequency 2, azimuthal
-
+@IMPROVE, handle negative sqrts gracefully
+@IMPROVE, add switch for action calculation
+@IMPROVE, offload transformations to OrbitDefinitions.jl
+@IMPROVE, disallow any frequency overshoots with known boundaries
 
 """
-function henon_anomaly_frequencies(potential::Function,r_apo::Float64,r_peri::Float64,ee::Float64,jj::Float64,NINT::Int64=64)
+function henon_anomaly_frequencies(potential::Function,
+                                   r_apo::Float64,
+                                   r_peri::Float64,
+                                   E::Float64,
+                                   L::Float64,
+                                   NINT::Int64=64)
 
 
 
@@ -55,11 +50,11 @@ function henon_anomaly_frequencies(potential::Function,r_apo::Float64,r_peri::Fl
 
         ur = potential(r)
 
-        tmp = 2(ee-ur) - (jj*jj)/(r*r)
+        tmp = 2(E-ur) - (L*L)/(r*r)
 
         s    = r/(r_apo*r_peri);
         ur1  = potential(1.0/s)
-        tmp2 = 2*(ee-ur1) - (jj*jj*s*s)
+        tmp2 = 2*(E-ur1) - (L*L*s*s)
 
         accum0 += dr * tmp;
 
@@ -81,7 +76,7 @@ function henon_anomaly_frequencies(potential::Function,r_apo::Float64,r_peri::Fl
 
     #freq1 = integration_distance/(accum1*dt);
     freq1 = (pi/2)*uNINT/(accum1)
-    freq2 = freq1/(pi/2) * jj * (sm/am) * accum2 / uNINT;
+    freq2 = freq1/(pi/2) * L * (sm/am) * accum2 / uNINT;
 
     # @IMPROVE
     # note that we could also return the actions if we wanted:
