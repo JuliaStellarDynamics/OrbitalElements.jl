@@ -6,6 +6,11 @@ using Optim
 # for interpolations
 using Interpolations
 
+# utils
+include("Extremise.jl")
+
+# anything to IO?
+include("IO.jl")
 
 # define some basic orbit transformations
 include("OrbitDefinitions.jl")
@@ -23,7 +28,8 @@ include("CircularRadial/SpecialCases.jl")
 # bring in the generic frequency solver
 include("Frequencies.jl")
 
-# anything to IO?
-include("IO.jl")
+# bring in the resonance mappings
+include("Resonance/UVbounds.jl")
+
 
 end # module
