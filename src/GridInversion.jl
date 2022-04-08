@@ -70,7 +70,7 @@ function make_frequency_grid(potential::Function,dpotential::Function,ddpotentia
 end
 
 
-"""ae_from_omega1omega2
+"""ae_from_omega1omega2_grid
 
 basic interpolation version to find (a,e) from (omega1,omega2) grid.
 
@@ -78,7 +78,7 @@ basic interpolation version to find (a,e) from (omega1,omega2) grid.
 @IMPROVE Solve the integrals efficiently
 
 """
-function ae_from_omega1omega2(omega1::Float64,omega2::Float64,O1grid,O2grid,agrid,egrid)
+function ae_from_omega1omega2_grid(omega1::Float64,omega2::Float64,O1grid,O2grid,agrid,egrid)
     #
 
 
