@@ -31,5 +31,8 @@ include("Frequencies.jl")
 # bring in the resonance mappings
 include("Resonance/UVbounds.jl")
 
+# bring in the frequency inversion
+include("NumericalInversion.jl")
+
 
 end # module

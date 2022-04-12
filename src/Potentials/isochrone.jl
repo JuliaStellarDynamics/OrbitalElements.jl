@@ -44,57 +44,103 @@ function isochrone_ddpsi_ddr(r::Float64,bc::Float64=1.,M::Float64=1.,astronomica
                           + (sqrt(rbc)*(sqrt(rbc)+bc)^2)^(-1))
 end
 
-#=
 
-SCALING FUNCTIONS
-
-=#
+"""
+isochrone frequency scale, from Fouvry 21 (appendix G)
+"""
 function isochrone_Omega0(bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
-    # isochrone frequency scale, from Fouvry 21 (appendix G)
     return sqrt(astronomicalG*M/bc^3)
 end
 
+"""
+isochrone energy scale, from Fouvry 21 (appendix G)
+"""
 function isochrone_E0(bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
-    # isochrone energy scale, from Fouvry 21 (appendix G)
     return -sqrt(astronomicalG*M/bc)
 end
 
+"""
+isochrone action scale, from Fouvry 21 (appendix G)
+"""
 function isochrone_L0(bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
-    # isochrone action scale, from Fouvry 21 (appendix G)
     return sqrt(astronomicalG*M*bc)
 end
 
 
-#=
+"""
+isochrone reduced coordinates for pericentre and apocentre
+"""
+function isochrone_spsa_from_rpra(rp::Float64,ra::Float64,bc::Float64=1.)
+    xp = rp/bc
+    xa = ra/bc
+   return sqrt(1+xp^2),sqrt(1+xa^2)
+end
 
-FREQUENCY COMPUTATION
 
-=#
+
+"""
+compute the dimensionless function for Omega1
+(Fouvry 21 eq. G5)
+"""
 function isochrone_omega_ae(rp::Float64,ra::Float64,bc::Float64=1.)
-    # isochrone \omega (Fouvry 21 eq. G5)
-    sp,sa = spsa_from_rpra(rp,ra)
+    sp,sa = isochrone_spsa_from_rpra(rp,ra)
     return (2/(sp+sa))^(3/2)
 end
 
+"""
+compute the dimensionless function for Omega2
+(Fouvry 21 eq. G7)
+"""
 function isochrone_eta_ae(rp::Float64,ra::Float64,bc::Float64=1.)
-    # isochrone \eta (Fouvry 21 eq. G7)
     xp = rp/bc
     xa = ra/bc
-    sp,sa = spsa_from_rpra(rp,ra)
+    sp,sa = isochrone_spsa_from_rpra(rp,ra)
     return (1/2)*(1+(xp*xa)/((1+sp)*(1+sa)))
 end
 
 
 function isochrone_Omega_1_2(rp::Float64,ra::Float64,bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
-    # wrapper for returning both \Omega_1 and \Omega_2
-
-    Omega0   = isochrone_Omega0(gc,M,astronomicalG)
+    Omega0   = isochrone_Omega0(bc,M,astronomicalG)
     omega_ae = isochrone_omega_ae(rp,ra)
     eta_ae   = isochrone_eta_ae(rp,ra)
     return omega_ae*Omega0,omega_ae*eta_ae*Omega0
 
 end
 
+
+function isochrone_EL_from_alphabeta(alpha::Float64,beta::Float64,bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
+    scaleEnergy = isochrone_E0(bc,M,astronomicalG)
+    scaleAction = isochrone_L0(bc,M,astronomicalG)
+    E = 0.5*scaleEnergy*(alpha)^(2/3) # Value of the energy
+    L = scaleAction*(2.0*beta-1.0)/(sqrt(beta*(1.0-beta))) # Value of the angular momentum
+    return E, L # Output
+end
+
+"""
+
+@IMPROVE, used a floor to avoid any sqrt problems with circular orbits
+"""
+function isochrone_rpra_fromEL(E::Float64,L::Float64,bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
+    scaleEnergy = isochrone_E0(bc,M,astronomicalG)
+    scaleAction = isochrone_L0(bc,M,astronomicalG)
+    xc = ((0.5*scaleEnergy)/E) - 1.0                                 # Value of xc
+    ecc_ov = sqrt(max(0,1.0 - (L/scaleAction)^(2)*(1.0/xc)*(1.0+(1.0/xc)))) # Value of overline{e}
+    xp = sqrt(max(0,(2.0 + xc*(1.0-ecc_ov))*(xc*(1.0-ecc_ov))))             # Value of xp
+    xa = sqrt(max(0,(2.0 + xc*(1.0+ecc_ov))*(xc*(1.0+ecc_ov))))             # Value of xa
+    rp, ra = xp*bc, xa*bc                                            # Value of rp,ra
+    return rp, ra # Output
+end
+
+"""
+
+@IMPROVE, needs the Omega0 scaling functions
+"""
+function isochrone_ae_from_omega1omega2(omega1::Float64,omega2::Float64)
+    E,L = isochrone_EL_from_alphabeta(omega1,omega2/omega1)
+    rp,ra = isochrone_rpra_fromEL(E,L)
+    a,e = ae_from_rpra(rp,ra)
+    return a,e
+end
 
 #=
 
@@ -104,7 +150,7 @@ ENERGY AND ANGULAR MOMENTUM
 function isochrone_E_from_rpra(rp::Float64,ra::Float64,bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
     # isochrone analytic energy, Fouvry 21 G9
     E0 = isochrone_E0()
-    sp,sa = spsa_from_rpra(rp,ra)
+    sp,sa = isochrone_spsa_from_rpra(rp,ra)
     return E0/(sp+sa)
 end
 
@@ -114,7 +160,7 @@ function isochrone_L_from_rpra(rp::Float64,ra::Float64,bc::Float64=1.,M::Float64
     xp = rp/bc
     xa = ra/bc
     L0 = isochrone_L0()
-    sp,sa = spsa_from_rpra(rp,ra)
+    sp,sa = isochrone_spsa_from_rpra(rp,ra)
     return sqrt(2)*L0*xp*xa/sqrt((1+sp)*(1+sa)*(sp+sa))
 end
 
@@ -129,7 +175,7 @@ function isochrone_dthetadu_from_rpra(r::Float64,u::Float64,rp::Float64,ra::Floa
     sr = sqrt(1+xr^(2))
     Omega0 = isochrone_Omega0(bc,M,astronomicalG)
     Omega1,Omega2 = isochrone_Omega_1_2(rp,ra,bc,M,astronomicalG)
-    sp,sa = spsa_from_rpra(rp,ra)
+    sp,sa = isochrone_spsa_from_rpra(rp,ra)
     return (3/sqrt(2))*(Omega1/Omega0)*(xr/sqrt(4-u^(2)))*(sqrt((sr+sp)*(sr+sa)*(sp+sa))/sqrt((xr+xp)*(xr+xa)))
 end
 
