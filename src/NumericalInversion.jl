@@ -23,13 +23,13 @@ function ae_from_omega1omega2_brute(omega1::Float64,omega2::Float64,
     # get the circular orbit (maximum radius) for a given omega1,omega2. use the stronger constraint.
     acirc = Omega1circ_to_radius(omega1,dpotential,ddpotential)
 
-    #=
+
     # check to make sure we aren't very close to circular (radial isn't a problem)
     f1circ,f2circ = compute_frequencies_ae(potential,dpotential,ddpotential,acirc,0.0)
-    if (((omega1 - f1circ)^2 + (omega2 - f2circ)^2) > eps^2)
+    if (((omega1 - f1circ)^2 + (omega2 - f2circ)^2) < eps^2)
         return acirc,0.0
     end
-    =#
+
 
     # then start from ecc=0.5 and take numerical derivatives
     aguess = acirc
