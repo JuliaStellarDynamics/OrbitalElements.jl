@@ -10,7 +10,7 @@ by brute-forcing the derivative steps domega1/da, domega1/de, deomega2/da, domeg
 
 basic interpolation version to find (a,e) from (omega1,omega2) brute force derivatives.
 
-
+@IMPROVE, check that scalings are working (bc!=1)
 """
 function ae_from_omega1omega2_brute(omega1::Float64,omega2::Float64,
                                     potential::Function,

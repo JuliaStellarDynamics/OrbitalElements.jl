@@ -4,16 +4,16 @@
 """
 
 
-"""find_w_min_max
+"""find_wmin_wmax
 
 for a given resonance, find the maximum frequencies
 must have Omega1_circular, Omega2_circular defined (CircularRadial/CircularFrequencies.jl)
 
 @IMPROVE: specific to the cored cluster with infinite extent
 
-OrbitalElements.find_w_min_max(-3,4,OrbitalElements.isochrone_dpsi_dr,OrbitalElements.isochrone_ddpsi_ddr)
+OrbitalElements.find_wmin_wmax(-3,4,OrbitalElements.isochrone_dpsi_dr,OrbitalElements.isochrone_ddpsi_ddr)
 """
-function find_w_min_max(n1::Int64,n2::Int64,
+function find_wmin_wmax(n1::Int64,n2::Int64,
                         dpotential::Function,
                         ddpotential::Function,
                         rmax::Float64=1000.,
@@ -43,7 +43,7 @@ Fouvry & Prunet B3
 """
 function get_varpi(omg::Complex{Float64},n1::Int64,n2::Int64,dpotential::Function,ddpotential::Function,rmax::Float64=1000.,Omega0::Float64=1.)
 
-    w_min,w_max = find_w_min_max(n1,n2,dpotential,ddpotential,rmax,Omega0)
+    w_min,w_max = find_wmin_wmax(n1,n2,dpotential,ddpotential,rmax,Omega0)
 
     return (2omg - w_max - w_min)/(w_max - w_min)
 
@@ -107,14 +107,15 @@ function constraint_three(u::Float64,wmin::Float64,wmax::Float64,n1::Int64,n2::I
     return hval/(n2/2 + n1)
 end
 
-"""vmin_vmax
+"""find_vmin_vmax
 
 for a given resonance, at a specific value of u, find the v coordinate boundaries.
 
 @IMPROVE, put in guards for the edges in beta_c
+@IMPROVE, is there a way to specify the type on beta_c?
 
 """
-function vmin_vmax(u::Float64,wmin::Float64,wmax::Float64,n1::Int64,n2::Int64,vbound::Float64,beta_c)
+function find_vmin_vmax(u::Float64,wmin::Float64,wmax::Float64,n1::Int64,n2::Int64,vbound::Float64,beta_c)
     # this function works for n2 != 0
 
     if (n2==0)
@@ -166,7 +167,7 @@ function alphabeta_from_uv(u::Float64,v::Float64,
                            n1::Int64,n2::Int64,dpotential::Function,ddpotential::Function,rmax::Float64=1000.)
 
 
-    wmin,wmax = find_w_min_max(n1,n2,dpotential,ddpotential,rmax)
+    wmin,wmax = find_wmin_wmax(n1,n2,dpotential,ddpotential,rmax)
 
     if n2 == 0
         beta  = v
@@ -191,7 +192,7 @@ OrbitalElements.uv_from_alphabeta(0.5,0.7,-3,4,OrbitalElements.isochrone_dpsi_dr
 function uv_from_alphabeta(alpha::Float64,beta::Float64,
                            n1::Int64,n2::Int64,dpotential::Function,ddpotential::Function,rmax::Float64=1000.)
 
-    wmin,wmax = find_w_min_max(n1,n2,dpotential,ddpotential,rmax)
+    wmin,wmax = find_wmin_wmax(n1,n2,dpotential,ddpotential,rmax)
 
     wval = n1*alpha + n2*beta*alpha
 
