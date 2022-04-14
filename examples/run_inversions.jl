@@ -48,6 +48,3 @@ acomp,ecomp = OrbitalElements.isochrone_ae_from_omega1omega2(f1comp,f2comp,bc,M,
 aguess,eguess = OrbitalElements.ae_from_omega1omega2_brute(f1comp,f2comp,potential,dpotential,ddpotential,0.000001,100)
 
 @printf("aguess=%f eguess=%f\n", aguess,eguess)
-
-
-u,v = OrbitalElements.uv_from_alphabeta(f1real/Omega0,f2real/f1real,2,-3,dpotential,ddpotential)

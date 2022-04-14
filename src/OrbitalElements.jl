@@ -7,7 +7,7 @@ using Optim
 using Interpolations
 
 # utils
-include("Extremise.jl")
+include("Utils/Extremise.jl")
 
 # anything to IO?
 include("IO.jl")
@@ -20,7 +20,7 @@ include("Potentials/isochrone.jl")
 include("Potentials/plummer.jl")
 
 # enable energy and angular momentum computation (including expansions)
-include("ComputeEL.jl")
+include("Utils/ComputeEL.jl")
 
 # bring in the circular orbit frequencies
 include("CircularRadial/SpecialCases.jl")
@@ -30,9 +30,6 @@ include("Frequencies.jl")
 
 # bring in the resonance mappings
 include("Resonance/UVbounds.jl")
-
-# bring in the frequency inversion
-include("NumericalInversion.jl")
 
 
 end # module

@@ -7,21 +7,25 @@
 
 ## Quick activate
 
-In the main directory where you the package lives, enter the Julia environment (`julia`), then the package manager (`]`), then activate (`activate .`). To be extra safe, you can `resolve` to check for updates. Then return to the Julia interpreter (`[backspace]`): you are good to go with the latest version of the package! Import the exports by typing `using OrbitalElements` into the Julia interpreter. You may also need to download some packages if you are using a new Julia interpreter: try `using(Pkg);Pkg.instantiate()`. If you want to access specific elements listed below, I recommend `import OrbitalElements` which will give access modeled on `OrbitalElements.rpra_from_ae` (for example).
-
 As `OrbitalElements` is unregistered, if you would like to add it to your Julia registry, read [here](https://pkgdocs.julialang.org/v1/managing-packages/#Adding-unregistered-packages). Short version: when in the package manager, `add "git@github.com:michael-petersen/JuliaOrbitElements.git"`. If you are getting an error about git keys, you will need to register your private key using the julia shell prompt (access with `;`), and then pointing at your private key: `ssh-add ~/.ssh/id_rsa`.
+
+Another option, for development: after cloning the repository, in the main directory where you the package lives, enter the Julia environment (`julia`), then the package manager (`]`), then activate (`activate .`). To be extra safe, you can `resolve` to check for updates. Then return to the Julia interpreter (`[backspace]`): you are good to go with the latest version of the package! Import the exports by typing `using OrbitalElements` into the Julia interpreter. You may also need to download some packages if you are using a new Julia interpreter: try `using(Pkg);Pkg.instantiate()`. If you want to access specific elements listed below, I recommend `import OrbitalElements` which will give access modeled on `OrbitalElements.rpra_from_ae` (for example).
+
 
 -----------------------------
 
 ## Obtaining Orbital Frequencies
 
-`compute_frequencies(ψ,dψ/dr,d²ψ/dr²,rp,ra)` will compute frequencies give a potential plus two derivatives, for an orbit described by pericentre (rp) and apocentre (ra).
+`compute_frequencies(ψ,dψ/dr,d²ψ/dr²,rp,ra)` will compute frequencies given a potential plus two derivatives, for an orbit described by pericentre (rp) and apocentre (ra).
 
 Example for matching against isochrone:
 ```
+using OrbitalElements
 rp,ra = 0.9,1.1
-compute_frequencies_rpra(OrbitalElements.isochrone_psi,OrbitalElements.isochrone_dpsi_dr,OrbitalElements.isochrone_ddpsi_ddr,rp,ra)
+OrbitalElements.compute_frequencies_rpra(OrbitalElements.isochrone_psi,OrbitalElements.isochrone_dpsi_dr,OrbitalElements.isochrone_ddpsi_ddr,rp,ra)
 ```
+
+`Theta(ψ,dψ/dr,d²ψ/dr²,u,rp,ra)` will compute the anomaly along an orbit, given a potential plus two derivatives.
 
 -----------------------------
 

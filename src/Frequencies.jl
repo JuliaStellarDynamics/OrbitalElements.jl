@@ -12,7 +12,8 @@ include("Henon/Frequencies.jl")
 # bring in the anomaly mapping (i.e. f(u))
 include("Henon/Ufunc.jl")
 
-# bring in the inverse function
+# bring in the frequency inversion
+include("Utils/NumericalInversion.jl")
 
 
 """compute_frequencies_ae(potential,dpotential,ddpotential,a,ecc[,TOLECC,verbose])
