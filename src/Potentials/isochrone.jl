@@ -54,9 +54,11 @@ end
 
 """
 isochrone energy scale, from Fouvry 21 (appendix G)
+Emin = -GM/(2bc)
 """
 function isochrone_E0(bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
-    return -sqrt(astronomicalG*M/bc)
+    #return -sqrt(astronomicalG*M/bc)
+    return -astronomicalG*M/bc
 end
 
 """
@@ -83,7 +85,7 @@ compute the dimensionless function for Omega1
 (Fouvry 21 eq. G5)
 """
 function isochrone_omega_ae(rp::Float64,ra::Float64,bc::Float64=1.)
-    sp,sa = isochrone_spsa_from_rpra(rp,ra)
+    sp,sa = isochrone_spsa_from_rpra(rp,ra,bc)
     return (2/(sp+sa))^(3/2)
 end
 
@@ -94,20 +96,24 @@ compute the dimensionless function for Omega2
 function isochrone_eta_ae(rp::Float64,ra::Float64,bc::Float64=1.)
     xp = rp/bc
     xa = ra/bc
-    sp,sa = isochrone_spsa_from_rpra(rp,ra)
+    sp,sa = isochrone_spsa_from_rpra(rp,ra,bc)
     return (1/2)*(1+(xp*xa)/((1+sp)*(1+sa)))
 end
 
-
+"""
+analytic function to return isochrone frequencies
+"""
 function isochrone_Omega_1_2(rp::Float64,ra::Float64,bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
     Omega0   = isochrone_Omega0(bc,M,astronomicalG)
-    omega_ae = isochrone_omega_ae(rp,ra)
-    eta_ae   = isochrone_eta_ae(rp,ra)
+    omega_ae = isochrone_omega_ae(rp,ra,bc)
+    eta_ae   = isochrone_eta_ae(rp,ra,bc)
     return omega_ae*Omega0,omega_ae*eta_ae*Omega0
 
 end
 
-
+"""
+inversion of EL -> alpha,beta function
+"""
 function isochrone_EL_from_alphabeta(alpha::Float64,beta::Float64,bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
     scaleEnergy = isochrone_E0(bc,M,astronomicalG)
     scaleAction = isochrone_L0(bc,M,astronomicalG)
@@ -132,35 +138,35 @@ function isochrone_rpra_fromEL(E::Float64,L::Float64,bc::Float64=1.,M::Float64=1
 end
 
 """
-
-@IMPROVE, needs the Omega0 scaling functions
+function to wrap (alpha,beta)->(E,L)->(rp,ra)->(a,e) conversions for isochrone
 """
-function isochrone_ae_from_omega1omega2(omega1::Float64,omega2::Float64)
-    E,L = isochrone_EL_from_alphabeta(omega1,omega2/omega1)
-    rp,ra = isochrone_rpra_fromEL(E,L)
-    a,e = ae_from_rpra(rp,ra)
+function isochrone_ae_from_omega1omega2(omega1::Float64,omega2::Float64,bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
+    Omega0= isochrone_Omega0(bc,M,astronomicalG)
+    E,L   = isochrone_EL_from_alphabeta(omega1/Omega0,omega2/omega1,bc,M,astronomicalG)
+    rp,ra = isochrone_rpra_fromEL(E,L,bc,M,astronomicalG)
+    a,e   = ae_from_rpra(rp,ra)
     return a,e
 end
 
-#=
-
-ENERGY AND ANGULAR MOMENTUM
-
-=#
+"""
+energy from isochrone model, using rpra
+Fouvry 21 G9
+"""
 function isochrone_E_from_rpra(rp::Float64,ra::Float64,bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
-    # isochrone analytic energy, Fouvry 21 G9
-    E0 = isochrone_E0()
-    sp,sa = isochrone_spsa_from_rpra(rp,ra)
-    return E0/(sp+sa)
+    scaleEnergy = isochrone_E0(bc,M,astronomicalG)
+    sp,sa       = isochrone_spsa_from_rpra(rp,ra,bc)
+    return scaleEnergy/(sp+sa)
 end
 
-
+"""
+angular momentum from isochrone model, using rpra
+"""
 function isochrone_L_from_rpra(rp::Float64,ra::Float64,bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
     # isochrone analytic energy, Fouvry 21 G9
     xp = rp/bc
     xa = ra/bc
-    L0 = isochrone_L0()
-    sp,sa = isochrone_spsa_from_rpra(rp,ra)
+    L0 = isochrone_L0(bc,M,astronomicalG)
+    sp,sa = isochrone_spsa_from_rpra(rp,ra,bc)
     return sqrt(2)*L0*xp*xa/sqrt((1+sp)*(1+sa)*(sp+sa))
 end
 

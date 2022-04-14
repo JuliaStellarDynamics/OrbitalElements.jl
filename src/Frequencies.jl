@@ -12,6 +12,8 @@ include("Henon/Frequencies.jl")
 # bring in the anomaly mapping (i.e. f(u))
 include("Henon/Ufunc.jl")
 
+# bring in the inverse function
+
 
 """compute_frequencies_ae(potential,dpotential,ddpotential,a,ecc[,TOLECC,verbose])
 
@@ -25,6 +27,21 @@ function compute_frequencies_ae(potential::Function,dpotential::Function,ddpoten
         f1,f2 = compute_frequencies_henon_ae(potential,dpotential,ddpotential,a,ecc,TOLECC,verbose)
 
         return f1,f2
+end
+
+
+"""compute_ae_from_frequencies(potential,dpotential,ddpotential,a,ecc[,eps,maxiter])
+
+wrapper to select which type of inversion to compute for (Omega1,Omega2)->(a,e)
+
+"""
+function compute_ae_from_frequencies(potential::Function,dpotential::Function,ddpotential::Function,
+                                     omega1::Float64,omega2::Float64,eps::Float64=1*10^(-6),maxiter::Int64=10000)
+
+
+        a,e = ae_from_omega1omega2_brute(omega1,omega2,potential,dpotential,ddpotential,eps,maxiter)
+
+        return a,e
 end
 
 

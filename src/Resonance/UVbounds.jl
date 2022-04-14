@@ -4,7 +4,7 @@
 """
 
 
-"""find_wmin_wmax
+"""find_wmin_wmax(n1,n2,dpotential,ddpotential[,rmax,Omega0])
 
 for a given resonance, find the maximum frequencies
 must have Omega1_circular, Omega2_circular defined (CircularRadial/CircularFrequencies.jl)
@@ -33,7 +33,7 @@ function find_wmin_wmax(n1::Int64,n2::Int64,
     return w_min,w_max
 end
 
-"""get_varpi
+"""get_varpi(omega,n1,n2,dpotential,ddpotential[,rmax,Omega0])
 
 translate a complex frequency into a rescale frequency.
 maps ``\\omega \\to [-1,1]``
@@ -49,7 +49,7 @@ function get_varpi(omg::Complex{Float64},n1::Int64,n2::Int64,dpotential::Functio
 
 end
 
-"""hu
+"""hu(u,wmin,wmax)
 
 return h, a helper quantity
 
@@ -60,7 +60,7 @@ function hu(u::Float64,wmin::Float64,wmax::Float64)
     return 0.5*(wmax+wmin + u*(wmax-wmin))
 end
 
-"""root_of_h_omega
+"""root_of_h_omega(u,wmin,wmax,n1,n2,vound,beta_c)
 
 solve for roots of the h(u) equation
 Fouvry & Prunet B10 (term 3)
@@ -101,13 +101,17 @@ function root_of_h_omega(u::Float64,wmin::Float64,wmax::Float64,n1::Int64,n2::In
     return r1,r2
 end
 
+"""constraint_three(u,wmin,wmax,n1,n2)
+
+helper function for finding v bounds
+"""
 function constraint_three(u::Float64,wmin::Float64,wmax::Float64,n1::Int64,n2::Int64)
     # greater than this
     hval = hu(u,wmin,wmax)
     return hval/(n2/2 + n1)
 end
 
-"""find_vmin_vmax
+"""find_vmin_vmax(u,wmin,wmax,n1,n2,vbound,beta_c)
 
 for a given resonance, at a specific value of u, find the v coordinate boundaries.
 
@@ -164,10 +168,10 @@ Fouvry & Prunet B5
 
 """
 function alphabeta_from_uv(u::Float64,v::Float64,
-                           n1::Int64,n2::Int64,dpotential::Function,ddpotential::Function,rmax::Float64=1000.)
+                           n1::Int64,n2::Int64,dpotential::Function,ddpotential::Function,rmax::Float64=1000.,Omega0::Float64=1.)
 
 
-    wmin,wmax = find_wmin_wmax(n1,n2,dpotential,ddpotential,rmax)
+    wmin,wmax = find_wmin_wmax(n1,n2,dpotential,ddpotential,rmax,Omega0)
 
     if n2 == 0
         beta  = v
@@ -180,7 +184,7 @@ function alphabeta_from_uv(u::Float64,v::Float64,
     return alpha,beta
 end
 
-"""uv_from_alphabeta
+"""uv_from_alphabeta(alpha,beta,n1,n2,dpotential,ddpotential[,rmax,Omega0])
 
 mapping from  (u,v) to (alpha,beta)
 
@@ -190,9 +194,9 @@ OrbitalElements.uv_from_alphabeta(0.5,0.7,-3,4,OrbitalElements.isochrone_dpsi_dr
 
 """
 function uv_from_alphabeta(alpha::Float64,beta::Float64,
-                           n1::Int64,n2::Int64,dpotential::Function,ddpotential::Function,rmax::Float64=1000.)
+                           n1::Int64,n2::Int64,dpotential::Function,ddpotential::Function,rmax::Float64=1000.,Omega0=1.)
 
-    wmin,wmax = find_wmin_wmax(n1,n2,dpotential,ddpotential,rmax)
+    wmin,wmax = find_wmin_wmax(n1,n2,dpotential,ddpotential,rmax,Omega0)
 
     wval = n1*alpha + n2*beta*alpha
 

@@ -118,6 +118,8 @@ function compute_frequencies_henon(potential::Function,dpotential::Function,ddpo
     return freq1,freq2
 end
 
+"""
+"""
 function compute_frequencies_henon_ae(potential::Function,dpotential::Function,ddpotential::Function,
                                       a::Float64,ecc::Float64,TOLECC::Float64=0.01,verbose::Int64=0)
     #=compute_frequencies_henon_ae
