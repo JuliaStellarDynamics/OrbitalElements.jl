@@ -3,18 +3,13 @@ The isochrone potential definitions
 
   isochrone.jl is unique in that we can define many of the quantities analytically, which makes for a useful testbed for empirical potentials.
 
-=#
-
-#=
-
-POTENTIAL AND DERIVATIVES
+  nearly all quantities for the isochrone potential can be computed analytically
 
 =#
 
-"""isochrone_psi
+"""isochrone_psi(r[,bc,M,G])
 
 the isochrone potential
-
 """
 function isochrone_psi(r::Float64,bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
 
@@ -22,21 +17,21 @@ function isochrone_psi(r::Float64,bc::Float64=1.,M::Float64=1.,astronomicalG::Fl
     return -astronomicalG*M*(bc+sqrt(rbc))^(-1)
 end
 
+"""isochrone_dpsi_dr(r[,bc,M,G])
+
+the isochrone potential derivative
+"""
 function isochrone_dpsi_dr(r::Float64,bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
-    #=isochrone_dpsi_dr
-
-    the isochrone potential derivative
-
-    =#
     rbc = r^2 + bc^2
     return astronomicalG*M*r*(sqrt(rbc)*(sqrt(rbc)+bc)^2)^(-1)
 end
 
+"""isochrone_ddpsi_ddr(r[,bc,M,G])
+
+the isochrone potential second derivative
+"""
 function isochrone_ddpsi_ddr(r::Float64,bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
-    #=isochrone_ddpsi_ddr
-
-    the isochrone potential second derivative
-
+    #=
     =#
     rbc = r^2 + bc^2
     return astronomicalG*M*(- r^(2)*((rbc^(3/2))*(sqrt(rbc)+bc)^2)^(-1)
@@ -124,7 +119,7 @@ end
 
 """
 
-@IMPROVE, used a floor to avoid any sqrt problems with circular orbits
+@IMPROVE, uses a floor to avoid any sqrt problems with circular orbits
 """
 function isochrone_rpra_fromEL(E::Float64,L::Float64,bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
     scaleEnergy = isochrone_E0(bc,M,astronomicalG)
@@ -186,35 +181,20 @@ function isochrone_dthetadu_from_rpra(r::Float64,u::Float64,rp::Float64,ra::Floa
 end
 
 
-
+"""
+beta as a function of alpha for circular orbits
+"""
 function isochrone_beta_c(alpha::Float64)
-    #=
-
-    =#
     return 1/(1+alpha^(2/3))
 end
 
-
-function fanomaly(u::Float64)
-    # the Henon anomaly
-    u*(1.5 - 0.5*u^(2))
-end
-
-function dfdu(u::Float64)
-    # the derivative of the Henon anomaly
-    1.5*(1.0 - u^(2))
-end
-
-function isochrone_drduINVvrfromrpra(rp::Float64,ra::Float64,u::Float64)
-    #=
-
-
-    =#
-    bISO = 1.
-    Omega0 = 1.
+"""
+Theta function for the isochrone model
+"""
+function isochrone_drduINVvrfromrpra(rp::Float64,ra::Float64,u::Float64,bc::Flat64=1.,Omega0::Float64=1.)
     Sigma, Delta = (ra+rp)*0.5, (ra-rp)*0.5 # Used for the mapping from u
-    r = Sigma + Delta*fanomaly(u) # Current value of the radius
-    xp, xa, xr = rp/bISO, ra/bISO, r/bISO # Rescaled pericentre, apocentre, and radius
+    r = Sigma + Delta*henon_f(u) # Current value of the radius
+    xp, xa, xr = rp/bc, ra/bc, r/bc # Rescaled pericentre, apocentre, and radius
     sqxp, sqxa, sqxr = sqrt(1.0+xp^(2)), sqrt(1.0+xa^(2)), sqrt(1.0+xr^(2)) # Pre-computing the values of sqrt(1+xp^2), sqrt(1+xa^2), and sqrt(1+xr^(2))
     #####
     drduINVvr = (3.0/(sqrt(2.0)))/(Omega0)*xr*sqrt(((sqxr+sqxp)*(sqxr+sqxa)*(sqxp+sqxa))/((xr+xp)*(xr+xa)*(4.0-u^(2))))# Analytical expression of (dr/du)(1/vr), that is always well-posed

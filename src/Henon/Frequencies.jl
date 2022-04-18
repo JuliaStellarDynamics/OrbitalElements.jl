@@ -1,4 +1,19 @@
 
+
+"""the henon anomaly increment
+"""
+function henon_f(u::Float64)
+    u*(1.5 - 0.5*u^(2))
+end
+
+"""the derivative of the henon anomaly increment
+"""
+function henon_dfdu(u::Float64)
+    1.5*(1.0 - u^(2))
+end
+
+
+
 """henon_anomaly_frequencies
 
 use the henon anomaly mapping to compute orbit frequencies
@@ -89,7 +104,8 @@ function henon_anomaly_frequencies(potential::Function,
 end
 
 
-
+"""compute_frequences_henon(ψ,dψ/dr,d²ψ/dr²,rp,ra[,TOLECC,verbose])
+"""
 function compute_frequencies_henon(potential::Function,dpotential::Function,ddpotential::Function,
         r_peri::Float64,r_apo::Float64,TOLECC::Float64=0.01,verbose::Int64=0)
 
@@ -118,7 +134,7 @@ function compute_frequencies_henon(potential::Function,dpotential::Function,ddpo
     return freq1,freq2
 end
 
-"""
+"""compute_frequences_henon_ae(ψ,dψ/dr,d²ψ/dr²,rp,ra[,TOLECC,verbose])
 """
 function compute_frequencies_henon_ae(potential::Function,dpotential::Function,ddpotential::Function,
                                       a::Float64,ecc::Float64,TOLECC::Float64=0.01,verbose::Int64=0)
