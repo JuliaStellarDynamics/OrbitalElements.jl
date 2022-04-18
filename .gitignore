@@ -1,4 +1,6 @@
 
 examples/run_isochrone.jl
+examples/run_plummer.jl
 
-src/GridInversion.jl
+
+src/Utils/GridInversion.jl

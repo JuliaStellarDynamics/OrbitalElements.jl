@@ -191,7 +191,7 @@ end
 """
 Theta function for the isochrone model
 """
-function isochrone_drduINVvrfromrpra(rp::Float64,ra::Float64,u::Float64,bc::Flat64=1.,Omega0::Float64=1.)
+function isochrone_drduINVvrfromrpra(rp::Float64,ra::Float64,u::Float64,bc::Float64=1.,Omega0::Float64=1.)
     Sigma, Delta = (ra+rp)*0.5, (ra-rp)*0.5 # Used for the mapping from u
     r = Sigma + Delta*henon_f(u) # Current value of the radius
     xp, xa, xr = rp/bc, ra/bc, r/bc # Rescaled pericentre, apocentre, and radius

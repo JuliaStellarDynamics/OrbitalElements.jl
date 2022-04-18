@@ -2,7 +2,7 @@ import OrbitalElements
 using Printf
 
 # how to redefine easy potentials to pass to frequency calculators
-bc, M, G = 8.,0.5 ,12.
+bc, M, G = 1.,1. ,1.
 potential   = r->OrbitalElements.isochrone_psi(r,bc,M,G)
 dpotential  = r->OrbitalElements.isochrone_dpsi_dr(r,bc,M,G)
 ddpotential = r->OrbitalElements.isochrone_ddpsi_ddr(r,bc,M,G)
@@ -11,6 +11,9 @@ a,e = 5.0, 0.2
 
 rp,ra = OrbitalElements.rpra_from_ae(a,e)
 @printf("rp=%f ra=%f\n", rp,ra)
+
+gval = OrbitalElements.Theta(potential,dpotential,ddpotential,u,rp,ra)
+println(gval)
 
 E  = OrbitalElements.E_from_rpra_pot(potential,dpotential,ddpotential,rp,ra)
 Ei = OrbitalElements.isochrone_E_from_rpra(rp,ra,bc,M,G)
@@ -30,7 +33,6 @@ u,v = OrbitalElements.uv_from_alphabeta(alpha,beta,n1,n2,dpotential,ddpotential,
 alphaguess,betaguess = OrbitalElements.alphabeta_from_uv(u,v,n1,n2,dpotential,ddpotential,rmax,Omega0)
 
 @printf("alpha=%f alphaguess=%f beta=%f betaguess=%f\n", alpha,alphaguess,beta,betaguess)
-
 
 
 
