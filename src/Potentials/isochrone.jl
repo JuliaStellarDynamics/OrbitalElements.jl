@@ -73,7 +73,15 @@ function isochrone_spsa_from_rpra(rp::Float64,ra::Float64,bc::Float64=1.)
    return sqrt(1+xp^2),sqrt(1+xa^2)
 end
 
-
+"""
+compute the radial action
+(Fouvry 21 eq. G3)
+"""
+function isochrone_jr_rpra(rp::Float64,ra::Float64,bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
+    E = isochrone_E_from_rpra(rp,ra,bc,M,astronomicalG)
+    L = isochrone_L_from_rpra(rp,ra,bc,M,astronomicalG)
+    return (astronomicalG*M/sqrt(-2E)) - 0.5 * (L + sqrt(L*L + 4*astronomicalG*M*bc))
+end
 
 """
 compute the dimensionless function for Omega1
@@ -200,3 +208,37 @@ function isochrone_drduINVvrfromrpra(rp::Float64,ra::Float64,u::Float64,bc::Floa
     drduINVvr = (3.0/(sqrt(2.0)))/(Omega0)*xr*sqrt(((sqxr+sqxp)*(sqxr+sqxa)*(sqxp+sqxa))/((xr+xp)*(xr+xa)*(4.0-u^(2))))# Analytical expression of (dr/du)(1/vr), that is always well-posed
     return drduINVvr # Output
 end
+
+
+"""
+this is for the change of variables from E,L to alpha,beta
+"""
+function isochrone_JacEL_to_alphabeta(alpha::Float64,beta::Float64,bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
+    scaleEnergy = isochrone_E0(bc,M,astronomicalG)
+    scaleAction = isochrone_L0(bc,M,astronomicalG)
+    Omega0      = isochrone_Omega0(bc,M,astronomicalG)
+    return abs((1.0/6.0)*scaleEnergy*scaleAction/(alpha^(1/3)*(beta*(1.0-beta))^(3/2))*(1.0/Omega0)) # Output of the ABSOLUTE VALUE of the Jacobian. ATTENTION, contains the rescaling factor 1/Omega0
+end
+
+
+"""
+Saha distribution function
+ra is the anisotropy radius
+"""
+function isochrone_Saha_DF(E::Float64,L::Float64,ra::Float64,bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
+    scaleEnergy = isochrone_E0(bc,M,astronomicalG)
+
+    Q = (1/scaleEnergy) * (E + (L^2)/(2*ra^2))
+    gamma = (bc/ra)^2
+
+    prefactor = (M/((G*M*bc)^(3/2))) * (1/(128*sqrt(2)*pi)) * (sqrt(Q)/((1-Q)^4))
+
+    term1 = 27 + 77gamma - (66+286gamma)*Q + (320+136gamma)*Q*Q -(240+32gamma)*Q*Q*Q + 64*Q*Q*Q*Q
+    term2 = ((3*asin(sqrt(Q)))/sqrt(Q*(1-Q))) * ((-9 + 17gamma) + (28-44gamma)*Q + (16-8gamma)*Q*Q)
+
+    return prefactor * (term1+term2)
+end
+
+"""
+we also need dF/dQ and then we have the isochrone complete!
+"""

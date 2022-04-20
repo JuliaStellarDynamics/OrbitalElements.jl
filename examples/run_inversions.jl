@@ -1,8 +1,11 @@
+"""
+check a bunch of quantities against the isochrone case, so we can be confident we are doing the numerical work correctly!
+"""
 import OrbitalElements
 using Printf
 
 # how to redefine easy potentials to pass to frequency calculators
-bc, M, G = 1.,1. ,1.
+bc, M, G = 12.,1. ,1.
 potential   = r->OrbitalElements.isochrone_psi(r,bc,M,G)
 dpotential  = r->OrbitalElements.isochrone_dpsi_dr(r,bc,M,G)
 ddpotential = r->OrbitalElements.isochrone_ddpsi_ddr(r,bc,M,G)
@@ -12,8 +15,7 @@ a,e = 5.0, 0.2
 rp,ra = OrbitalElements.rpra_from_ae(a,e)
 @printf("rp=%f ra=%f\n", rp,ra)
 
-gval = OrbitalElements.Theta(potential,dpotential,ddpotential,u,rp,ra)
-println(gval)
+
 
 E  = OrbitalElements.E_from_rpra_pot(potential,dpotential,ddpotential,rp,ra)
 Ei = OrbitalElements.isochrone_E_from_rpra(rp,ra,bc,M,G)
@@ -24,6 +26,20 @@ Li = OrbitalElements.isochrone_L_from_rpra(rp,ra,bc,M,G)
 f1real,f2real = OrbitalElements.isochrone_Omega_1_2(rp,ra,bc,M,G)
 f1comp,f2comp = OrbitalElements.compute_frequencies_ae(potential,dpotential,ddpotential,a,e)
 @printf("O1=%f O1guess=%f O2=%f O2guess=%f\n", f1real,f1comp,f2real,f2comp)
+
+jrreal = OrbitalElements.isochrone_jr_rpra(rp,ra,bc,M,G)
+
+
+f1comp,f2comp,a1comp = OrbitalElements.henon_anomaly_frequencies(potential,ra,rp,E,L,true)
+
+
+
+f1comp,f2comp,a1comp = OrbitalElements.compute_frequencies_ae(potential,dpotential,ddpotential,a,e)
+
+
+u = -1.
+gval = OrbitalElements.Theta(potential,dpotential,ddpotential,u,rp,ra)
+println(gval)
 
 Omega0 = OrbitalElements.isochrone_Omega0(bc,M,G)
 n1,n2 = 2,-3

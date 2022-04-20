@@ -22,12 +22,15 @@ wrapper to select which type of frequency computation to perform, from (a,e)
 
 """
 function compute_frequencies_ae(potential::Function,dpotential::Function,ddpotential::Function,
-                                a::Float64,ecc::Float64,TOLECC::Float64=0.001,verbose::Int64=0)
+                                a::Float64,ecc::Float64,action::Bool=false,TOLECC::Float64=0.001,verbose::Int64=0)
 
-
-        f1,f2 = compute_frequencies_henon_ae(potential,dpotential,ddpotential,a,ecc,TOLECC,verbose)
-
-        return f1,f2
+        if action
+            f1,f2,a1 = compute_frequencies_henon_ae(potential,dpotential,ddpotential,a,ecc,true,TOLECC,verbose)
+            return f1,f1,a1
+        else
+            f1,f2 = compute_frequencies_henon_ae(potential,dpotential,ddpotential,a,ecc,false,TOLECC,verbose)
+            return f1,f2
+        end
 end
 
 
@@ -50,6 +53,8 @@ end
 
 wrapper to select which type of frequency computation to perform, from (a,e), but
 DERIVATIVES
+
+@IMPROVE: could add action derivatives here? more copacetic with analytic derivatives anyway
 
 """
 function compute_frequencies_ae_derivs(potential::Function,

@@ -55,3 +55,19 @@ function ae_from_omega1omega2_brute(omega1::Float64,omega2::Float64,
 
     return aguess,eguess
 end
+
+
+"""jacobian_EL_alphabeta
+
+use the potential derivatives to compute the Jacobian. Needs to be finished!
+"""
+function jacobian_EL_alphabeta(alpha::Float64,beta::Float64,
+                                    potential::Function,
+                                    dpotential::Function,
+                                    ddpotential::Function,
+                                    eps::Float64=1*10^(-6),
+                                    maxiter::Int64=10000)
+
+    return 1.
+
+end

@@ -29,6 +29,7 @@ function henon_anomaly_frequencies(potential::Function,
                                    r_peri::Float64,
                                    E::Float64,
                                    L::Float64,
+                                   action::Bool=false,
                                    NINT::Int64=64)
 
 
@@ -71,16 +72,14 @@ function henon_anomaly_frequencies(potential::Function,
         ur1  = potential(1.0/s)
         tmp2 = 2*(E-ur1) - (L*L*s*s)
 
-        accum0 += dr * tmp;
+
 
         # @IMPROVE: this is a block for invalid accumulations, but this check could be smarter
         if (tmp>0) & (tmp2>0)
-
+            accum0 += dr * sqrt(tmp);
             accum1 += dr / sqrt(tmp);
-            uNINT += 1.0
-
             accum2 += dr/sqrt(tmp2);
-
+            uNINT += 1.0
         end
 
         # advance the counter
@@ -95,11 +94,15 @@ function henon_anomaly_frequencies(potential::Function,
 
     # @IMPROVE
     # note that we could also return the actions if we wanted:
-    #action1 = (pi/2)*uNINT*accum0
+    action1 = accum0/((pi/2)*uNINT)
     #action2 = jj;
 
     # @IMPROVE: we may want to force never allowing an overshoot (i.e. freq1 is capped at 1 no matter what)
-    return freq1,freq2
+    if action
+        return freq1,freq2,action1
+    else
+        return freq1,freq2
+    end
 
 end
 
@@ -107,7 +110,7 @@ end
 """compute_frequences_henon(ψ,dψ/dr,d²ψ/dr²,rp,ra[,TOLECC,verbose])
 """
 function compute_frequencies_henon(potential::Function,dpotential::Function,ddpotential::Function,
-        r_peri::Float64,r_apo::Float64,TOLECC::Float64=0.01,verbose::Int64=0)
+        r_peri::Float64,r_apo::Float64,action::Bool=false,TOLECC::Float64=0.01,verbose::Int64=0)
 
     E = E_from_rpra_pot(potential,dpotential,ddpotential,r_peri,r_apo)
     J = L_from_rpra_pot(potential,dpotential,ddpotential,r_peri,r_apo)
@@ -129,15 +132,19 @@ function compute_frequencies_henon(potential::Function,dpotential::Function,ddpo
     end
 
     # go to the frequency calculation
-    freq1,freq2 = henon_anomaly_frequencies(potential,r_apo,r_peri,E,J)
-
-    return freq1,freq2
+    if action
+        freq1,freq2,action1 = henon_anomaly_frequencies(potential,r_apo,r_peri,E,J,true)
+        return freq1,freq2,action1
+    else
+        freq1,freq2 = henon_anomaly_frequencies(potential,r_apo,r_peri,E,J,false)
+        return freq1,freq2
+    end
 end
 
 """compute_frequences_henon_ae(ψ,dψ/dr,d²ψ/dr²,rp,ra[,TOLECC,verbose])
 """
 function compute_frequencies_henon_ae(potential::Function,dpotential::Function,ddpotential::Function,
-                                      a::Float64,ecc::Float64,TOLECC::Float64=0.01,verbose::Int64=0)
+                                      a::Float64,ecc::Float64,action::Bool=false,TOLECC::Float64=0.01,verbose::Int64=0)
     #=compute_frequencies_henon_ae
 
     wrapper to compute the frequencies for an orbit specified by (a,e)
@@ -167,8 +174,13 @@ function compute_frequencies_henon_ae(potential::Function,dpotential::Function,d
 
     # if radial, we should exploit freq1 = 2*freq2 somehow.
 
-    # go to the safe frequency calculation integration
-    freq1,freq2 = henon_anomaly_frequencies(potential,r_apo,r_peri,E,J)
-    return freq1,freq2
+    # go to the frequency calculation
+    if action
+        freq1,freq2,action1 = henon_anomaly_frequencies(potential,r_apo,r_peri,E,J,true)
+        return freq1,freq2,action1
+    else
+        freq1,freq2 = henon_anomaly_frequencies(potential,r_apo,r_peri,E,J,false)
+        return freq1,freq2
+    end
 
 end
