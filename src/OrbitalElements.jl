@@ -8,12 +8,8 @@ using Interpolations
 
 # utils
 include("Utils/Extremise.jl")
-
-# anything to IO?
-include("IO.jl")
-
-# define some basic orbit transformations
-include("OrbitDefinitions.jl")
+include("Utils/IO.jl")
+include("Utils/OrbitDefinitions.jl")
 
 # bring in the test potentials (not strictly needed)
 include("Potentials/isochrone.jl")
@@ -25,11 +21,11 @@ include("Utils/ComputeEL.jl")
 # bring in the circular orbit frequencies
 include("CircularRadial/SpecialCases.jl")
 
-# bring in the generic frequency solver
-include("Frequencies.jl")
-
 # bring in the resonance mappings
 include("Resonance/UVbounds.jl")
+include("Resonance/ABtoUV.jl")
 
+# the main wrapper for frequency and action calculations
+include("Frequencies.jl")
 
 end # module
