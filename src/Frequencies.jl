@@ -73,11 +73,11 @@ function compute_frequencies_ae_derivs(potential::Function,
         # (f1c,f2c)-> (f1r,f2r) [+de]
 
         # @IMPROVE watch out for close to TOLECC, will fail across boundary
-        f1c,f2c = compute_frequencies_henon_ae(potential,dpotential,ddpotential,a,ecc,TOLECC,verbose)
+        f1c,f2c = compute_frequencies_henon_ae(potential,dpotential,ddpotential,a,ecc,false,TOLECC,verbose)
 
-        f1h,f2h = compute_frequencies_henon_ae(potential,dpotential,ddpotential,a+da,ecc,TOLECC,verbose)
+        f1h,f2h = compute_frequencies_henon_ae(potential,dpotential,ddpotential,a+da,ecc,false,TOLECC,verbose)
 
-        f1r,f2r = compute_frequencies_henon_ae(potential,dpotential,ddpotential,a,ecc+de,TOLECC,verbose)
+        f1r,f2r = compute_frequencies_henon_ae(potential,dpotential,ddpotential,a,ecc+de,false,TOLECC,verbose)
 
         df1da = (f1h-f1c)/da
         df2da = (f2h-f2c)/da
