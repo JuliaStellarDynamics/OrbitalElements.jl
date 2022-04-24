@@ -97,7 +97,7 @@ function expandThetaPos(potential::Function,dpotential::Function,ddpotential::Fu
 end
 
 
-"""u_potential_rpra
+"""Theta
 
 ``Theta(s) \\equiv (1/vr)*(dr/ds) where s\\in[-1,1]``
 
@@ -122,8 +122,23 @@ function Theta(potential::Function,dpotential::Function,ddpotential::Function,u:
     else # main branch, direct calculation
 
         Qval = Q(potential,dpotential,ddpotential,u,rp,ra)
-        dr = drdu(u,rp,ra)
-        res = (1/sqrt(Qval))*dr
+
+        # check if Q is negative. If negative...revert back to the expanded values
+        if (Qval<0)
+            println("OrbitalElements/Ufunc.jl: Bad Q=",Qval," (u=",u,",rp=",rp,",ra=",ra,")")
+
+            if (u>0)
+                res = expandThetaPos(potential,dpotential,ddpotential,u,rp,ra)
+            else
+                res = expandThetaNeg(potential,dpotential,ddpotential,u,rp,ra)
+            end
+
+        # if not negative, proceed along main branch
+        else
+            dr = drdu(u,rp,ra)
+            res = (1/sqrt(Qval))*dr
+        end
+
 
     end
 
