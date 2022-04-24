@@ -17,7 +17,7 @@ function ae_from_omega1omega2_brute(omega1::Float64,omega2::Float64,
                                     dpotential::Function,
                                     ddpotential::Function,
                                     eps::Float64=1*10^(-6),
-                                    maxiter::Int64=10000)
+                                    maxiter::Int64=10000,TOLECC::Float64=0.001)
     #
 
     # get the circular orbit (maximum radius) for a given omega1,omega2. use the stronger constraint.
@@ -46,6 +46,20 @@ function ae_from_omega1omega2_brute(omega1::Float64,omega2::Float64,
         step = jacobian \ (-([f1;f2] - [omega1 ; omega2]))
 
         aguess,eguess = aguess + step[1],eguess + step[2]
+
+        # if bad guesses, needs to reset to a different part of space
+        # can't go too small
+        if eguess < TOLECC
+            # go halfway between the previous guess and 0.
+            eguess = eguess - step[2]
+            eguess = 0.5*eguess
+        end
+
+        if eccguess >= 1.0-0.000001
+            # go halfway between the previous guess and 1.
+            eguess = eguess - step[2]
+            eguess = eguess + 0.5*(1-eguess)
+        end
 
         iter += 1
         if iter > maxiter

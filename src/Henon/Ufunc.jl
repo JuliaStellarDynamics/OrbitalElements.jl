@@ -77,8 +77,15 @@ function expandThetaNeg(potential::Function,dpotential::Function,ddpotential::Fu
     end
 
     ddr = ddrddu(u,rp,ra)
-
     dQdrval = dQdr(potential,dpotential,ddpotential,u,rp,ra)
+
+    # if the sqrt is about to be zero...don't let it.
+    if ((ddr < 0) | (dQdrval < 0))
+        println("OrbitalElements/Ufunc.jl: Bad T-expansion=",ddr,",",dQdrval," (u=",u,",rp=",rp,",ra=",ra,")")
+        u = -1.
+        ddr = ddrddu(u,rp,ra)
+        dQdrval = dQdr(potential,dpotential,ddpotential,u,rp,ra)
+    end
 
     return sqrt(2*ddr/dQdrval)
 end
@@ -90,8 +97,15 @@ expansion of Theta near +1.
 """
 function expandThetaPos(potential::Function,dpotential::Function,ddpotential::Function,u::Float64,rp::Float64,ra::Float64)
     ddr = ddrddu(u,rp,ra)
-
     dQdrval = dQdr(potential,dpotential,ddpotential,u,rp,ra)
+
+    # if the sqrt is about to be zero...don't let it.
+    if ((ddr < 0) | (dQdrval < 0))
+        println("OrbitalElements/Ufunc.jl: Bad T-expansion=",ddr,",",dQdrval," (u=",u,",rp=",rp,",ra=",ra,")")
+        u = 1.
+        ddr = ddrddu(u,rp,ra)
+        dQdrval = dQdr(potential,dpotential,ddpotential,u,rp,ra)
+    end
 
     return sqrt(abs(2*ddr/dQdrval))
 end
