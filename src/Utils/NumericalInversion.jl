@@ -55,7 +55,7 @@ function ae_from_omega1omega2_brute(omega1::Float64,omega2::Float64,
             eguess = 0.5*eguess
         end
 
-        if eccguess >= 1.0-0.000001
+        if eguess >= 1.0-0.000001
             # go halfway between the previous guess and 1.
             eguess = eguess - step[2]
             eguess = eguess + 0.5*(1-eguess)
