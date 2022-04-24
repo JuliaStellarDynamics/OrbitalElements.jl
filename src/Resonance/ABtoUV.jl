@@ -54,12 +54,13 @@ end
 
 """
 using the definitions for (alpha, beta) and (u,v), compute the Jacobian.
+@ATTENTION, to match eq. B6, this has the 2/(wmax-wmin) term already absorbed into it. therefore, not formally the Jacobian, but adds the dimensional removal.
 """
 function Jacalphabeta_to_uv(n1::Int64,n2::Int64,w_min::Float64,w_max::Float64,v::Float64)
 
     if n2 ==0
-        return abs(w_max-w_min) * (1/(2n1))
+        return (2.0/(w_max-w_min))*abs(w_max-w_min) * (1/(2n1))
     else
-        return abs(w_max-w_min) * (1/(2n2*v))
+        return (2.0/(w_max-w_min))*abs(w_max-w_min) * (1/(2n2*v))
     end
 end

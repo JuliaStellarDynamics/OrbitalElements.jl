@@ -14,9 +14,9 @@ Another option, for development: after cloning the repository, in the main direc
 
 -----------------------------
 
-## Obtaining Orbital Frequencies
+### Obtaining Orbital Frequencies
 
-`compute_frequencies(ψ,dψ/dr,d²ψ/dr²,rp,ra)` will compute frequencies given a potential plus two derivatives, for an orbit described by pericentre (rp) and apocentre (ra).
+`compute_frequencies(ψ,dψ/dr,d²ψ/dr²,rp,ra)` will compute frequencies (Ω₁,Ω₂) given a potential (ψ) plus two derivatives (dψ/dr,d²ψ/dr²), for an orbit described by pericentre (rp) and apocentre (ra).
 
 Example for matching against isochrone:
 ```
@@ -29,25 +29,25 @@ OrbitalElements.compute_frequencies_rpra(OrbitalElements.isochrone_psi,OrbitalEl
 
 -----------------------------
 
-## Mapping to Resonance Space
+### Mapping to Resonance Space
 
 For a given potential, one can also compute the resonance mappings, called (u,v).
 `uv_from_alphabeta(α,β,n₁,n₂,dψ/dr,d²ψ/dr²)` will compute the resonant mappings (u,v) for a given frequency pair (α,β), resonance vector (n₁,n₂), and potential derivatives.
 
 -----------------------------
 
-## Matching Isochrone Frequencies
-We know analytic isochrone frequencies and actions, so this makes sense for a test case.
+### Analytic isochrone quantities for matching
+We know analytic isochrone frequencies and actions. The definitions are included as a verification of the methods.
 
-`isochrone_Omega_1_2(rp,ra,bc,M,G)` will return the analytic isochrone frequencies for an orbit defined by pericentre (rp), apocentre (ra) and potential sourced by (bc,M,G; all unity by default).
+`isochrone_Omega_1_2(rp,ra,bc,M,G)` will return the analytic isochrone frequencies (Ω₁,Ω₂) for an orbit defined by pericentre (rp), apocentre (ra) and potential sourced by (bc,M,G; all unity by default).
 
 -----------------------------
 
-## Notes
+### Notes
 By default, `OrbitalElements` uses pericentre and apocentre. If you want to use semimajor axis and eccentricity units, transformations are available. `rpra_from_ae(a,e)` will return pericentre and apocentre from semimajor axis and eccentricity.
 
 -----------------------------
 
-## Author
+### Author
 
 Mike Petersen -  @michael-petersen - petersen@iap.fr

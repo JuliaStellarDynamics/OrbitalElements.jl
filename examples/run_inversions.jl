@@ -11,18 +11,53 @@ potential   = r->OrbitalElements.isochrone_psi(r,bc,M,G)
 dpotential  = r->OrbitalElements.isochrone_dpsi_dr(r,bc,M,G)
 ddpotential = r->OrbitalElements.isochrone_ddpsi_ddr(r,bc,M,G)
 
-a,e = 5.0, 0.2
+a,e = 2., 0.1
 
 rp,ra = OrbitalElements.rpra_from_ae(a,e)
 @printf("rp=%f ra=%f\n", rp,ra)
 
+E,L   = OrbitalElements.EL_from_rpra_pot(potential,dpotential,ddpotential,rp,ra)
+Ei,Li = OrbitalElements.isochrone_EL_from_rpra(rp,ra,bc,M,G)
+
+aguess,eguess = OrbitalElements.ae_from_EL_brute(E,L,potential,dpotential,ddpotential,1*10^(-10),1000,0.001,0)
+f1comp,f2comp = OrbitalElements.compute_frequencies_ae(potential,dpotential,ddpotential,aguess,eguess)
+aguess,eguess = OrbitalElements.ae_from_omega1omega2_brute(f1comp,f2comp,potential,dpotential,ddpotential,0.000001,100)
 
 
-E  = OrbitalElements.E_from_rpra_pot(potential,dpotential,ddpotential,rp,ra)
-Ei = OrbitalElements.isochrone_E_from_rpra(rp,ra,bc,M,G)
+# test out a numerical derivative
+aguessh,eguessh = OrbitalElements.ae_from_EL_brute(E+0.0001,L,potential,dpotential,ddpotential,1*10^(-10),1000,0.001,0)
+aguessr,eguessr = OrbitalElements.ae_from_EL_brute(E,L+0.0001,potential,dpotential,ddpotential,1*10^(-10),1000,0.001,0)
+dadE = (aguessh-aguess)/0.0001
+dedE = (eguessh-eguess)/0.0001
+dadL = (aguessr-aguess)/0.0001
+dedL = (eguessr-eguess)/0.0001
 
-L  = OrbitalElements.L_from_rpra_pot(potential,dpotential,ddpotential,rp,ra)
-Li = OrbitalElements.isochrone_L_from_rpra(rp,ra,bc,M,G)
+# get the local derivs
+f1,f2,df1da,df2da,df1de,df2de = OrbitalElements.compute_frequencies_ae_derivs(potential,dpotential,ddpotential,aguess,eguess)
+
+df1dE = dadE*df1da + dedE*df1de
+df1dL = dadL*df1da + dedL*df1de
+df2dE = dadE*df2da + dedE*df2de
+df2dL = dadL*df2da + dedL*df2de
+
+Jac_f1f2_EL = abs(df1dE*df2dL - df1dL*df2dE)
+
+
+Omega0 = OrbitalElements.isochrone_Omega0(bc,M,G)
+alpha,beta = f1/Omega0,f2/f1
+JacELab = OrbitalElements.isochrone_JacEL_to_alphabeta(alpha,beta)
+
+estJacELab = Omega0*f1*Jac_f1f2_EL
+
+Eguess,Lguess,dEda,dEde,dLda,dLde = OrbitalElements.dEdL_from_rpra_pot(potential,dpotential,ddpotential,rp,ra,0.0001,0.0001,0.001)
+df1dE = df1da/dEda + df1de/dEde
+df1dL = df1da/dLda + df1de/dLde
+df2dE = df2da/dEda + df2de/dEde
+df2dL = df2da/dLda + df2de/dLde
+
+
+Jac_f1f2_EL = abs(df1dE*df2dL - df1dL*df2dE)
+
 
 f1real,f2real = OrbitalElements.isochrone_Omega_1_2(rp,ra,bc,M,G)
 f1comp,f2comp = OrbitalElements.compute_frequencies_ae(potential,dpotential,ddpotential,a,e)
@@ -61,31 +96,6 @@ f1,f2,df1da,df2da,df1de,df2de = OrbitalElements.compute_frequencies_ae_derivs(po
 # make the jacobian
 #jaco1o2el = df1
 
-
-# these should be rethought as change of variables. The Jacobian should be invertible, though?
-# compute some nearby frequencies
-f1c,f2c = OrbitalElements.compute_frequencies_henon_ae(potential,dpotential,ddpotential,aguess,eguess)
-f1h,f2h = OrbitalElements.compute_frequencies_henon_ae(potential,dpotential,ddpotential,aguess+0.0001,eguess)
-f1r,f2r = OrbitalElements.compute_frequencies_henon_ae(potential,dpotential,ddpotential,aguess,eguess+0.0001)
-# and the corresponding E,L
-rpc,rac = OrbitalElements.rpra_from_ae(aguess,eguess)
-rph,rah = OrbitalElements.rpra_from_ae(aguess+0.0001,eguess)
-rpr,rar = OrbitalElements.rpra_from_ae(aguess,eguess+0.0001)
-Ec = OrbitalElements.E_from_rpra_pot(potential,dpotential,ddpotential,rpc,rac)
-Lc = OrbitalElements.L_from_rpra_pot(potential,dpotential,ddpotential,rpc,rac)
-Eh = OrbitalElements.E_from_rpra_pot(potential,dpotential,ddpotential,rph,rah)
-Lr = OrbitalElements.L_from_rpra_pot(potential,dpotential,ddpotential,rpr,rar)
-Lh = OrbitalElements.L_from_rpra_pot(potential,dpotential,ddpotential,rph,rah)
-
-dEdf1 = (Eh-Ec)/(f1h-f1c)
-dEdf2 = (Eh-Ec)/(f2h-f2c)
-dLdf1 = (Lr-Lc)/(f1r-f1c)
-dLdf2 = (Lr-Lc)/(f2r-f2c)
-dLdf1 = (Lh-Lc)/(f1h-f1c)
-dLdf2 = (Lh-Lc)/(f2h-f2c)
-
-# this might be dangerous.
-Jacguess = Omega0*f1c*(dEdf1*dLdf2 - dEdf2*dLdf1)
 
 
 Omega0 = OrbitalElements.isochrone_Omega0(bc,M,G)

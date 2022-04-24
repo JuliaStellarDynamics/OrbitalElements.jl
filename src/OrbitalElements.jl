@@ -2,6 +2,7 @@ module OrbitalElements
 
 # for zero-finding
 using Optim
+using Roots
 
 # for interpolations
 using Interpolations
