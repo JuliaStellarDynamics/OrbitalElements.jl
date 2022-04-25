@@ -163,7 +163,7 @@ function compute_frequencies_henon_ae(potential::Function,dpotential::Function,d
     E = E_from_rpra_pot(potential,dpotential,ddpotential,r_peri,r_apo)
     J = L_from_rpra_pot(potential,dpotential,ddpotential,r_peri,r_apo)
 
-    if verbose>0
+    if verbose>2
         print("E/J ",E," ",J,"\n")
     end
 

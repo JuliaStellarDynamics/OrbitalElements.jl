@@ -7,10 +7,8 @@ Specific to Henon mapping.
 
 """
 
-"""ru
-
+"""ru(u,rp,ra)
 mapping from u->r in Henon variables
-
 """
 function ru(u::Float64,rperi::Float64,rapo::Float64)
     a,e = (rperi+rapo)/2,(rapo-rperi)/(rapo+rperi)
@@ -18,10 +16,8 @@ function ru(u::Float64,rperi::Float64,rapo::Float64)
     return a*(1+e*fu)
 end
 
-"""drdu
-
+"""drdu(u,rp,ra)
 first derivative of r(u)
-
 """
 function drdu(u::Float64,rperi::Float64,rapo::Float64)
     a,e = (rperi+rapo)/2,(rapo-rperi)/(rapo+rperi)
@@ -29,10 +25,8 @@ function drdu(u::Float64,rperi::Float64,rapo::Float64)
     return (3/2)*a*e*(1-(u^2))
 end
 
-"""ddrddu
-
+"""ddrddu(u,rp,ra)
 second derivative of r(u)
-
 """
 function ddrddu(u::Float64,rperi::Float64,rapo::Float64)
     a,e = (rperi+rapo)/2,(rapo-rperi)/(rapo+rperi)
@@ -40,12 +34,9 @@ function ddrddu(u::Float64,rperi::Float64,rapo::Float64)
     return -3*a*e*u
 end
 
-"""Q(u,rp,ra)
-
+"""Q(ψ,dψ/dr,d²ψ/dr²,u,rp,ra)
 Q \equiv 2(E-psi(r)) - L^2/r^2
-
 uses mapping r(u)
-
 """
 function Q(potential::Function,dpotential::Function,ddpotential::Function,u::Float64,rp::Float64,ra::Float64)
 
@@ -53,21 +44,18 @@ function Q(potential::Function,dpotential::Function,ddpotential::Function,u::Flo
     L = L_from_rpra_pot(potential,dpotential,ddpotential,rp,ra)
 
     r  = ru(u,rp,ra)
-    #println(E," ",L," ",r," ",potential(r))
 
     if L==0
-        return 2*(E-potential(r))# - (L^2)/(r^2)
+        return 2*(E-potential(r))
     else
         return 2*(E-potential(r)) - (L^2)/(r^2)
     end
 end
 
-"""expandThetaNeg
-
-expansion of Theta near -1.
-
+"""expandThetaNeg(ψ,dψ/dr,d²ψ/dr²,u,rp,ra[,verbose])
+expansion of Theta near u=-1.
 """
-function expandThetaNeg(potential::Function,dpotential::Function,ddpotential::Function,u::Float64,rp::Float64,ra::Float64)
+function expandThetaNeg(potential::Function,dpotential::Function,ddpotential::Function,u::Float64,rp::Float64,ra::Float64,verbose::Int64=0)
 
     # check for radial orbits
     L = L_from_rpra_pot(potential,dpotential,ddpotential,rp,ra)
@@ -80,8 +68,11 @@ function expandThetaNeg(potential::Function,dpotential::Function,ddpotential::Fu
     dQdrval = dQdr(potential,dpotential,ddpotential,u,rp,ra)
 
     # if the sqrt is about to be zero...don't let it.
-    if ((ddr < 0) | (dQdrval < 0))
-        println("OrbitalElements/Ufunc.jl: Bad T-expansion=",ddr,",",dQdrval," (u=",u,",rp=",rp,",ra=",ra,")")
+    #if ((ddr < 0) ⊻ (dQdrval < 0)) # XOR gate method, is this faster or slower?
+    if (ddr*dQdrval < 0)
+        if verbose>0
+            println("OrbitalElements/Ufunc.jl: Bad T-expansion=",ddr,",",dQdrval," (u=",u,",rp=",rp,",ra=",ra,")")
+        end
         u = -1.
         ddr = ddrddu(u,rp,ra)
         dQdrval = dQdr(potential,dpotential,ddpotential,u,rp,ra)
@@ -90,18 +81,19 @@ function expandThetaNeg(potential::Function,dpotential::Function,ddpotential::Fu
     return sqrt(2*ddr/dQdrval)
 end
 
-"""expandThetaPos
-
-expansion of Theta near +1.
-
+"""expandThetaPos(ψ,dψ/dr,d²ψ/dr²,u,rp,ra[,verbose])
+expansion of Theta near u=+1.
 """
-function expandThetaPos(potential::Function,dpotential::Function,ddpotential::Function,u::Float64,rp::Float64,ra::Float64)
+function expandThetaPos(potential::Function,dpotential::Function,ddpotential::Function,u::Float64,rp::Float64,ra::Float64,verbose::Int64=0)
     ddr = ddrddu(u,rp,ra)
     dQdrval = dQdr(potential,dpotential,ddpotential,u,rp,ra)
 
     # if the sqrt is about to be zero...don't let it.
-    if ((ddr < 0) | (dQdrval < 0))
-        println("OrbitalElements/Ufunc.jl: Bad T-expansion=",ddr,",",dQdrval," (u=",u,",rp=",rp,",ra=",ra,")")
+    #if ((ddr < 0) ⊻ (dQdrval < 0)) # XOR gate method, is this faster or slower?
+    if (ddr*dQdrval < 0)
+        if verbose>0
+            println("OrbitalElements/Ufunc.jl: Bad T+expansion=",ddr,",",dQdrval," (u=",u,",rp=",rp,",ra=",ra,")")
+        end
         u = 1.
         ddr = ddrddu(u,rp,ra)
         dQdrval = dQdr(potential,dpotential,ddpotential,u,rp,ra)
@@ -111,14 +103,14 @@ function expandThetaPos(potential::Function,dpotential::Function,ddpotential::Fu
 end
 
 
-"""Theta
+"""Theta(ψ,dψ/dr,d²ψ/dr²,u,rp,ra[,ulim,verbose])
 
 ``Theta(s) \\equiv (1/vr)*(dr/ds) where s\\in[-1,1]``
 
 ulim sets the switch to the expanded approximation near the boundaries
 for radial orbits, the pericentre limit is overridden and set to 0.
 """
-function Theta(potential::Function,dpotential::Function,ddpotential::Function,u::Float64,rp::Float64,ra::Float64,ulim::Float64=0.01)
+function Theta(potential::Function,dpotential::Function,ddpotential::Function,u::Float64,rp::Float64,ra::Float64,ulim::Float64=0.01,verbose::Int64=0)
 
     L = L_from_rpra_pot(potential,dpotential,ddpotential,rp,ra)
     if (L==0)
@@ -139,7 +131,9 @@ function Theta(potential::Function,dpotential::Function,ddpotential::Function,u:
 
         # check if Q is negative. If negative...revert back to the expanded values
         if (Qval<0)
-            println("OrbitalElements/Ufunc.jl: Bad Q=",Qval," (u=",u,",rp=",rp,",ra=",ra,")")
+            if verbose>0
+                println("OrbitalElements/Ufunc.jl: Bad Q=",Qval," (u=",u,",rp=",rp,",ra=",ra,")")
+            end
 
             if (u>0)
                 res = expandThetaPos(potential,dpotential,ddpotential,u,rp,ra)
@@ -159,7 +153,7 @@ function Theta(potential::Function,dpotential::Function,ddpotential::Function,u:
     return res
 end
 
-"""dQdr
+"""dQdr(ψ,dψ/dr,d²ψ/dr²,u,rp,ra)
 
 Partial derivative of Q w.r.t. r
 
@@ -179,16 +173,12 @@ function dQdr(potential::Function,dpotential::Function,ddpotential::Function,u::
 
 end
 
-"""dThetadu
-
+"""dThetadu(ψ,dψ/dr,d²ψ/dr²,u,rp,ra)
 partial derivative of Theta w.r.t. u.
-
 """
 function dThetadu(potential::Function,dpotential::Function,ddpotential::Function,u::Float64,rp::Float64,ra::Float64)
 
     Qval = Q(potential,dpotential,ddpotential,u,rp,ra)
-    #E = E_from_rpra_pot(potential,dpotential,ddpotential,rp,ra)
-    #L = L_from_rpra_pot(potential,dpotential,ddpotential,rp,ra)
 
     r   = ru(u,rp,ra)
     dr  = drdu(u,rp,ra)
@@ -200,10 +190,8 @@ function dThetadu(potential::Function,dpotential::Function,ddpotential::Function
 
 end
 
-"""dQdrnumerical
-
+"""dQdrnumerical(ψ,dψ/dr,d²ψ/dr²,u,rp,ra[,eps])
 numerical check version of dQ/dr
-
 """
 function dQdrnumerical(potential::Function,dpotential::Function,ddpotential::Function,u::Float64,rp::Float64,ra::Float64,eps::Float64=0.001)
     Qval1 = Q(potential,dpotential,ddpotential,u,rp,ra)
@@ -213,10 +201,8 @@ function dQdrnumerical(potential::Function,dpotential::Function,ddpotential::Fun
     return (Qval2-Qval1)/(r2-r1)
 end
 
-"""dQdunumerical
-
+"""dQdunumerical(ψ,dψ/dr,d²ψ/dr²,u,rp,ra[,eps])
 numerical check version of dQ/du
-
 """
 function dQdunumerical(potential::Function,dpotential::Function,ddpotential::Function,u::Float64,rp::Float64,ra::Float64,eps::Float64=0.001)
     Qval1 = Q(potential,dpotential,ddpotential,u,rp,ra)
@@ -224,10 +210,8 @@ function dQdunumerical(potential::Function,dpotential::Function,ddpotential::Fun
     return (Qval2-Qval1)/(eps)
 end
 
-"""dThetadunumerical
-
+"""dThetadunumerical(ψ,dψ/dr,d²ψ/dr²,u,rp,ra)
 numerical check version of dTheta/du
-
 """
 function dThetadunumerical(potential::Function,dpotential::Function,ddpotential::Function,u::Float64,rp::Float64,ra::Float64)
     eps = 0.001

@@ -1,12 +1,12 @@
 """
 numerical inversion of (omega1,omega2) -> (a,e)
-by brute-forcing the derivative steps domega1/da, domega1/de, deomega2/da, domega2/de
+by brute-forcing the derivative increments domega1/da, domega1/de, deomega2/da, domega2/de
 
 """
 
 
 
-"""ae_from_omega1omega2_brute(o1,o2,ψ,dψ/dr,d²ψ/dr²[,eps,maxiter])
+"""ae_from_omega1omega2_brute(Ω₁,Ω₂,ψ,dψ/dr,d²ψ/dr²[,eps,maxiter])
 
 basic Newton-Raphson algorithm to find (a,e) from (omega1,omega2) brute force derivatives.
 
@@ -16,8 +16,11 @@ function ae_from_omega1omega2_brute(omega1::Float64,omega2::Float64,
                                     potential::Function,
                                     dpotential::Function,
                                     ddpotential::Function,
-                                    eps::Float64=1*10^(-6),
-                                    maxiter::Int64=10000,TOLECC::Float64=0.001)
+                                    eps::Float64=1*10^(-10),
+                                    maxiter::Int64=1000,
+                                    TOLECC::Float64=0.001,TOLA::Float64=0.000011,
+                                    da::Float64=0.01,de::Float64=0.001,
+                                    verbose::Int64=0)
     #
 
     # get the circular orbit (maximum radius) for a given omega1,omega2. use the stronger constraint.
@@ -36,29 +39,72 @@ function ae_from_omega1omega2_brute(omega1::Float64,omega2::Float64,
     eguess = 0.5
     f1,f2 = compute_frequencies_ae(potential,dpotential,ddpotential,aguess,eguess)
 
-    # 2d Newton Raphson inversion and find new steps
+    # 2d Newton Raphson inversion and find new increments
     iter = 0
     while (((omega1 - f1)^2 + (omega2 - f2)^2) > eps^2)
 
-        f1,f2,df1da,df2da,df1de,df2de = OrbitalElements.compute_frequencies_ae_derivs(potential,dpotential,ddpotential,aguess,eguess)
+        f1,f2,df1da,df2da,df1de,df2de = compute_frequencies_ae_derivs(potential,dpotential,ddpotential,aguess,eguess,da,de,TOLECC,verbose)
 
         jacobian = [df1da df1de ; df2da df2de]
-        step = jacobian \ (-([f1;f2] - [omega1 ; omega2]))
 
-        aguess,eguess = aguess + step[1],eguess + step[2]
+        # this increment reports occasional failures; why?
+        try
+            increment = jacobian \ (-([f1 ; f2] - [omega1 ; omega2]))
+            aguess,eguess = aguess + increment[1],eguess + increment[2]
+        catch e # this catch appears to not work because LAPACK is doing something under the hood
+            if verbose>0
+                println("OrbitalElements/NumericalInversion.jl: bad division for Jacobian=",jacobian," and (f1,f2)=",f1,f2," and (Ω₁,Ω₂)=",omega1,omega2)
+            end
+            # are we just in some tiny bad patch? # reset to 'safe' values
+            aguess,eguess = aguess + 1.e-3,0.5
+            increment = [0;0]
+        end
 
+        # the try...catch above is failing for some reason
+        if (@isdefined increment) == false
+            increment = [0;0]
+        end
+
+
+
+
+        # @WARNING: these appear to have broken something.
         # if bad guesses, needs to reset to a different part of space
         # can't go too small
         if eguess < TOLECC
             # go halfway between the previous guess and 0.
-            eguess = eguess - step[2]
-            eguess = 0.5*eguess
+            try
+                # reset eguess value
+                eguess = eguess - increment[2]
+                eguess = max(TOLECC,0.5eguess)
+            catch e
+                if verbose>0
+                    println("OrbitalElements/NumericalInversion.jl: guessing close to ecc=0: ",eguess," (a=",aguess,")")
+                end
+                eguess = max(TOLECC,0.5eguess)
+            end
         end
 
-        if eguess >= 1.0-0.000001
+        if eguess >= (1-TOLECC)
             # go halfway between the previous guess and 1.
-            eguess = eguess - step[2]
-            eguess = eguess + 0.5*(1-eguess)
+            try
+                eguess = eguess - increment[2]
+                eguess = min(1-TOLECC,eguess + 0.5*(1-eguess))
+            catch e
+                println("OrbitalElements/NumericalInversion.jl: guessing close to ecc=1: ",eguess," (a=",aguess,") for increment ",increment)
+                eguess = min(1-TOLECC,eguess + 0.5*(1-eguess))
+            end
+        end
+
+        if aguess < TOLA
+            aguess = TOLA
+            if verbose>1
+                println("OrbitalElements/NumericalInversion.jl: guessing close to a=0: ",aguess," (e=",eguess,")")
+            end
+        end
+
+        if (verbose>2)
+            println("OrbitalElements/NumericalInversion.jl: iter=",iter," a=",aguess," e=",eguess)
         end
 
         iter += 1
@@ -67,7 +113,19 @@ function ae_from_omega1omega2_brute(omega1::Float64,omega2::Float64,
         end
     end
 
-    return aguess,eguess
+    if verbose > 0
+        println("OrbitalElements/NumericalInversion.jl: niter=",iter)
+    end
+
+    # check here to not allow bad values?
+    if isnan(aguess) | isnan(eguess)
+        if verbose>0
+            println("OrbitalElements/NumericalInversion.jl: failed for inputs (Ω₁,Ω₂)=",omega1,omega2)
+        end
+        return acirc,0.5,-1
+    else
+        return aguess,eguess,iter
+    end
 end
 
 
@@ -116,7 +174,7 @@ function ae_from_EL_brute(E::Float64,L::Float64,
 
 
 
-    # 2d Newton Raphson inversion and find new steps
+    # 2d Newton Raphson inversion and find new increments
     iter = 0
     while (((E - Eguess)^2 + (L - Lguess)^2) > eps^2)
 
@@ -126,21 +184,21 @@ function ae_from_EL_brute(E::Float64,L::Float64,
         Eguess,Lguess,dEda,dEde,dLda,dLde = dEdL_from_rpra_pot(potential,dpotential,ddpotential,rpguess,raguess,0.0001,0.0001,TOLECC)
 
         jacobian = [dEda dEde ; dLda dLde]
-        step = jacobian \ (-([Eguess;Lguess] - [E ; L]))
+        increment = jacobian \ (-([Eguess;Lguess] - [E ; L]))
 
-        aguess,eccguess = aguess + step[1],eccguess + step[2]
+        aguess,eccguess = aguess + increment[1],eccguess + increment[2]
 
         # if bad guesses, needs to reset to a different part of space
         # can't go too small
         if eccguess < TOLECC
             # go halfway between the previous guess and 0.
-            eccguess = eccguess - step[2]
+            eccguess = eccguess - increment[2]
             eccguess = 0.5*eccguess
         end
 
         if eccguess >= 1.0-0.000001
             # go halfway between the previous guess and 1.
-            eccguess = eccguess - step[2]
+            eccguess = eccguess - increment[2]
             eccguess = eccguess + 0.5*(1-eccguess)
         end
 

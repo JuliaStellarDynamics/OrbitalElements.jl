@@ -16,10 +16,8 @@ include("Henon/Ufunc.jl")
 include("Utils/NumericalInversion.jl")
 
 
-"""compute_frequencies_ae(potential,dpotential,ddpotential,a,ecc[,TOLECC,verbose])
-
+"""compute_frequencies_ae(ψ,dψ/dr,d²ψ/dr²,a,ecc[,TOLECC,verbose])
 wrapper to select which type of frequency computation to perform, from (a,e)
-
 """
 function compute_frequencies_ae(potential::Function,dpotential::Function,ddpotential::Function,
                                 a::Float64,ecc::Float64,action::Bool=false,TOLECC::Float64=0.001,verbose::Int64=0)
@@ -34,28 +32,43 @@ function compute_frequencies_ae(potential::Function,dpotential::Function,ddpoten
 end
 
 
-"""compute_ae_from_frequencies(potential,dpotential,ddpotential,a,ecc[,eps,maxiter])
-
+"""compute_ae_from_frequencies(ψ,dψ/dr,d²ψ/dr²,a,ecc[,eps,maxiter,TOLECC,TOLA])
 wrapper to select which type of inversion to compute for (Omega1,Omega2)->(a,e)
-
 """
 function compute_ae_from_frequencies(potential::Function,dpotential::Function,ddpotential::Function,
-                                     omega1::Float64,omega2::Float64,eps::Float64=1*10^(-6),maxiter::Int64=10000)
+                                     omega1::Float64,omega2::Float64,
+                                     eps::Float64=1*10^(-12),
+                                     maxiter::Int64=1000,
+                                     TOLECC::Float64=0.001,TOLA::Float64=0.0001,
+                                     da::Float64=0.0001,de::Float64=0.0001,
+                                     verbose::Int64=0)
 
+        # use adaptive da, de branches
+        # da max(0.0001,0.01a)
+        # de min(max(0.0001,0.1a*e)
+        a,e,iter = ae_from_omega1omega2_brute(omega1,omega2,potential,dpotential,ddpotential,eps,maxiter,TOLECC,TOLA,da,de,verbose)
 
-        a,e = ae_from_omega1omega2_brute(omega1,omega2,potential,dpotential,ddpotential,eps,maxiter)
+        ntries = 0
+        while (iter == maxiter+1) | (iter <= 0)
+            # double the da step to scan through space
+            da = 2da
+            a,e,iter = ae_from_omega1omega2_brute(omega1,omega2,potential,dpotential,ddpotential,eps,maxiter,TOLECC,TOLA,da,de,verbose)
+            ntries += 1
+            if ntries > 3
+                break
+            end
+        end
+
+        # more optional massages to try and go smaller
 
         return a,e
 end
 
 
-"""compute_frequencies_ae_derivs(potential,dpotential,ddpotential,a,ecc[,TOLECC,verbose])
-
-wrapper to select which type of frequency computation to perform, from (a,e), but
-DERIVATIVES
+"""compute_frequencies_ae_derivs(ψ,dψ/dr,d²ψ/dr²a,ecc[,TOLECC,verbose])
+wrapper to select which type of frequency computation to perform, from (a,e), but DERIVATIVES
 
 @IMPROVE: could add action derivatives here? more copacetic with analytic derivatives anyway
-
 """
 function compute_frequencies_ae_derivs(potential::Function,
                                        dpotential::Function,
@@ -89,10 +102,8 @@ function compute_frequencies_ae_derivs(potential::Function,
 end
 
 
-"""compute_frequencies_rpra(potential,dpotential,ddpotential,r_peri,r_apo[,TOLECC,verbose])
-
+"""compute_frequencies_rpra(ψ,dψ/dr,d²ψ/dr²,r_peri,r_apo[,TOLECC,verbose])
 wrapper to select which type of frequency computation to perform, from (a,e)
-
 """
 function compute_frequencies_rpra(potential::Function,dpotential::Function,ddpotential::Function,
                                   r_peri::Float64,r_apo::Float64,TOLECC::Float64=0.001,verbose::Int64=0)

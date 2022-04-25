@@ -11,15 +11,44 @@ potential   = r->OrbitalElements.isochrone_psi(r,bc,M,G)
 dpotential  = r->OrbitalElements.isochrone_dpsi_dr(r,bc,M,G)
 ddpotential = r->OrbitalElements.isochrone_ddpsi_ddr(r,bc,M,G)
 
-a,e = 2., 0.1
+a,e = 10., 0.4
+rp,ra = OrbitalElements.rpra_from_ae(a,e); @printf("rp=%f ra=%f\n", rp,ra)
 
-rp,ra = OrbitalElements.rpra_from_ae(a,e)
-@printf("rp=%f ra=%f\n", rp,ra)
+f1comp,f2comp = OrbitalElements.compute_frequencies_ae(potential,dpotential,ddpotential,a,e) # frequencies go over the limit...hopefully not a problem
+a1,e1 = OrbitalElements.compute_ae_from_frequencies(potential,dpotential,ddpotential,f1comp,f2comp,1*10^(-12),1)
+
+maxestep = 0.005
+aguess,eguess = OrbitalElements.compute_ae_from_frequencies(potential,dpotential,ddpotential,f1comp,f2comp,1*10^(-12),1000,0.001,0.0001,max(0.0001,0.001a1),min(max(0.0001,0.1a1*e1),maxestep),1)
+
+
+aguess,eguess = OrbitalElements.compute_ae_from_frequencies(potential,dpotential,ddpotential,f1comp,f2comp,1*10^(-12),5000,0.001,0.0001,max(0.0001,0.001a1),min(max(0.0001,0.1a1*e1),maxestep),1)
+aguess,eguess = OrbitalElements.compute_ae_from_frequencies(potential,dpotential,ddpotential,f1comp,f2comp,1*10^(-12),5000,0.001,0.0001,max(0.0001,0.005a1),min(max(0.0001,0.1a1*e1),maxestep),1)
+aguess,eguess = OrbitalElements.compute_ae_from_frequencies(potential,dpotential,ddpotential,f1comp,f2comp,1*10^(-12),5000,0.001,0.0001,max(0.0001,0.01a),min(max(0.0001,0.1a*e),maxestep),1)
+
+
+aguess,eguess = OrbitalElements.ae_from_omega1omega2_brute(f1comp,f2comp,potential,dpotential,ddpotential,1*10^(-12),5000,0.001,0.0001,max(0.0001,0.01a),min(max(0.0001,0.1a*e),0.01),0)
+
+
+# works normally
+aguess,eguess = OrbitalElements.ae_from_omega1omega2_brute(f1comp,f2comp,potential,dpotential,ddpotential,1*10^(-12),5000,0.001,0.0001,max(0.0001,0.001a),max(0.0001,0.01a*e),0)
+
+
 
 E,L   = OrbitalElements.EL_from_rpra_pot(potential,dpotential,ddpotential,rp,ra)
 Ei,Li = OrbitalElements.isochrone_EL_from_rpra(rp,ra,bc,M,G)
 
+aguess,eguess = OrbitalElements.ae_from_omega1omega2_brute(f1comp,f2comp,potential,dpotential,ddpotential,1*10^(-8),500,0.001,0.0001,max(0.0001,0.001a),0.01e,0)
+
+
+da,de=0.0001,0.0001
+da,de=0.001,0.001
+a,e = 50., 0.95
+
+OrbitalElements.compute_frequencies_ae_derivs(potential,dpotential,ddpotential,a,e,da,de,0.001,0)
+
+
 aguess,eguess = OrbitalElements.ae_from_EL_brute(E,L,potential,dpotential,ddpotential,1*10^(-10),1000,0.001,0)
+
 f1comp,f2comp = OrbitalElements.compute_frequencies_ae(potential,dpotential,ddpotential,aguess,eguess)
 aguess,eguess = OrbitalElements.ae_from_omega1omega2_brute(f1comp,f2comp,potential,dpotential,ddpotential,0.000001,100)
 
