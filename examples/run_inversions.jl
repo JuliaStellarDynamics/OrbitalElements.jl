@@ -17,8 +17,23 @@ rp,ra = OrbitalElements.rpra_from_ae(a,e); @printf("rp=%f ra=%f\n", rp,ra)
 f1comp,f2comp = OrbitalElements.compute_frequencies_ae(potential,dpotential,ddpotential,a,e) # frequencies go over the limit...hopefully not a problem
 a1,e1 = OrbitalElements.compute_ae_from_frequencies(potential,dpotential,ddpotential,f1comp,f2comp,1*10^(-12),1)
 
-maxestep = 0.005
-aguess,eguess = OrbitalElements.compute_ae_from_frequencies(potential,dpotential,ddpotential,f1comp,f2comp,1*10^(-12),1000,0.001,0.0001,max(0.0001,0.001a1),min(max(0.0001,0.1a1*e1),maxestep),1)
+
+Omega0 = 1.
+vbound = OrbitalElements.find_vbound(n1,n2,dpotential,ddpotential,1000.,Omega0)
+uval = tabuGLquad[K_u]
+w_min,w_max = OrbitalElements.find_wmin_wmax(n1,n2,dpotential,ddpotential,1000.,Omega0)
+beta_c = OrbitalElements.make_betac(dpotential,ddpotential,2000,Omega0)
+vmin,vmax = OrbitalElements.find_vmin_vmax(uval,w_min,w_max,n1,n2,vbound,beta_c)
+deltav = (vmax - vmin)/(K_v)
+kvval = 20
+vval = vmin + deltav*(kvval-0.5)
+alpha,beta = OrbitalElements.alphabeta_from_uv(uval,vval,n1,n2,dpotential,ddpotential)
+omega1,omega2 = alpha*Omega0,alpha*beta*Omega0
+sma,ecc = OrbitalElements.compute_ae_from_frequencies(potential,dpotential,ddpotential,omega1,omega2)
+
+acirc = OrbitalElements.Omega1circ_to_radius(omega1,dpotential,ddpotential)
+# find that the problem is large a orbits, with low precision
+
 
 
 aguess,eguess = OrbitalElements.compute_ae_from_frequencies(potential,dpotential,ddpotential,f1comp,f2comp,1*10^(-12),5000,0.001,0.0001,max(0.0001,0.001a1),min(max(0.0001,0.1a1*e1),maxestep),1)

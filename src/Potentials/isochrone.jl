@@ -268,7 +268,7 @@ we also need dF/dQ and then we have the isochrone complete!
 @ATTENTION, check this answer against isochrone_Saha_DF
 """
 function DFISOQ_ROI(Q::Float64,ra::Float64,bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
-    gamma = (bc/ra)^2
+    gamma_ROI = (bc/ra)^2
     return (Mtot*sqrt(Q)*(27.0+77.0*gamma_ROI+2.0*Q*(-11.0*(3.0+13.0*gamma_ROI)+
     4.0*Q*(40+2.0*Q*(-15.0+4.0*Q-2.0*gamma_ROI)+17.0*gamma_ROI))+
     (3.0*(-9.0+4.0*Q*(7.0-2.0*Q*(-2.0+gamma_ROI)-11.0*gamma_ROI)+17.0*gamma_ROI)*
@@ -280,7 +280,7 @@ Saha distribution function derivative w.r.t. Q
 ra is the anisotropy radius
 """
 function isochrone_Saha_dDFdQ(Q::Float64,ra::Float64,bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
-    gamma = (bc/ra)^2
+    gamma_ROI = (bc/ra)^2
     return (M*((-1.0+Q)*(-128.0*gamma_ROI+Q*(-75.0+451.0*gamma_ROI+2.0*Q*
     (-659.0+387.0*gamma_ROI+4.0*Q*(90-23.0*gamma_ROI+2.0*Q*(-21.0+4.0*Q+2.0*gamma_ROI)))))-
     15.0*sqrt(-((-1.0+Q)*Q))*(5.0-13.0*gamma_ROI+4.0*Q*(-13.0+2.0*Q*(-2.0+gamma_ROI)+
@@ -290,7 +290,7 @@ end
 """
 jacobian for converting dF/dQ dQ/dE -> dF/dE
 """
-function dQdE_ROI(E::Float64,L::Float64,Ra::Float64,bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
+function isochrone_dQdE_ROI(E::Float64,L::Float64,Ra::Float64,bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
     scaleEnergy = isochrone_E0(bc,M,astronomicalG)
     return 1.0/scaleEnergy # Output
 end
@@ -299,7 +299,7 @@ end
 """
 jacobian for converting dF/dQ dQ/dL -> dF/dL
 """
-function dQdL_ROI(E::Float64,L::Float64,Ra::Float64,bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
+function isochrone_dQdL_ROI(E::Float64,L::Float64,Ra::Float64,bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
     scaleEnergy = isochrone_E0(bc,M,astronomicalG)
     return (L)/(scaleEnergy*Ra^(2)) # Output
 end
