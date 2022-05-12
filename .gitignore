@@ -1,6 +1,5 @@
 
-examples/run_isochrone.jl
 examples/run_plummer.jl
-
+examples/run_jacobians.jl
 
 src/Utils/GridInversion.jl
