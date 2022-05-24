@@ -3,3 +3,6 @@ examples/run_plummer.jl
 examples/run_jacobians.jl
 
 src/Utils/GridInversion.jl
+
+# very annoying OSX hidden files
+*.DS_Store
