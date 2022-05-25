@@ -18,8 +18,8 @@ function ae_from_omega1omega2_brute(omega1::Float64,omega2::Float64,
                                     ddpotential::Function,
                                     eps::Float64=1*10^(-10),
                                     maxiter::Int64=1000,
-                                    TOLECC::Float64=0.001,TOLA::Float64=0.000011,
-                                    da::Float64=0.01,de::Float64=0.001,
+                                    TOLECC::Float64=0.001,TOLA::Float64=0.0001,
+                                    da::Float64=0.0001,de::Float64=0.0001,
                                     verbose::Int64=0)
     #
 
@@ -117,14 +117,16 @@ function ae_from_omega1omega2_brute(omega1::Float64,omega2::Float64,
         println("OrbitalElements/NumericalInversion.jl: niter=",iter)
     end
 
+    finaltol = ((omega1 - f1)^2 + (omega2 - f2)^2)
+
     # check here to not allow bad values?
     if isnan(aguess) | isnan(eguess)
         if verbose>0
             println("OrbitalElements/NumericalInversion.jl: failed for inputs (Ω₁,Ω₂)=",omega1,omega2)
         end
-        return acirc,0.5,-1
+        return acirc,0.5,-1,finaltol
     else
-        return aguess,eguess,iter
+        return aguess,eguess,iter,finaltol
     end
 end
 

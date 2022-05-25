@@ -1,6 +1,8 @@
 
 examples/run_plummer.jl
 examples/run_jacobians.jl
+examples/*.txt
+examples/figures/*
 
 src/Utils/GridInversion.jl
 

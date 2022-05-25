@@ -2,7 +2,6 @@
 test some basic inversions to make sure all definitions are equivalent
 """
 
-
 import OrbitalElements
 using Printf
 
@@ -18,24 +17,57 @@ d²ψdr²  = r->OrbitalElements.isochrone_ddpsi_ddr(r,bc,M,G)
 a,e = 10., 0.4
 
 # compute rperi and rapo
-rp,ra = OrbitalElements.rpra_from_ae(a,e); @printf("rp=%f ra=%f\n", rp,ra)
+println("Compute rp,ra...")
+@time rp,ra = OrbitalElements.rpra_from_ae(a,e); @printf("rp=%f ra=%f\n", rp,ra)
 
+# compute (E,L)
+println("Compute E,L...")
+E,L   = OrbitalElements.EL_from_rpra_pot(ψ,dψdr,d²ψdr²,rp,ra)
+
+# compute frequencies
+println("Compute Ω₁c,Ω₂c...")
+@time Ω₁c,Ω₂c = OrbitalElements.compute_frequencies_ae(ψ,dψdr,d²ψdr²,a,e)
+println("...",Ω₁c,",",Ω₂c)
+println("Compute Ω₁c,Ω₂c (Hénon specific)...")
+@time Ω₁c,Ω₂c = OrbitalElements.henon_anomaly_frequencies(ψ,ra,rp,E,L,NINT=64)
+println("...",Ω₁c,",",Ω₂c)
+@time Ω₁c,Ω₂c = OrbitalElements.henon_anomaly_frequencies(ψ,ra,rp,E,L,NINT=32)
+println("...",Ω₁c,",",Ω₂c)
+@time Ω₁c,Ω₂c = OrbitalElements.henon_anomaly_frequencies(ψ,ra,rp,E,L,NINT=16)
+println("...",Ω₁c,",",Ω₂c)
+
+# do the frequency inversion.
 Ω₁c,Ω₂c = OrbitalElements.compute_frequencies_ae(ψ,dψdr,d²ψdr²,a,e)
+println("INVERT Ω₁c,Ω₂c...")
+@time aguess,eguess = OrbitalElements.ae_from_omega1omega2_brute(Ω₁c,Ω₂c,ψ,dψdr,d²ψdr²,1*10^(-12),100)
+println("...",aguess,",",eguess)
+
 
 # test the ability to recover (a,e) from the calculated frequencies
-a1,e1 = OrbitalElements.compute_ae_from_frequencies(ψ,dψdr,d²ψdr²,Ω₁c,Ω₂c,1*10^(-12),1)
+println("Compute a1,e1 (inversion)...")
+#@time a1,e1 = OrbitalElements.compute_ae_from_frequencies(ψ,dψdr,d²ψdr²,Ω₁c,Ω₂c,1*10^(-12),100)
+@time a1,e1 = OrbitalElements.compute_ae_from_frequencies(ψ,dψdr,d²ψdr²,Ω₁c,Ω₂c,1*10^(-12),100)
+println("...",a1,",",e1)
 
-sma,ecc = OrbitalElements.compute_ae_from_frequencies(ψ,dψdr,d²ψdr²,Ω₁c,Ω₂c)
 
-acirc = OrbitalElements.Omega1circ_to_radius(Ω₁c,dψdr,d²ψdr²)
+Ω₁c,Ω₂c = OrbitalElements.compute_frequencies_ae(ψ,dψdr,d²ψdr²,a,e)
+println("INVERT Ω₁c,Ω₂c...part 2")
+@time aguess,eguess = OrbitalElements.ae_from_omega1omega2_brute(Ω₁c,Ω₂c,ψ,dψdr,d²ψdr²,1*10^(-12),100)
+println("...",aguess,",",eguess)
+
+println("Compute sma,ecc...")
+@time sma,ecc = OrbitalElements.compute_ae_from_frequencies(ψ,dψdr,d²ψdr²,Ω₁c,Ω₂c)
+
+println("Compute acirc...")
+@time acirc = OrbitalElements.Omega1circ_to_radius(Ω₁c,dψdr,d²ψdr²)
 # find that the problem is large a orbits, with low precision
 
+#E,L   = OrbitalElements.EL_from_rpra_pot(ψ,dψdr,d²ψdr²,rp,ra)
+println("INVERT E,L...")
+@time aguess,eguess = OrbitalElements.ae_from_EL_brute(E,L,ψ,dψdr,d²ψdr²,1*10^(-10),1000,0.001,0)
 
-E,L   = OrbitalElements.EL_from_rpra_pot(ψ,dψdr,d²ψdr²,rp,ra)
-aguess,eguess = OrbitalElements.ae_from_EL_brute(E,L,ψ,dψdr,d²ψdr²,1*10^(-10),1000,0.001,0)
 
-Ω₁c,Ω₂c = OrbitalElements.compute_frequencies_ae(ψ,dψdr,d²ψdr²,aguess,eguess)
-aguess,eguess = OrbitalElements.ae_from_omega1omega2_brute(Ω₁c,Ω₂c,ψ,dψdr,d²ψdr²,0.000001,100)
+
 
 # conversions from α, β to Omega1,Omega2
 α,β = Ω₁c/Ω₀,Ω₂c/Ω₁c
@@ -48,7 +80,7 @@ f1real,f2real = OrbitalElements.isochrone_Omega_1_2(rp,ra,bc,M,G)
 
 # also compute actions?
 jrreal = OrbitalElements.isochrone_jr_rpra(rp,ra,bc,M,G)
-Ω₁c,Ω₂c,a1comp = OrbitalElements.compute_frequencies_ae(ψ,dψdr,d²ψdr²,a,e,true)
+Ω₁c,Ω₂c,a1comp = OrbitalElements.compute_frequencies_ae(ψ,dψdr,d²ψdr²,a,e,action=true)
 @printf("Jr=%f Jrguess=%f\n", jrreal,a1comp)
 
 

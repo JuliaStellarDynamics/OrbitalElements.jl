@@ -20,13 +20,13 @@ include("Utils/NumericalInversion.jl")
 wrapper to select which type of frequency computation to perform, from (a,e)
 """
 function compute_frequencies_ae(potential::Function,dpotential::Function,ddpotential::Function,
-                                a::Float64,ecc::Float64,action::Bool=false,TOLECC::Float64=0.001,verbose::Int64=0)
+                                a::Float64,ecc::Float64;action::Bool=false,TOLECC::Float64=0.001,verbose::Int64=0,NINT::Int64=32)
 
         if action
-            f1,f2,a1 = compute_frequencies_henon_ae(potential,dpotential,ddpotential,a,ecc,true,TOLECC,verbose)
+            f1,f2,a1 = compute_frequencies_henon_ae(potential,dpotential,ddpotential,a,ecc,action=true,TOLECC=TOLECC,verbose=verbose,NINT=NINT)
             return f1,f1,a1
         else
-            f1,f2 = compute_frequencies_henon_ae(potential,dpotential,ddpotential,a,ecc,false,TOLECC,verbose)
+            f1,f2 = compute_frequencies_henon_ae(potential,dpotential,ddpotential,a,ecc,action=false,TOLECC=TOLECC,verbose=verbose,NINT=NINT)
             return f1,f2
         end
 end
@@ -46,13 +46,14 @@ function compute_ae_from_frequencies(potential::Function,dpotential::Function,dd
         # use adaptive da, de branches
         # da max(0.0001,0.01a)
         # de min(max(0.0001,0.1a*e)
-        a,e,iter = ae_from_omega1omega2_brute(omega1,omega2,potential,dpotential,ddpotential,eps,maxiter,TOLECC,TOLA,da,de,verbose)
+
+        a,e,iter,finaltol = ae_from_omega1omega2_brute(omega1,omega2,potential,dpotential,ddpotential,eps,maxiter,TOLECC,TOLA,da,de,verbose)
 
         ntries = 0
         while (iter == maxiter+1) | (iter <= 0)
             # double the da step to scan through space
             da = 2da
-            a,e,iter = ae_from_omega1omega2_brute(omega1,omega2,potential,dpotential,ddpotential,eps,maxiter,TOLECC,TOLA,da,de,verbose)
+            a,e,iter,finaltol = ae_from_omega1omega2_brute(omega1,omega2,potential,dpotential,ddpotential,eps,maxiter,TOLECC,TOLA,da,de,verbose)
             ntries += 1
             if ntries > 3
                 break
@@ -78,7 +79,8 @@ function compute_frequencies_ae_derivs(potential::Function,
                                        da::Float64=0.0001,
                                        de::Float64=0.0001,
                                        TOLECC::Float64=0.001,
-                                       verbose::Int64=0)
+                                       verbose::Int64=0,
+                                       NINT::Int64=32)
 
         # grid is structured like
         # (f1h,f2h) [+da]
@@ -86,11 +88,11 @@ function compute_frequencies_ae_derivs(potential::Function,
         # (f1c,f2c)-> (f1r,f2r) [+de]
 
         # @IMPROVE watch out for close to TOLECC, will fail across boundary
-        f1c,f2c = compute_frequencies_henon_ae(potential,dpotential,ddpotential,a,ecc,false,TOLECC,verbose)
+        f1c,f2c = compute_frequencies_henon_ae(potential,dpotential,ddpotential,a,ecc,action=false,TOLECC=TOLECC,verbose=verbose,NINT=NINT)
 
-        f1h,f2h = compute_frequencies_henon_ae(potential,dpotential,ddpotential,a+da,ecc,false,TOLECC,verbose)
+        f1h,f2h = compute_frequencies_henon_ae(potential,dpotential,ddpotential,a+da,ecc,action=false,TOLECC=TOLECC,verbose=verbose,NINT=NINT)
 
-        f1r,f2r = compute_frequencies_henon_ae(potential,dpotential,ddpotential,a,ecc+de,false,TOLECC,verbose)
+        f1r,f2r = compute_frequencies_henon_ae(potential,dpotential,ddpotential,a,ecc+de,action=false,TOLECC=TOLECC,verbose=verbose,NINT=NINT)
 
         df1da = (f1h-f1c)/da
         df2da = (f2h-f2c)/da
@@ -106,9 +108,9 @@ end
 wrapper to select which type of frequency computation to perform, from (a,e)
 """
 function compute_frequencies_rpra(potential::Function,dpotential::Function,ddpotential::Function,
-                                  r_peri::Float64,r_apo::Float64,TOLECC::Float64=0.001,verbose::Int64=0)
+                                  r_peri::Float64,r_apo::Float64,TOLECC::Float64=0.001,verbose::Int64=0,NINT=32)
 
-        f1,f2 = compute_frequencies_henon(potential,dpotential,ddpotential,r_peri,r_apo,TOLECC,verbose)
+        f1,f2 = compute_frequencies_henon(potential,dpotential,ddpotential,r_peri,r_apo,TOLECC=TOLECC,verbose=verbose,NINT=NINT)
 
         return f1,f2
 end
