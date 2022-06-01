@@ -22,15 +22,19 @@ rp,ra = OrbitalElements.rpra_from_ae(a,e); @printf("rp=%f ra=%f\n", rp,ra)
 
 # test frequency computation
 Ω₁r,Ω₂r = OrbitalElements.isochrone_Omega_1_2(rp,ra,bc,M,G)
-Ω₁c,Ω₂c = OrbitalElements.compute_frequencies_ae(ψ,dψdr,d²ψdr²,a,e,NINT=32)
+Jrr = OrbitalElements.isochrone_jr_rpra(rp,ra,bc,M,G)
+
+# make a HIGH RES version of the frequencies
+#Ω₁r,Ω₂r = OrbitalElements.compute_frequencies_ae(ψ,dψdr,d²ψdr²,a,e,NINT=1024)
+Ω₁c,Ω₂c,Jrc = OrbitalElements.compute_frequencies_ae(ψ,dψdr,d²ψdr²,a,e,NINT=32,action=true)
 @printf("O1=%f O1guess=%f O2=%f O2guess=%f\n", Ω₁r,Ω₁c,Ω₂r,Ω₂c)
 
 # make an accuracy table as a function of number of steps in frequency calculation
 open("NINTconvergence.txt","w") do io
-    println(io,"truth",",",Ω₁r,",",Ω₂r)
+    println(io,"truth",",",Ω₁r,",",Ω₂r,",",Jrr)
     for NINT=1:256
-        Ω₁c,Ω₂c = OrbitalElements.compute_frequencies_ae(ψ,dψdr,d²ψdr²,a,e,NINT=NINT)
-        println(io,NINT,",",Ω₁c,",",Ω₂c)
+        Ω₁c,Ω₂c,Jrc = OrbitalElements.compute_frequencies_ae(ψ,dψdr,d²ψdr²,a,e,NINT=NINT,action=true)
+        println(io,NINT,",",Ω₁c,",",Ω₂c,",",Jrc)
     end
 end
 
@@ -42,8 +46,10 @@ emin    = 0.
 de      = 0.01
 ne      = 100
 TOL     = 1.e-4
+TOLECC  = 0.03
 o1diffmat = zeros(Float64,na,ne)
 o2diffmat = zeros(Float64,na,ne)
+j1diffmat = zeros(Float64,na,ne)
 
 open("NINTarray.txt","w") do io
     for aindx=1:na
@@ -52,19 +58,25 @@ open("NINTarray.txt","w") do io
             eval = (eindx-1)*de
             rp,ra = OrbitalElements.rpra_from_ae(aval,eval)
             Ω₁r,Ω₂r = OrbitalElements.isochrone_Omega_1_2(rp,ra,bc,M,G)
+            Jrr = OrbitalElements.isochrone_jr_rpra(rp,ra,bc,M,G)
+            #Ω₁r,Ω₂r = OrbitalElements.compute_frequencies_ae(ψ,dψdr,d²ψdr²,aval,eval,NINT=1024)
             NINT=8
             o1diff = 1.0
             while (o1diff > TOL)
-                Ω₁c,Ω₂c = OrbitalElements.compute_frequencies_ae(ψ,dψdr,d²ψdr²,aval,eval,NINT=NINT)
+                #Ω₁c,Ω₂c,Jrc = OrbitalElements.compute_frequencies_ae(ψ,dψdr,d²ψdr²,aval,eval,NINT=NINT,action=true)
+                Ω₁c,Ω₂c = OrbitalElements.compute_frequencies_ae(ψ,dψdr,d²ψdr²,aval,eval,NINT=NINT,TOLECC=TOLECC)#,action=true)
+                #Ω₁c,Ω₂c,Jrc = OrbitalElements.compute_frequencies_ae(ψ,dψdr,d²ψdr²,a,e,NINT=NINT,action=true)
                 NINT += 1
                 o1diff = abs(Ω₁c-Ω₁r)
                 o2diff = abs(Ω₂c-Ω₂r)
+                j1diff = abs(Jrc-Jrr)
                 if NINT>256
                     break
                 end
             end
             o1diffmat[aindx,eindx] = NINT-1
             o2diffmat[aindx,eindx] = NINT-1
+            j1diffmat[aindx,eindx] = NINT-1
             println(io,aval,",",eval,",",NINT-1)
         end
     end
@@ -90,5 +102,52 @@ acomp,ecomp = OrbitalElements.isochrone_ae_from_omega1omega2(Ω₁c,Ω₂c,bc,M,
 @printf("analytical: a=%f aguess=%f e=%f eguess=%f\n", a,acomp,e,ecomp)
 
 # more options for checking...
-#E,L   = OrbitalElements.EL_from_rpra_pot(potential,dpotential,ddpotential,rp,ra)
-#Ei,Li = OrbitalElements.isochrone_EL_from_rpra(rp,ra,bc,M,G)
+#
+#
+# make an accuracy table as a function of number of steps in frequency calculation
+aval = 1.
+#TOLECC = 0.00001
+open("ELconvergence.txt","w") do io
+    for eindx=1:1000
+        eval = (eindx-1)*0.000001
+        rp,ra = OrbitalElements.rpra_from_ae(aval,eval)
+        Ei,Li = OrbitalElements.isochrone_EL_from_rpra(rp,ra,bc,M,G)
+        E,L   = OrbitalElements.EL_from_rpra_pot(ψ,dψdr,d²ψdr²,rp,ra)
+        println(io,eval,",",E-Ei,",",L-Li)
+    end
+end
+
+
+
+"""
+o1diffmat = zeros(Float64,na,ne)
+o2diffmat = zeros(Float64,na,ne)
+j1diffmat = zeros(Float64,na,ne)
+
+open("NINTarray.txt","w") do io
+    for aindx=1:na
+        for eindx=1:ne
+            aval = 10.0^(logamin+(aindx-1)*logda)
+            eval = (eindx-1)*de
+            rp,ra = OrbitalElements.rpra_from_ae(aval,eval)
+            Ei,Li = OrbitalElements.isochrone_EL_from_rpra(rp,ra,bc,M,G)
+            NINT=8
+            o1diff = 1.0
+            while (o1diff > TOL)
+                E,L   = OrbitalElements.EL_from_rpra_pot(potential,dpotential,ddpotential,rp,ra)
+                NINT += 1
+                o1diff = abs(Ω₁c-Ω₁r)
+                o2diff = abs(Ω₂c-Ω₂r)
+                j1diff = abs(Jrc-Jrr)
+                if NINT>256
+                    break
+                end
+            end
+            o1diffmat[aindx,eindx] = NINT-1
+            o2diffmat[aindx,eindx] = NINT-1
+            j1diffmat[aindx,eindx] = NINT-1
+            println(io,aval,",",eval,",",NINT-1)
+        end
+    end
+end
+"""

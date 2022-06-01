@@ -24,7 +24,7 @@ function compute_frequencies_ae(potential::Function,dpotential::Function,ddpoten
 
         if action
             f1,f2,a1 = compute_frequencies_henon_ae(potential,dpotential,ddpotential,a,ecc,action=true,TOLECC=TOLECC,verbose=verbose,NINT=NINT)
-            return f1,f1,a1
+            return f1,f2,a1
         else
             f1,f2 = compute_frequencies_henon_ae(potential,dpotential,ddpotential,a,ecc,action=false,TOLECC=TOLECC,verbose=verbose,NINT=NINT)
             return f1,f2

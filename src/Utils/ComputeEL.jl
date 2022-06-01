@@ -1,3 +1,6 @@
+
+
+
 """
 first-order expansion of energy equation near a circular orbit
 """
@@ -28,8 +31,8 @@ end
 energy as a function of rp,ra (or a,e)
 """
 function E_from_rpra_pot(potential::Function,dpotential::Function,ddpotential::Function,
-                         rp::Float64,ra::Float64,
-                         TOLECC::Float64=0.005)
+                         rp::Float64,ra::Float64;
+                         TOLECC::Float64=ELTOLECC)
 
 
     # check the tolerance
@@ -49,8 +52,8 @@ end
 angular momentum as a function of rp,ra (or a,e)
 """
 function L_from_rpra_pot(potential::Function,dpotential::Function,ddpotential::Function,
-                         rp::Float64,ra::Float64,
-                         TOLECC::Float64=0.005)
+                         rp::Float64,ra::Float64;
+                         TOLECC::Float64=ELTOLECC)
 
 
     # check the tolerance
@@ -71,8 +74,8 @@ end
 combined energy + angular momentum as a function of rp,ra (or a,e)
 """
 function EL_from_rpra_pot(potential::Function,dpotential::Function,ddpotential::Function,
-                          rp::Float64,ra::Float64,
-                          TOLECC::Float64=0.005)
+                          rp::Float64,ra::Float64;
+                          TOLECC::Float64=ELTOLECC)
 
 
     # check the tolerance
@@ -93,8 +96,8 @@ end
 combined energy + angular momentum as a function of (a,e)
 """
 function EL_from_ae_pot(potential::Function,dpotential::Function,ddpotential::Function,
-                        a::Float64,ecc::Float64,
-                        TOLECC::Float64=0.005)
+                        a::Float64,ecc::Float64;
+                        TOLECC::Float64=ELTOLECC)
 
 
 
@@ -117,9 +120,9 @@ end
 energy and angular momentum derivatives for a given rp,ra
 """
 function dEdL_from_rpra_pot(potential::Function,dpotential::Function,ddpotential::Function,
-                            rp::Float64,ra::Float64,
+                            rp::Float64,ra::Float64;
                             da::Float64=0.0001,de::Float64=0.0001,
-                            TOLECC::Float64=0.001)
+                            TOLECC::Float64=ELTOLECC)
 
 
     # check the central tolerance

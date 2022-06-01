@@ -26,16 +26,44 @@ mpl.rcParams['ytick.minor.width'] = 0.75
 mpl.rcParams['xtick.minor.visible'] = True
 mpl.rcParams['ytick.minor.visible'] = True
 
+A = np.genfromtxt("ELconvergence.txt",delimiter=',')
+
+plt.figure(figsize=(4.5,3))
+
+# make predictions in grey, real values in black
+#plt.plot(np.log10(A[1:,0]),np.log10(1/(A[1:,0]**2))-0.7,color='grey')
+plt.plot(np.log10(A[1:,0]),np.log10(np.abs(A[1:,1])),color='black')
+plt.plot(np.log10(A[1:,0]),np.log10(np.abs(A[1:,2])),color='black')
+
+#plt.plot((A[:,0]),np.log10(np.abs(A[:,1])),color='black')
+#plt.plot((A[:,0]),np.log10(np.abs(A[:,2])),color='black')
+
+plt.xlabel("log $e$")
+plt.ylabel("log $\epsilon_{E}$ (solid)")
+#plt.title("Isochrone mode test")
+plt.tight_layout()
+plt.savefig('figures/el_convergence.png')
+
+
 
 A = np.genfromtxt("NINTconvergence.txt",delimiter=',')
 
+plt.figure(figsize=(4.5,3))
 
-plt.plot(A[1:,0],np.log10(np.abs(A[1:,1]-A[0,1])),color='grey')
-plt.plot(A[1:,0],np.log10(np.abs(A[1:,2]-A[0,2])),color='grey',linestyle='dashed')
+# make predictions in grey, real values in black
+plt.plot(np.log10(A[1:,0]),np.log10(1/(A[1:,0]**2))-0.7,color='grey')
+plt.plot(np.log10(A[1:,0]),np.log10(np.abs(A[1:,1]-A[0,1])),color='black')
 
-plt.xlabel("NINT")
-plt.ylabel("Omega1")
+plt.plot(np.log10(A[1:,0]),np.log10(1/(A[1:,0]**0))-8.,color='grey',linestyle='dashed')
+plt.plot(np.log10(A[1:,0]),np.log10(np.abs(A[1:,2]-A[0,2])),color='black',linestyle='dashed')
+
+plt.plot(np.log10(A[1:,0]),np.log10(1/(A[1:,0]**4))-5.9,color='grey',linestyle='dotted')
+plt.plot(np.log10(A[1:,0]),np.log10(np.abs(A[1:,3]-A[0,3])),color='black',linestyle='dotted')
+
+plt.xlabel("log N$_\Omega$")
+plt.ylabel("log $\epsilon_{\Omega_1}$ (solid)\nlog $\epsilon_{\Omega_2}$ (dashed)\nlog $\epsilon_{J_r}$ (dotted)")
 #plt.title("Isochrone mode test")
+plt.tight_layout()
 plt.savefig('figures/nint_convergence.png')
 
 

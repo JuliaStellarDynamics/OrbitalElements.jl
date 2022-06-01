@@ -17,6 +17,8 @@ include("Potentials/isochrone.jl")
 include("Potentials/plummer.jl")
 
 # enable energy and angular momentum computation (including expansions)
+# first, set the radius where we switch to expansions
+const ELTOLECC = 0.00001
 include("Utils/ComputeEL.jl")
 
 # bring in the circular orbit frequencies
