@@ -1,17 +1,34 @@
 """
 test some basic inversions to make sure all definitions are equivalent
+
+julia --compile=min run_inversions.jl
+
 """
 
 import OrbitalElements
 using Printf
 
 # define easy potentials to pass to frequency calculators
-bc, M, G = 1.,1. ,1.
-ψ       = r->OrbitalElements.isochrone_psi(r,bc,M,G)
-dψdr    = r->OrbitalElements.isochrone_dpsi_dr(r,bc,M,G)
-d²ψdr²  = r->OrbitalElements.isochrone_ddpsi_ddr(r,bc,M,G)
-Ω₀      = OrbitalElements.isochrone_Omega0(bc,M,G)
+#bc, M, G = 1.,1. ,1.
+const bc, M, G = 1.,1. ,1.  # these can be constant for optimization flags
 
+Ω₀                  = OrbitalElements.isochrone_Omega0(bc,M,G)
+
+#ψ(r::Float64)       = r->OrbitalElements.isochrone_psi(r,bc,M,G)
+#dψdr(r::Float64)    = r->OrbitalElements.isochrone_dpsi_dr(r,bc,M,G)
+#d²ψdr²(r::Float64)  = r->OrbitalElements.isochrone_ddpsi_ddr(r,bc,M,G)
+
+#ψ       = r->OrbitalElements.isochrone_psi(r,bc,M,G)
+#dψdr    = r->OrbitalElements.isochrone_dpsi_dr(r,bc,M,G)
+#d²ψdr²  = r->OrbitalElements.isochrone_ddpsi_ddr(r,bc,M,G)
+
+#ψ       = r::Float64->OrbitalElements.isochrone_psi(r,bc,M,G)
+#dψdr    = r::Float64->OrbitalElements.isochrone_dpsi_dr(r,bc,M,G)
+#d²ψdr²  = r::Float64->OrbitalElements.isochrone_ddpsi_ddr(r,bc,M,G)
+
+ψ(r::Float64)       = OrbitalElements.isochrone_psi(r,bc,M,G)
+dψdr(r::Float64)    = OrbitalElements.isochrone_dpsi_dr(r,bc,M,G)
+d²ψdr²(r::Float64)  = OrbitalElements.isochrone_ddpsi_ddr(r,bc,M,G)
 
 # select an (a,e) value for the orbit
 a,e = 10., 0.4
