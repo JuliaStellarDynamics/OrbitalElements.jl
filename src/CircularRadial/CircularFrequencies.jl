@@ -89,23 +89,30 @@ do a high-resolution interpolation to get \beta_c(alpha), the frequency O2/O1 fr
 """
 function make_betac(dpotential::Function,ddpotential::Function,numr::Int64=2000,Omega0::Float64=1.)
 
-
+    # define the circular frequencies
     alpha_c(x) = Omega1_circular(dpotential,ddpotential,x)    # alpha_c(r)
     beta_c(x)  = Omega2_circular(dpotential,x)/alpha_c(x)     # beta_c(r)
-
 
     # @IMPROVE: make this range adaptive
     testu = 10 .^ LinRange(5.,-5.,numr)
 
+    # initialise blank arrays
     garr = Array{Float64}(undef, (numr))
     farr = Array{Float64}(undef, (numr))
 
+    # fill the arrays
     for u = 1:numr
         garr[u] = alpha_c(testu[u])/Omega0
         farr[u] = beta_c(testu[u])
     end
 
+    # compute a linear interpolation of the arrays
     beta_c = LinearInterpolation(garr,farr)
 
-    return beta_c
+    #return beta_c
+
+    # convert this to a function for easier Julia compile
+    calculate_betac(x::Float64) = beta_c(x)
+    return calculate_betac
+
 end

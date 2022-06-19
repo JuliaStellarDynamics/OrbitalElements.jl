@@ -15,6 +15,10 @@ include("Henon/Ufunc.jl")
 # bring in the frequency inversion
 include("Utils/NumericalInversion.jl")
 
+function JacEL_to_alphabeta(alpha::Float64,beta::Float64)
+    isochrone_JacEL_to_alphabeta(alpha,beta)
+end
+
 
 """compute_frequencies_ae(ψ,dψ/dr,d²ψ/dr²,a,ecc[,TOLECC,verbose])
 wrapper to select which type of frequency computation to perform, from (a,e)
@@ -22,13 +26,13 @@ wrapper to select which type of frequency computation to perform, from (a,e)
 function compute_frequencies_ae(potential::Function,dpotential::Function,ddpotential::Function,
                                 a::Float64,ecc::Float64;action::Bool=false,TOLECC::Float64=0.001,verbose::Int64=0,NINT::Int64=32)
 
-        if action
-            f1,f2,a1 = compute_frequencies_henon_ae(potential,dpotential,ddpotential,a,ecc,action=true,TOLECC=TOLECC,verbose=verbose,NINT=NINT)
-            return f1,f2,a1
-        else
-            f1,f2 = compute_frequencies_henon_ae(potential,dpotential,ddpotential,a,ecc,action=false,TOLECC=TOLECC,verbose=verbose,NINT=NINT)
-            return f1,f2
-        end
+    if action
+        f1,f2,a1 = compute_frequencies_henon_ae(potential,dpotential,ddpotential,a,ecc,action=true,TOLECC=TOLECC,verbose=verbose,NINT=NINT)
+        return f1,f2,a1
+    else
+        f1,f2 = compute_frequencies_henon_ae(potential,dpotential,ddpotential,a,ecc,action=false,TOLECC=TOLECC,verbose=verbose,NINT=NINT)
+        return f1,f2
+    end
 end
 
 

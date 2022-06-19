@@ -7,7 +7,7 @@ import OrbitalElements
 using Printf
 
 # define easy potentials to pass to frequency calculators
-bc, M, G = 1.,1. ,1.
+const bc, M, G = 1.,1. ,1.
 ψ       = r->OrbitalElements.isochrone_psi(r,bc,M,G)
 dψdr    = r->OrbitalElements.isochrone_dpsi_dr(r,bc,M,G)
 d²ψdr²  = r->OrbitalElements.isochrone_ddpsi_ddr(r,bc,M,G)
