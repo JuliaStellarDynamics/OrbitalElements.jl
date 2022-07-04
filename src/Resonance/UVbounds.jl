@@ -86,18 +86,26 @@ function hu(u::Float64,wmin::Float64,wmax::Float64)
     return 0.5*(wmax+wmin + u*(wmax-wmin))
 end
 
-"""RootOfHOmega(u,wmin,wmax,n₁,n₂,vbound,beta_c)
+"""RootOfHOmega(u,wmin,wmax,n₁,n₂,vbound,βc)
 solve for roots of the h(u) equation
 Fouvry & Prunet B10 (term 3)
+
+βc must be a function
+
+@IMPROVE: rootequation can be optimised for memory footprint, perhaps?
+@IMPROVE: is there a more clever way to do the root-finding?
+@IMPROVE: decide if 1.e-6 tolerance at the ends of root-finding bound are safe
 """
 function RootOfHOmega(u::Float64,
                          wmin::Float64,wmax::Float64,
                          n1::Int64,n2::Int64,
                          vbound::Float64,
-                         beta_c::Function)
+                         βc::Function)
 
     hval = hu(u,wmin,wmax)
-    rootequation(x) = hval - n1*x - n2*x*beta_c[x]
+
+    rootequation(x::Float64)::Float64 = hval - n1*x - n2*x*βc(x)
+
     # two roots to try: bounded by [0,v(u=1)] and [v(u=1),1]
     if rootequation(0+1.e-6)*rootequation(vbound) < 0
         r1 = fzero(rootequation, 0+1.e-6,vbound)
@@ -138,13 +146,13 @@ function ConstraintThree(u::Float64,wmin::Float64,wmax::Float64,n1::Int64,n2::In
     return hval/(n2/2 + n1)
 end
 
-"""FindVminVmax(u,wmin,wmax,n₁,n₂,vbound,beta_c)
+"""FindVminVmax(u,wmin,wmax,n₁,n₂,vbound,βc)
 for a given resonance, at a specific value of u, find the v coordinate boundaries.
 
 @IMPROVE, put in guards for the edges in BetaC
 @IMPROVE, decide if we want to have FindVminVmax wrap the vbound calculation?
 """
-function find_vmin_vmax(u::Float64,wmin::Float64,wmax::Float64,n1::Int64,n2::Int64,vbound::Float64,beta_c::Function)
+function find_vmin_vmax(u::Float64,wmin::Float64,wmax::Float64,n1::Int64,n2::Int64,vbound::Float64,βc::Function)
     # this function works for n2 != 0
 
     if (n2==0)
@@ -154,11 +162,11 @@ function find_vmin_vmax(u::Float64,wmin::Float64,wmax::Float64,n1::Int64,n2::Int
         vmin = 0.5
 
         # put in guards for the very edges. SLOPPY
-        vmax = beta_c(minimum([0.99999,maximum([hval/n1,0.00001])]))
+        vmax = βc(minimum([0.99999,maximum([hval/n1,0.00001])]))
 
     else
 
-        r1,r2 = RootOfHOmega(u,wmin,wmax,n1,n2,vbound,beta_c)
+        r1,r2 = RootOfHOmega(u,wmin,wmax,n1,n2,vbound,βc)
 
         r3 = ConstraintThree(u,wmin,wmax,n1,n2)
 
