@@ -80,11 +80,12 @@ end
 
 
 """make_betac(dψ/dr,d²ψ/dr²[,numr,Omega0])
-do a high-resolution interpolation to get \beta_c(alpha), the frequency O2/O1 frequency ratio as a function of O1.
+do a high-resolution interpolation to get \beta_c(\alpha), the frequency O2/O1 frequency ratio as a function of O1.
 
 @IMPROVE: find Omega0 adaptively
 @IMPROVE: make the interpolation range adaptive in radius
 @IMPROVE: decide on best mapping for interplation range (currently log)
+@IMPROVE: remove anonymous functions for alpha_c,beta_c
 
 """
 function make_betac(dpotential::Function,ddpotential::Function,numr::Int64=2000,Omega0::Float64=1.)
