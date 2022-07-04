@@ -1,7 +1,22 @@
 """
 test resonance mapping capabilities
 
+julia run_resonance.jl
+# 1.119036 seconds (2.02 M allocations: 113.069 MiB, 7.55% gc time, 99.99% compilation time)
+
 julia --compile=min run_resonance.jl
+# 0.008095 seconds (9.06 k allocations: 613.031 KiB)
+
+julia --optimize=0 run_resonance.jl
+# 1.006424 seconds (2.02 M allocations: 113.069 MiB, 12.97% gc time, 99.99% compilation time)
+
+julia --optimize=0 --inline=no run_resonance.jl
+# 1.972923 seconds (1.86 M allocations: 105.962 MiB, 20.93% gc time, 99.98% compilation time)
+
+julia --compile=no run_resonance.jl
+# 0.022154 seconds (9.06 k allocations: 613.031 KiB) # also a TON of complaints
+
+julia --compile=min --inline=no run_resonance.jl
 
 NOTES
 -without --compile=min, there are _many_ allocations relating to finding vmin,vmax empirically (conversely, the analytic version is actually hurt by this!)
