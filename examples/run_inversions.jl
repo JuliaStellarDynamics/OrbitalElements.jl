@@ -26,9 +26,9 @@ const bc, M, G = 1.,1. ,1.  # these can be constant for optimization flags
 #dψdr    = r::Float64->OrbitalElements.isochrone_dpsi_dr(r,bc,M,G)
 #d²ψdr²  = r::Float64->OrbitalElements.isochrone_ddpsi_ddr(r,bc,M,G)
 
-ψ(r::Float64)       = OrbitalElements.isochrone_psi(r,bc,M,G)
-dψdr(r::Float64)    = OrbitalElements.isochrone_dpsi_dr(r,bc,M,G)
-d²ψdr²(r::Float64)  = OrbitalElements.isochrone_ddpsi_ddr(r,bc,M,G)
+ψ(r::Float64)::Float64       = OrbitalElements.isochrone_psi(r,bc,M,G)
+dψdr(r::Float64)::Float64    = OrbitalElements.isochrone_dpsi_dr(r,bc,M,G)
+d²ψdr²(r::Float64)::Float64  = OrbitalElements.isochrone_ddpsi_ddr(r,bc,M,G)
 
 # select an (a,e) value for the orbit
 a,e = 10., 0.4
@@ -36,6 +36,12 @@ a,e = 10., 0.4
 # compute rperi and rapo
 println("Compute rp,ra...")
 @time rp,ra = OrbitalElements.rpra_from_ae(a,e); @printf("rp=%f ra=%f\n", rp,ra)
+
+
+# compute circular equivalent
+println("Compute O1 circular...")
+O1c   = OrbitalElements.Omega1_circular(dψdr,d²ψdr²,ra)
+println(O1c)
 
 # compute (E,L)
 println("Compute E,L...")
