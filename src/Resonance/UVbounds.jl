@@ -139,12 +139,28 @@ end
 
 """ConstraintThree(u,wmin,wmax,n₁,n₂)
 helper function for finding v bounds
+
+Fouvry & Prunet (2022) B10, third constraint
+
+@ATTENTION: can return -Inf in n1=1,n2=-2 (or n1=-1,n2=2) scenario
 """
 function ConstraintThree(u::Float64,wmin::Float64,wmax::Float64,n1::Int64,n2::Int64)
     # greater than this
     hval = hu(u,wmin,wmax)
-    return hval/(n2/2 + n1)
+    denom = (n2/2 + n1)
+
+    # special cases:
+    if denom==0
+        if n2 < 0
+            return 1.
+        else
+            return 1.
+        end
+    else
+        return hval/denom
+    end
 end
+
 
 """FindVminVmax(u,wmin,wmax,n₁,n₂,vbound,βc)
 for a given resonance, at a specific value of u, find the v coordinate boundaries.
@@ -178,11 +194,11 @@ function find_vmin_vmax(u::Float64,wmin::Float64,wmax::Float64,n1::Int64,n2::Int
             vmax = minimum([r2,1.0])
         end
 
-        if isnan(vmax)
+        if (isnan(vmax) | isinf(vmax))
             vmax = 1.
         end
 
-        if isnan(vmin)
+        if (isnan(vmin) | isinf(vmin))
             vmin = 0.
         end
     end

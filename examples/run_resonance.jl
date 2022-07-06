@@ -38,9 +38,9 @@ d²ψdr²(r::Float64)::Float64  = OrbitalElements.isochrone_ddpsi_ddr(r,bc,M,G)
 beta_c = OrbitalElements.make_betac(dψdr,d²ψdr²,2000,Ω₀)
 
 # put in some dummy values for testing: picking a resonance
-n1 = 2
-n2 = 0
-@time w_min,w_max = OrbitalElements.find_wmin_wmax(n1,n2,dψdr,d²ψdr²,1000.,Ω₀)
+n1 = 1
+n2 = -2
+@time w_min,w_max = OrbitalElements.find_wmin_wmax(n1,n2,dψdr,d²ψdr²,1000.,Ω₀,Ziter=36)
 @printf("wmin=%f wmax=%f\n", w_min,w_max)
 
 @time vbound = OrbitalElements.find_vbound(n1,n2,dψdr,d²ψdr²,1000.,Ω₀)
@@ -48,6 +48,14 @@ n2 = 0
 
 # for a given u value, find the integration boundaries
 uval = -0.5
+
+RH1,RH2 = OrbitalElements.RootOfHOmega(uval,w_min,w_max,n1,n2,vbound,beta_c)
+@printf("RH1=%f RH2=%f\n", RH1,RH2)
+
+C3 = OrbitalElements.ConstraintThree(uval,w_min,w_max,n1,n2)
+@printf("C3=%f\n", C3)
+
+
 @time vmin,vmax = OrbitalElements.find_vmin_vmax(uval,w_min,w_max,n1,n2,vbound,beta_c)
 @printf("vmin=%f vmax=%f\n", vmin,vmax)
 println(typeof(beta_c))
