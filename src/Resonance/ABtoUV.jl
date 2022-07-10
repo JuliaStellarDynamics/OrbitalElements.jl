@@ -5,10 +5,13 @@ mapping from (alpha,beta) to (u,v)
 Fouvry & Prunet B5
 
 @IMPROVE, this has rounding error: concern?
+@IMPROVE, Omega0 isnt really optional, so we should perhaps not set a default?
 
 """
 function alphabeta_from_uv(u::Float64,v::Float64,
-                           n1::Int64,n2::Int64,dpotential::Function,ddpotential::Function,rmax::Float64=1000.,Omega0::Float64=1.)
+                           n1::Int64,n2::Int64,
+                           dpotential::Function,ddpotential::Function,
+                           rmax::Float64=1000.,Omega0::Float64=1.)
 
 
     wmin,wmax = find_wmin_wmax(n1,n2,dpotential,ddpotential,rmax,Omega0)
@@ -59,8 +62,8 @@ using the definitions for (alpha, beta) and (u,v), compute the Jacobian.
 function Jacalphabeta_to_uv(n1::Int64,n2::Int64,w_min::Float64,w_max::Float64,v::Float64)
 
     if n2 ==0
-        return (2.0/(w_max-w_min))*abs(w_max-w_min) * (1/(2n1))
+        return (2.0/(w_max-w_min))*abs((w_max-w_min) * (1/(2n1)))
     else
-        return (2.0/(w_max-w_min))*abs(w_max-w_min) * (1/(2n2*v))
+        return (2.0/(w_max-w_min))*abs((w_max-w_min) * (1/(2n2*v)))
     end
 end

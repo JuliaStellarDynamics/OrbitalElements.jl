@@ -23,7 +23,7 @@ NOTES
 
 """
 
-
+import AstroBasis
 import OrbitalElements
 using Printf
 
@@ -59,6 +59,52 @@ C3 = OrbitalElements.ConstraintThree(uval,w_min,w_max,n1,n2)
 @time vmin,vmax = OrbitalElements.find_vmin_vmax(uval,w_min,w_max,n1,n2,vbound,beta_c)
 @printf("vmin=%f vmax=%f\n", vmin,vmax)
 println(typeof(beta_c))
+
+midv = (vmax+vmin)/2
+vval = midv
+
+alpha,beta = OrbitalElements.alphabeta_from_uv(uval,midv,n1,n2,dψdr,d²ψdr²)
+println("alpha=$alpha, beta=$beta")
+
+omega1,omega2 = alpha*Ω₀,alpha*beta*Ω₀
+a1,e1 = OrbitalElements.compute_ae_from_frequencies(ψ,dψdr,d²ψdr²,omega1,omega2,1*10^(-12),1)
+maxestep = 0.005
+sma,ecc = OrbitalElements.compute_ae_from_frequencies(ψ,dψdr,d²ψdr²,omega1,omega2,1*10^(-12),1000,0.001,0.0001,max(0.0001,0.001a1),min(max(0.0001,0.1a1*e1),maxestep),0)
+
+rp,ra = OrbitalElements.rpra_from_ae(sma,ecc)
+println("rp=$rp, ra=$ra")
+
+gval = OrbitalElements.Theta(ψ,dψdr,d²ψdr²,uval,rp,ra,0.02)
+println("gval=$gval")
+
+
+Lval = OrbitalElements.L_from_rpra_pot(ψ,dψdr,d²ψdr²,rp,ra)
+Sigma, Delta = (ra+rp)*0.5, (ra-rp)*0.5
+
+# Current location of the radius, r=r(u): isn't this exactly rp?
+rval = Sigma + Delta*OrbitalElements.henon_f(uval)
+
+# the velocity for integration
+dt1du, dt2du = omega1*gval, (omega2 - Lval/(rval^(2)))*gval
+println("dt1du=$dt1du, dt2du=$dt2du")
+
+const rb = 10.
+lmax,nmax = 2,10
+lharmonic=2
+basis = AstroBasis.CB73Basis_create(lmax=lmax, nmax=nmax,G=G,rb=rb)
+AstroBasis.fill_prefactors!(basis)
+AstroBasis.tabUl!(basis,lharmonic,rval)
+println(basis.tabUl)
+
+alpha,beta = OrbitalElements.alphabeta_from_uv(uval,vval,n1,n2,dψdr,d²ψdr²)
+println("alpha=$alpha, beta=$beta")
+
+w_min,w_max = OrbitalElements.find_wmin_wmax(n1,n2,dψdr,d²ψdr²,1000.,Ω₀)
+Jacalphabeta = OrbitalElements.Jacalphabeta_to_uv(n1,n2,w_min,w_max,vval) #(alpha,beta) -> (u,v)
+JacEL        = OrbitalElements.JacEL_to_alphabeta(alpha,beta)          #(E,L) -> (alpha,beta)
+JacJ         = (1/omega1)                                #(J) -> (E,L)
+dimensionl   = (1/Ω₀)                                # remove dimensionality
+println("Jab=$Jacalphabeta JacEL=$JacEL, JacJ=$JacJ, dimensionl=$dimensionl")
 
 function empirical_beta_c(x::Float64)::Float64
     return beta_c(x)

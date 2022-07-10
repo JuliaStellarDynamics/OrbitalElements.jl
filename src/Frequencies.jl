@@ -15,6 +15,10 @@ include("Henon/Ufunc.jl")
 # bring in the frequency inversion
 include("Utils/NumericalInversion.jl")
 
+"""
+
+@ATTENTION this is isochrone specific right now.
+"""
 function JacEL_to_alphabeta(alpha::Float64,beta::Float64)
     isochrone_JacEL_to_alphabeta(alpha,beta)
 end
