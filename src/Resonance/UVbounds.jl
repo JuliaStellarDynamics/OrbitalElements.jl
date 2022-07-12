@@ -203,5 +203,6 @@ function find_vmin_vmax(u::Float64,wmin::Float64,wmax::Float64,n1::Int64,n2::Int
         end
     end
 
-    return vmin,vmax
+    # account for reversed limits in some particular cases -- perhaps figure out why sometime.
+    return min(vmin,vmax),max(vmin,vmax)
 end

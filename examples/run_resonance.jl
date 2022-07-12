@@ -38,8 +38,8 @@ d²ψdr²(r::Float64)::Float64  = OrbitalElements.isochrone_ddpsi_ddr(r,bc,M,G)
 beta_c = OrbitalElements.make_betac(dψdr,d²ψdr²,2000,Ω₀)
 
 # put in some dummy values for testing: picking a resonance
-n1 = 1
-n2 = -2
+n1 = -2
+n2 = 2
 @time w_min,w_max = OrbitalElements.find_wmin_wmax(n1,n2,dψdr,d²ψdr²,1000.,Ω₀,Ziter=36)
 @printf("wmin=%f wmax=%f\n", w_min,w_max)
 
@@ -63,7 +63,9 @@ println(typeof(beta_c))
 midv = (vmax+vmin)/2
 vval = midv
 
-alpha,beta = OrbitalElements.alphabeta_from_uv(uval,midv,n1,n2,dψdr,d²ψdr²)
+#alpha,beta = OrbitalElements.alphabeta_from_uv(uval,midv,n1,n2,dψdr,d²ψdr²)
+alpha,beta = OrbitalElements.alphabeta_from_uv(uval,midv,n1,n2,w_min,w_max)
+
 println("alpha=$alpha, beta=$beta")
 
 omega1,omega2 = alpha*Ω₀,alpha*beta*Ω₀
