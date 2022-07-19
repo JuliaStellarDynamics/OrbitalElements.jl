@@ -19,7 +19,7 @@ the truncated Mestel potential (flat rotation curve).
 """
 function mestel_psi(r::Float64,R0::Float64=1.,V0::Float64=1.,eps::Float64=0.01)
 
-    return (V0)^(2)*log( sqrt( (r/R0)^(2)+(eps)^(2) ) )
+    return 0.5 * (V0)^(2) * log( (r/R0)^(2)+(eps)^(2) )
 end
 
 """
@@ -106,23 +106,6 @@ function Zang_outer_tapering(L::Float64,Rout::Float64=11.5,V0::Float64=1.,mu::In
 
     return (Rout*V0)^(mu) / ( (Rout*V0)^(mu) + (L)^(mu) )
 end
-
-"""
-    mestel_Zang_DF(E, L[, R0, Rin, Rout, Rmax, V0, xi, C, q, sigma, nu, mu])
-Zang star distribution function.
-
-@ WARNING : Cut off at large radius to add !
-"""
-function mestel_Zang_DF(E::Float64,L::Float64;
-                        R0::Float64=20., Rin::Float64=1., Rout::Float64=11.5, Rmax::Float64=20.,
-                        V0::Float64=1.,
-                        xi::Float64=0.5, C::Float64=9.075e-14, 
-                        q::Float64=11.44, sigma::Float64=2.835e-1,
-                        nu::Int64=4, mu::Int64=5)
-
-    return xi * mestel_DF(E,L,C,q,sigma) * Zang_inner_tapering(L,Rin,V0,nu) * Zang_outer_tapering(L,Rout,V0,mu)
-end
-
 
 """
     mestel_Zang_DF(E, L[, R0, Rin, Rout, Rmax, V0, xi, C, q, sigma, nu, mu])
