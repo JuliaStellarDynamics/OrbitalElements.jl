@@ -62,6 +62,8 @@ end
 
 """
 jacobian for converting dF/dQ dQ/dL -> dF/dL
+
+@IMPROVE, does this need an extra factor of bc?
 """
 function isochrone_dQdL_ROI(E::Float64,L::Float64,Ra::Float64,bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
     scaleEnergy = isochrone_E0(bc,M,astronomicalG)

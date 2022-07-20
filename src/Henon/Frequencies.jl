@@ -171,9 +171,13 @@ function compute_frequencies_henon_ae(potential::Function,dpotential::Function,d
         print("E/J ",E," ",J,"\n")
     end
 
-    # don't go into the loop if circular
+    # don't go into the loop if too circular: use an approximation
     if ecc<TOLECC
-        return Omega1_circular(dpotential,ddpotential,a),Omega2_circular(dpotential,a)
+        if action
+            return Omega1_circular(dpotential,ddpotential,a),Omega2_circular(dpotential,a),0.0
+        else
+            return Omega1_circular(dpotential,ddpotential,a),Omega2_circular(dpotential,a)
+        end
     end
 
     # if radial, we should exploit freq1 = 2*freq2 somehow.

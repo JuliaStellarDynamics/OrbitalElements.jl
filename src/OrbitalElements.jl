@@ -15,6 +15,7 @@ include("Utils/OrbitDefinitions.jl")
 # bring in the test potentials (not strictly needed)
 include("Potentials/isochrone.jl")
 include("Potentials/plummer.jl")
+include("Potentials/mestelzang.jl")
 
 # bring in the test distribution functions (not strictly needed)
 include("DistributionFunctions/isochrone.jl")

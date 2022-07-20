@@ -39,7 +39,7 @@ the truncated Mestel potential second derivative.
 """
 function mestel_ddpsi_ddr(r::Float64,R0::Float64=1.,V0::Float64=1.,eps::Float64=0.01)
 
-    return - (V0)^(2) / (R0)^(2) * ( (eps)^(2) - (r/R0)^2 ) / ( (eps)^(2) + (r/R0)^(2) )^(2)
+    return  (V0)^(2) / (R0)^(2) * ( (eps)^(2) - (r/R0)^2 ) / ( (eps)^(2) + (r/R0)^(2) )^(2)
 end
 
 """
@@ -116,7 +116,7 @@ Zang star distribution function.
 function mestel_Zang_DF(E::Float64,L::Float64;
                         R0::Float64=20., Rin::Float64=1., Rout::Float64=11.5, Rmax::Float64=20.,
                         V0::Float64=1.,
-                        xi::Float64=0.5, C::Float64=9.075e-14, 
+                        xi::Float64=0.5, C::Float64=9.075e-14,
                         q::Float64=11.44, sigma::Float64=2.835e-1,
                         nu::Int64=4, mu::Int64=5)
 

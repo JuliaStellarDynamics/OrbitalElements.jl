@@ -1,5 +1,6 @@
 
 examples/run_plummer.jl
+examples/run_mestel.jl
 examples/run_jacobians.jl
 examples/*.txt
 examples/figures/*
