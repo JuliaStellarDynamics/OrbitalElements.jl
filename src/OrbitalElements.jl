@@ -16,6 +16,10 @@ include("Utils/OrbitDefinitions.jl")
 include("Potentials/isochrone.jl")
 include("Potentials/plummer.jl")
 
+# bring in the test distribution functions (not strictly needed)
+include("DistributionFunctions/isochrone.jl")
+include("DistributionFunctions/plummer.jl")
+
 # enable energy and angular momentum computation (including expansions)
 # first, set the radius where we switch to expansions
 const ELTOLECC = 0.00001

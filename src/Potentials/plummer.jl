@@ -7,11 +7,9 @@ The plummer potential definitions
 =#
 
 
-#=
-
-POTENTIAL AND DERIVATIVES
-
-=#
+"""
+the plummer potential
+"""
 function plummer_psi(r::Float64,bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
     #=plummer_psi
 
@@ -21,6 +19,9 @@ function plummer_psi(r::Float64,bc::Float64=1.,M::Float64=1.,astronomicalG::Floa
     return -astronomicalG*M*(sqrt(rbc))^(-1)
 end
 
+"""
+the plummer potential derivative
+"""
 function plummer_dpsi_dr(r::Float64,bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
     #=plummer_dpsi_dr
 
@@ -30,6 +31,9 @@ function plummer_dpsi_dr(r::Float64,bc::Float64=1.,M::Float64=1.,astronomicalG::
     return astronomicalG*M*r*((rbc)^(-3/2))
 end
 
+"""
+the plummer potential second derivative
+"""
 function plummer_ddpsi_ddr(r::Float64,bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
     #=plummer_ddpsi_ddr
 
@@ -39,6 +43,9 @@ function plummer_ddpsi_ddr(r::Float64,bc::Float64=1.,M::Float64=1.,astronomicalG
     return astronomicalG*M*(bc^2 - 2(r^2))*((rbc)^(-5/2))
 end
 
+"""
+the central frequency for the Plummer potential
+"""
 function plummer_Omega0(bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
     #=
 
