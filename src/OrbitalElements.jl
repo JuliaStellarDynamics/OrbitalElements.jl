@@ -20,6 +20,7 @@ include("Potentials/mestelzang.jl")
 # bring in the test distribution functions (not strictly needed)
 include("DistributionFunctions/isochrone.jl")
 include("DistributionFunctions/plummer.jl")
+include("DistributionFunctions/mestelzang.jl")
 
 # enable energy and angular momentum computation (including expansions)
 # first, set the radius where we switch to expansions
