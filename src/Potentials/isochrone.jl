@@ -67,7 +67,7 @@ end
 """
 isochrone reduced coordinates for pericentre and apocentre
 """
-function isochrone_spsa_from_rpra(rp::Float64,ra::Float64,bc::Float64=1.)
+function IsochroneSpSaFromRpRa(rp::Float64,ra::Float64,bc::Float64=1.)
     xp = rp/bc
     xa = ra/bc
    return sqrt(1+xp^2),sqrt(1+xa^2)
@@ -87,31 +87,62 @@ end
 compute the dimensionless function for Omega1
 (Fouvry 21 eq. G5)
 """
-function isochrone_omega_ae(rp::Float64,ra::Float64,bc::Float64=1.)
-    sp,sa = isochrone_spsa_from_rpra(rp,ra,bc)
+function IsochroneAlphaRpRa(rp::Float64,ra::Float64,bc::Float64=1.)
+    sp,sa = IsochroneSpSaFromRpRa(rp,ra,bc)
     return (2/(sp+sa))^(3/2)
 end
 
 """
-compute the dimensionless function for Omega2
+compute the dimensionless function for Omega1
+(Fouvry 21 eq. G5)
+"""
+function IsochroneAlphaAE(a::Float64,ecc::Float64,bc::Float64=1.)
+    sp,sa = IsochroneSpSaFromRpRa(a*(1-ecc),a*(1+ecc),bc)
+    return (2/(sp+sa))^(3/2)
+end
+
+"""
+compute the dimensionless function for Omega2 from (rp,ra)
 (Fouvry 21 eq. G7)
 """
-function isochrone_eta_ae(rp::Float64,ra::Float64,bc::Float64=1.)
+function IsochroneBetaRpRa(rp::Float64,ra::Float64,bc::Float64=1.)
     xp = rp/bc
     xa = ra/bc
-    sp,sa = isochrone_spsa_from_rpra(rp,ra,bc)
+    sp,sa = IsochroneSpSaFromRpRa(rp,ra,bc)
     return (1/2)*(1+(xp*xa)/((1+sp)*(1+sa)))
 end
 
 """
-analytic function to return isochrone frequencies
+compute the dimensionless function for Omega2 from (a,e)
+(Fouvry 21 eq. G7)
 """
-function isochrone_Omega_1_2(rp::Float64,ra::Float64,bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
+function IsochroneBetaAE(a::Float64,ecc::Float64,bc::Float64=1.)
+    xp = (a*(1-ecc))/bc
+    xa = (a*(1+ecc))/bc
+    sp,sa = IsochroneSpSaFromRpRa(a*(1-ecc),a*(1+ecc),bc)
+    return (1/2)*(1+(xp*xa)/((1+sp)*(1+sa)))
+end
+
+
+"""
+analytic function to return isochrone frequencies from (rp,ra)
+"""
+function IsochroneOmega12FromRpRa(rp::Float64,ra::Float64,bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
     Omega0   = isochrone_Omega0(bc,M,astronomicalG)
-    omega_ae = isochrone_omega_ae(rp,ra,bc)
-    eta_ae   = isochrone_eta_ae(rp,ra,bc)
+    omega_ae = IsochroneAlphaRpRa(rp,ra,bc)
+    eta_ae   = IsochroneBetaRpRa(rp,ra,bc)
     return omega_ae*Omega0,omega_ae*eta_ae*Omega0
 
+end
+
+"""
+analytic function to return isochrone frequencies from (a,e)
+"""
+function IsochroneOmega12FromAE(a::Float64,ecc::Float64,bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
+    Omega0   = isochrone_Omega0(bc,M,astronomicalG)
+    omega_ae = IsochroneAlphaAE(a,ecc,bc)
+    eta_ae   = IsochroneBetaAE(a,ecc,bc)
+    return omega_ae*Omega0,omega_ae*eta_ae*Omega0
 end
 
 """
@@ -157,7 +188,7 @@ Fouvry 21 G9
 """
 function isochrone_E_from_rpra(rp::Float64,ra::Float64,bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
     scaleEnergy = isochrone_E0(bc,M,astronomicalG)
-    sp,sa       = isochrone_spsa_from_rpra(rp,ra,bc)
+    sp,sa       = IsochroneSpSaFromRpRa(rp,ra,bc)
     return scaleEnergy/(sp+sa)
 end
 
@@ -169,7 +200,7 @@ function isochrone_L_from_rpra(rp::Float64,ra::Float64,bc::Float64=1.,M::Float64
     xp = rp/bc
     xa = ra/bc
     L0 = isochrone_L0(bc,M,astronomicalG)
-    sp,sa = isochrone_spsa_from_rpra(rp,ra,bc)
+    sp,sa = IsochroneSpSaFromRpRa(rp,ra,bc)
     return sqrt(2)*L0*xp*xa/sqrt((1+sp)*(1+sa)*(sp+sa))
 end
 
@@ -181,7 +212,7 @@ function isochrone_EL_from_rpra(rp::Float64,ra::Float64,bc::Float64=1.,M::Float6
     xa          = ra/bc
     L0          = isochrone_L0(bc,M,astronomicalG)
     scaleEnergy = isochrone_E0(bc,M,astronomicalG)
-    sp,sa       = isochrone_spsa_from_rpra(rp,ra,bc)
+    sp,sa       = IsochroneSpSaFromRpRa(rp,ra,bc)
     return scaleEnergy/(sp+sa),sqrt(2)*L0*xp*xa/sqrt((1+sp)*(1+sa)*(sp+sa))
 end
 
@@ -196,8 +227,8 @@ function isochrone_dthetadu_from_rpra(r::Float64,u::Float64,rp::Float64,ra::Floa
     xr = r/bc
     sr = sqrt(1+xr^(2))
     Omega0 = isochrone_Omega0(bc,M,astronomicalG)
-    Omega1,Omega2 = isochrone_Omega_1_2(rp,ra,bc,M,astronomicalG)
-    sp,sa = isochrone_spsa_from_rpra(rp,ra)
+    Omega1,Omega2 = IsochroneOmega12FromRpRa(rp,ra,bc,M,astronomicalG)
+    sp,sa = IsochroneSpSaFromRpRa(rp,ra)
     return (3/sqrt(2))*(Omega1/Omega0)*(xr/sqrt(4-u^(2)))*(sqrt((sr+sp)*(sr+sa)*(sp+sa))/sqrt((xr+xp)*(xr+xa)))
 end
 

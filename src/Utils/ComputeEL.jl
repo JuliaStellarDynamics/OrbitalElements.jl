@@ -157,3 +157,43 @@ function dEdL_from_rpra_pot(potential::Function,dpotential::Function,ddpotential
     return Ec,Lc,dEda,dEde,dLda,dLde
 
 end
+
+
+"""
+energy and angular momentum derivatives for a given a,e
+"""
+function dEdL_from_ae_pot(potential::Function,dpotential::Function,ddpotential::Function,
+                            a::Float64,ecc::Float64;
+                            da::Float64=0.0001,de::Float64=0.0001,
+                            TOLECC::Float64=ELTOLECC)
+
+    if ecc<TOLECC
+        # switch to the expanded case
+        ecc = TOLECC
+    end
+
+    # compute the varying values
+    rp,ra = rpra_from_ae(a,ecc)
+    rph,rah = rpra_from_ae(a+da,ecc)
+    rpr,rar = rpra_from_ae(a,ecc+de)
+
+    # the central values
+    Ec = ((ra^2)*potential(ra) - (rp^2)*potential(rp))/(ra^2 - rp^2)
+    Lc = sqrt(2*(potential(ra) - potential(rp))/(rp^(-2) - ra^(-2)))
+
+    # the da values
+    Eh = ((rah^2)*potential(rah) - (rph^2)*potential(rph))/(rah^2 - rph^2)
+    Lh = sqrt(2*(potential(rah) - potential(rph))/(rph^(-2) - rah^(-2)))
+
+    # the de values
+    Er = ((rar^2)*potential(rar) - (rpr^2)*potential(rpr))/(rar^2 - rpr^2)
+    Lr = sqrt(2*(potential(rar) - potential(rpr))/(rpr^(-2) - rar^(-2)))
+
+    dEda = (Eh-Ec)/(da)
+    dEde = (Er-Ec)/(de)
+    dLda = (Lh-Lc)/(da)
+    dLde = (Lr-Lc)/(de)
+
+    return Ec,Lc,dEda,dEde,dLda,dLde
+
+end

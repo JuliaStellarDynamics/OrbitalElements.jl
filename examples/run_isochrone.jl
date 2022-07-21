@@ -16,19 +16,40 @@ d²ψdr²(r::Float64)::Float64  = OrbitalElements.isochrone_ddpsi_ddr(r,bc,M,G)
 
 
 # select an (a,e) value for the orbit
-a,e = 0.01, 0.1
+a,e = 0.01, 0.8
 
 # compute rperi and rapo
 rp,ra = OrbitalElements.rpra_from_ae(a,e); @printf("rp=%f ra=%f\n", rp,ra)
 
 # test frequency computation
-Ω₁r,Ω₂r = OrbitalElements.isochrone_Omega_1_2(rp,ra,bc,M,G)
+Ω₁r,Ω₂r = OrbitalElements.IsochroneOmega12FromRpRa(rp,ra,bc,M,G)
+Ω₁e,Ω₂e = OrbitalElements.IsochroneOmega12FromAE(a,e,bc,M,G)
 Jrr = OrbitalElements.isochrone_jr_rpra(rp,ra,bc,M,G)
+println("Ω₁r=$Ω₁r,Ω₂r=$Ω₂r")
+println("Ω₁e=$Ω₁e,Ω₂e=$Ω₂e")
 
 # make a HIGH RES version of the frequencies
 #Ω₁r,Ω₂r = OrbitalElements.compute_frequencies_ae(ψ,dψdr,d²ψdr²,a,e,NINT=1024)
 Ω₁c,Ω₂c,Jrc = OrbitalElements.compute_frequencies_ae(ψ,dψdr,d²ψdr²,a,e,NINT=32,action=true)
 @printf("O1=%f O1guess=%f O2=%f O2guess=%f\n", Ω₁r,Ω₁c,Ω₂r,Ω₂c)
+
+alpha,beta = Ω₁c/Ω₀,Ω₂c/Ω₁c
+
+J_EL_ab = OrbitalElements.isochrone_JacEL_to_alphabeta(alpha,beta,bc,M,G)
+println("Jacobian(EL,ab):$J_EL_ab")
+
+# get the numerical frequency derivatives at this point
+f1c,f2c,df1da,df2da,df1de,df2de = OrbitalElements.compute_frequencies_ae_derivs(ψ,dψdr,d²ψdr²,a,e)
+Ec,Lc,dEda,dEde,dLda,dLde = OrbitalElements.dEdL_from_ae_pot(ψ,dψdr,d²ψdr²,a,e)
+
+J_EL_ae = abs(dEda*dLde - dEde*dLda)
+J_o1o2_ae = abs(df1da*df2de - df1de*df2da)
+
+tJ_EL_ab = f1c*Ω₀*J_EL_ae/J_o1o2_ae
+println("NJacobian(EL,ab):$tJ_EL_ab")
+
+
+#=
 
 # make an accuracy table as a function of number of steps in frequency calculation
 open("NINTconvergence.txt","w") do io
@@ -58,7 +79,7 @@ open("NINTarray.txt","w") do io
             aval = 10.0^(logamin+(aindx-1)*logda)
             eval = (eindx-1)*de
             rp,ra = OrbitalElements.rpra_from_ae(aval,eval)
-            Ω₁r,Ω₂r = OrbitalElements.isochrone_Omega_1_2(rp,ra,bc,M,G)
+            Ω₁r,Ω₂r = OrbitalElements.IsochroneOmega12FromRpRa(rp,ra,bc,M,G)
             Jrr = OrbitalElements.isochrone_jr_rpra(rp,ra,bc,M,G)
             #Ω₁r,Ω₂r = OrbitalElements.compute_frequencies_ae(ψ,dψdr,d²ψdr²,aval,eval,NINT=1024)
             NINT=8
@@ -152,3 +173,4 @@ open("NINTarray.txt","w") do io
     end
 end
 """
+=#

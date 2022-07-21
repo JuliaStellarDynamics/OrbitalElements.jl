@@ -17,11 +17,45 @@ include("Utils/NumericalInversion.jl")
 
 """
 
-@ATTENTION this is isochrone specific right now.
+@ATTENTION can use the isochrone-specific if you are using an isochrone. Otherwise this is a bit costly.
 """
 function JacEL_to_alphabeta(alpha::Float64,beta::Float64)
     isochrone_JacEL_to_alphabeta(alpha,beta)
 end
+
+"""
+
+@ATTENTION this takes (a,e) as arguments.
+@ATTENTION this combines several numerical derivatives; please take care!
+
+@IMPROVE add massaging parameters for numerical derivatives
+@IMPROVE fix boundary values when using limited development
+@IMPROVE noisy at the boundaries
+"""
+function JacELToAlphaBetaAE(a::Float64,ecc::Float64,ψ::Function,dψdr::Function,d²ψdr²::Function,Ω₀::Float64)
+
+    # to be fixed for limited development...
+    if ecc>0.99
+        ecc=0.99
+    end
+
+    if ecc<0.01
+        ecc=0.01
+    end
+
+    # get all numerical derivatives
+    f1c,f2c,df1da,df2da,df1de,df2de = compute_frequencies_ae_derivs(ψ,dψdr,d²ψdr²,a,e)
+    Ec,Lc,dEda,dEde,dLda,dLde = dEdL_from_ae_pot(ψ,dψdr,d²ψdr²,a,e)
+
+    # construct Jacobians
+    J_EL_ae = abs(dEda*dLde - dEde*dLda)
+    J_o1o2_ae = abs(df1da*df2de - df1de*df2da)
+
+    # combine and return
+    return f1c*Ω₀*J_EL_ae/J_o1o2_ae
+
+end
+
 
 
 """compute_frequencies_ae(ψ,dψ/dr,d²ψ/dr²,a,ecc[,TOLECC,verbose])
@@ -106,7 +140,7 @@ function compute_frequencies_ae_derivs(potential::Function,
         df2da = (f2h-f2c)/da
 
         df1de = (f1r-f1c)/de
-        df2de = (f2h-f2c)/de
+        df2de = (f2r-f2c)/de
 
         return f1c,f2c,df1da,df2da,df1de,df2de
 end
