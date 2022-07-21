@@ -31,7 +31,7 @@ dψdr(r::Float64)::Float64    = OrbitalElements.isochrone_dpsi_dr(r,bc,M,G)
 d²ψdr²(r::Float64)::Float64  = OrbitalElements.isochrone_ddpsi_ddr(r,bc,M,G)
 
 # select an (a,e) value for the orbit
-a,e = 10., 0.4
+a,e = .1, 0.4
 
 # compute rperi and rapo
 println("Compute rp,ra...")
@@ -80,6 +80,7 @@ println("...",aguess,",",eguess)
 
 println("Compute sma,ecc...")
 @time sma,ecc = OrbitalElements.compute_ae_from_frequencies(ψ,dψdr,d²ψdr²,Ω₁c,Ω₂c)
+println("...",sma,",",ecc)
 
 println("Compute acirc...")
 @time acirc = OrbitalElements.Omega1circ_to_radius(Ω₁c,dψdr,d²ψdr²)
@@ -97,7 +98,7 @@ println("INVERT E,L...")
 Ω₁,Ω₂ = α*Ω₀,α*β*Ω₀
 
 
-f1real,f2real = OrbitalElements.isochrone_Omega_1_2(rp,ra,bc,M,G)
+f1real,f2real = OrbitalElements.IsochroneOmega12FromRpRa(rp,ra,bc,M,G)
 Ω₁c,Ω₂c = OrbitalElements.compute_frequencies_ae(ψ,dψdr,d²ψdr²,a,e)
 @printf("O1=%f O1guess=%f O2=%f O2guess=%f\n", f1real,Ω₁c,f2real,Ω₂c)
 
@@ -123,13 +124,6 @@ u,v = OrbitalElements.uv_from_alphabeta(α,β,n1,n2,dψdr,d²ψdr²,rmax,Ω₀)
 @printf("α=%f αguess=%f β=%f βguess=%f\n", α,αguess,β,βguess)
 
 JacELab = OrbitalElements.isochrone_JacEL_to_alphabeta(α,β)
-
+JacELab2 = OrbitalElements.JacELToAlphaBetaAE(a,e,ψ,dψdr,d²ψdr²,Ω₀)
+println("Compare Jacobians:JacELab=$JacELab,JacELab2=$JacELab2")
 # now try to get the empirical version of the jacobian
-
-# get the estimated frequencies
-f1rev,f2rev = αguess*Ω₀,βguess*αguess*Ω₀
-# get (a,e)
-aguess,eguess = OrbitalElements.ae_from_omega1omega2_brute(f1rev,f2rev,ψ,dψdr,d²ψdr²,0.000001,100)
-
-# get estimates for local frequency derivatives the local derivs
-f1,f2,df1da,df2da,df1de,df2de = OrbitalElements.compute_frequencies_ae_derivs(ψ,dψdr,d²ψdr²,aguess,eguess)

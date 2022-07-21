@@ -44,8 +44,8 @@ function JacELToAlphaBetaAE(a::Float64,ecc::Float64,ψ::Function,dψdr::Function
     end
 
     # get all numerical derivatives
-    f1c,f2c,df1da,df2da,df1de,df2de = compute_frequencies_ae_derivs(ψ,dψdr,d²ψdr²,a,e)
-    Ec,Lc,dEda,dEde,dLda,dLde = dEdL_from_ae_pot(ψ,dψdr,d²ψdr²,a,e)
+    f1c,f2c,df1da,df2da,df1de,df2de = compute_frequencies_ae_derivs(ψ,dψdr,d²ψdr²,a,ecc)
+    Ec,Lc,dEda,dEde,dLda,dLde = dEdL_from_ae_pot(ψ,dψdr,d²ψdr²,a,ecc)
 
     # construct Jacobians
     J_EL_ae = abs(dEda*dLde - dEde*dLda)
