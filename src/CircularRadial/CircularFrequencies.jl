@@ -35,6 +35,8 @@ function Omega1_expansion(dpotential::Function,ddpotential::Function,
     dudr = dpotential(rcirc)
     dduddr = ddpotential(rcirc)
     h    = r-rcirc
+
+    # did the user provide a third derivative?
     if dddpotential(1)==2
         dddudddr = 0.
     else

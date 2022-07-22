@@ -16,7 +16,7 @@ d²ψdr²(r::Float64)::Float64  = OrbitalElements.isochrone_ddpsi_ddr(r,bc,M,G)
 
 
 # select an (a,e) value for the orbit
-a,e = 0.01, 0.8
+a,e = 10.0, 0.9
 
 # compute rperi and rapo
 rp,ra = OrbitalElements.rpra_from_ae(a,e); @printf("rp=%f ra=%f\n", rp,ra)
@@ -47,6 +47,34 @@ J_o1o2_ae = abs(df1da*df2de - df1de*df2da)
 
 tJ_EL_ab = f1c*Ω₀*J_EL_ae/J_o1o2_ae
 println("NJacobian(EL,ab):$tJ_EL_ab")
+println("Components,$J_EL_ae/$J_o1o2_ae")
+
+# print the analytic and numerical derivatives. who is failing at the boundaries?
+println("Checking O1,O2 derivatives")
+# frequency derivatives are more sensitive, compared to E,L. mitigation strategies?
+# Expansions for frequencies when approaching small values?
+da = 1.e-8
+f1m,f2m = OrbitalElements.IsochroneOmega12FromAE(a,e,bc,M,G)
+f1a,f2a = OrbitalElements.IsochroneOmega12FromAE(a+da,e,bc,M,G)
+f1e,f2e = OrbitalElements.IsochroneOmega12FromAE(a,e+da,bc,M,G)
+df1da2,df1de2,df2da2,df2de2 = (f1a-f1m)/da,(f1e-f1m)/da,(f2a-f2m)/da,(f2e-f2m)/da
+println("Comp derivatives:df1da=$df1da,df1da2=$df1da2")
+println("Comp derivatives:df1de=$df1de,df1de2=$df1de2")
+println("Comp derivatives:df2da=$df2da,df2da2=$df2da2")
+println("Comp derivatives:df2de=$df2de,df2de2=$df2de2")
+
+println("Checking E,L derivatives")
+#da = 1.e-5
+Em,Lm = OrbitalElements.IsochroneELFromAE(a,e,bc,M,G)
+Ea,La = OrbitalElements.IsochroneELFromAE(a+da,e,bc,M,G)
+Ee,Le = OrbitalElements.IsochroneELFromAE(a,e+da,bc,M,G)
+dEda2,dEde2,dLda2,dLde2 = (Ea-Em)/da,(Ee-Em)/da,(La-Lm)/da,(Le-Lm)/da
+println("Comp derivatives:dEda=$dEda,dEda2=$dEda2")
+println("Comp derivatives:dEde=$dEde,dEde2=$dEde2")
+println("Comp derivatives:dLda=$dLda,dLda2=$dLda2")
+println("Comp derivatives:dLde=$dLde,dLde2=$dLde2")
+
+# do all Jacobians tend to a value when a->0?
 
 
 #=

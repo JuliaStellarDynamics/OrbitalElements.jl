@@ -216,6 +216,19 @@ function isochrone_EL_from_rpra(rp::Float64,ra::Float64,bc::Float64=1.,M::Float6
     return scaleEnergy/(sp+sa),sqrt(2)*L0*xp*xa/sqrt((1+sp)*(1+sa)*(sp+sa))
 end
 
+"""
+energy and angular momentum from isochrone model, using ae
+"""
+function IsochroneELFromAE(a::Float64,ecc::Float64,bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
+    rp,ra = a*(1-ecc),a*(1+ecc)
+    xp          = rp/bc
+    xa          = ra/bc
+    L0          = isochrone_L0(bc,M,astronomicalG)
+    scaleEnergy = isochrone_E0(bc,M,astronomicalG)
+    sp,sa       = IsochroneSpSaFromRpRa(rp,ra,bc)
+    return scaleEnergy/(sp+sa),sqrt(2)*L0*xp*xa/sqrt((1+sp)*(1+sa)*(sp+sa))
+end
+
 
 function isochrone_dthetadu_from_rpra(r::Float64,u::Float64,rp::Float64,ra::Float64,bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
     #=
