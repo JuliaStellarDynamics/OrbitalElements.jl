@@ -37,7 +37,7 @@ function plummer_ROI_DF(E::Float64,L::Float64,ra::Float64,bc::Float64=1.,M::Floa
     # dimensionless anisotropy radius
     gamma = (bc/ra)^2
 
-    prefactor = (M/((G*M*bc)^(3/2))) * (48*sqrt(3)/(7*(pi^3)))
+    prefactor = (M/((astronomicalG*M*bc)^(3/2))) * (48*sqrt(3)/(7*(pi^3)))
 
     return prefactor * (Q^(7/2)) * (1-gamma+7gamma/(16*(Q^2)))
 
@@ -49,12 +49,12 @@ the derivative of the anisotropic distribution function
 """
 function plummer_ROI_dFdQ(Q::Float64,ra::Float64,bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
 
-    Q = plummer_ROI_Q(E,L,ra,bc,M,astronomicalG)
+    #Q = plummer_ROI_Q(E,L,ra,bc,M,astronomicalG)
 
     # dimensionless anisotropy radius
     gamma = (bc/ra)^2
 
-    prefactor = (M/((G*M*bc)^(3/2))) * (48*sqrt(3)/(7*(pi^3)))
+    prefactor = (M/((astronomicalG*M*bc)^(3/2))) * (48*sqrt(3)/(7*(pi^3)))
 
     return prefactor * sqrt(Q) * ( ((7/2)-(7gamma/2))*Q*Q + (21gamma/32))
 
@@ -68,7 +68,7 @@ function plummer_ISO_DF(E::Float64,bc::Float64=1.,M::Float64=1.,astronomicalG::F
 
     scaleEnergy = - astronomicalG * M / bc
 
-    prefactor = (M/((G*M*bc)^(3/2))) * (48*sqrt(3)/(7*(pi^3)))
+    prefactor = (M/((astronomicalG*M*bc)^(3/2))) * (48*sqrt(3)/(7*(pi^3)))
 
     return prefactor * (E/scaleEnergy)^(7/2)
 
@@ -82,7 +82,7 @@ function plummer_ISO_dFdE(E::Float64,bc::Float64=1.,M::Float64=1.,astronomicalG:
 
     scaleEnergy = - astronomicalG * M / bc
 
-    prefactor = (M/((G*M*bc)^(3/2))) * (24*sqrt(3)/(7*(pi^3)))
+    prefactor = (M/((astronomicalG*M*bc)^(3/2))) * (24*sqrt(3)/(7*(pi^3)))
 
     return prefactor * (E/scaleEnergy)^(5/2)
 
