@@ -152,7 +152,7 @@ wrapper to select which type of frequency computation to perform, from (a,e)
 function compute_frequencies_rpra(potential::Function,dpotential::Function,ddpotential::Function,
                                   r_peri::Float64,r_apo::Float64,TOLECC::Float64=0.001,verbose::Int64=0,NINT=32)
 
-        f1,f2 = compute_frequencies_henon(potential,dpotential,ddpotential,r_peri,r_apo,TOLECC=TOLECC,verbose=verbose,NINT=NINT)
+        f1,f2 = compute_frequencies_henon(potential,dpotential,ddpotential,r_peri,r_apo,action=false,TOLECC=TOLECC,verbose=verbose,NINT=NINT)
 
         return f1,f2
 end

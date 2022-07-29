@@ -110,7 +110,7 @@ end
 """compute_frequences_henon(ψ,dψ/dr,d²ψ/dr²,rp,ra[,TOLECC,verbose])
 """
 function compute_frequencies_henon(potential::Function,dpotential::Function,ddpotential::Function,
-        r_peri::Float64,r_apo::Float64,action::Bool=false,TOLECC::Float64=0.01,verbose::Int64=0,NINT::Int64=32)
+        r_peri::Float64,r_apo::Float64;action::Bool=false,TOLECC::Float64=0.01,verbose::Int64=0,NINT::Int64=32)
 
     E = E_from_rpra_pot(potential,dpotential,ddpotential,r_peri,r_apo)
     J = L_from_rpra_pot(potential,dpotential,ddpotential,r_peri,r_apo)
