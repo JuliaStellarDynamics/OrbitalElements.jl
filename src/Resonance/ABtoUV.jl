@@ -16,15 +16,7 @@ function alphabeta_from_uv(u::Float64,v::Float64,
 
     ωmin,ωmax = find_wmin_wmax(n1,n2,dψdr,d²ψdr²,rmax,Omega0)
 
-    if n2 == 0
-        beta  = v
-        alpha = (1/(2n1))*((ωmax-ωmin)*u + ωmin + ωmax)
-    else
-        alpha = v
-        beta  = (1/(n2*v))*(0.5*((ωmax-ωmin)*u + ωmin + ωmax) - n1*v)
-    end
-
-    return alpha,beta
+    return alphabeta_from_uv(u,v,n1,n2,ωmin,ωmax)
 end
 
 """alphabeta_from_uv(u,v,n1,n2,ωmin,ωmax)
@@ -42,10 +34,10 @@ function alphabeta_from_uv(u::Float64,v::Float64,
 
     if n2 == 0
         beta  = v
-        alpha = (1/(2n1))*((ωmax-ωmin)*u + ωmin + ωmax)
+        alpha = (1.0/(2*n1))*((ωmax-ωmin)*u + ωmin + ωmax)
     else
         alpha = v
-        beta  = (1/(n2*v))*(0.5*((ωmax-ωmin)*u + ωmin + ωmax) - n1*v)
+        beta  = (1.0/(n2*v))*(0.5*((ωmax-ωmin)*u + ωmin + ωmax) - n1*v)
     end
 
     return alpha,beta
@@ -65,17 +57,7 @@ function uv_from_alphabeta(alpha::Float64,beta::Float64,
 
     ωmin,ωmax = find_wmin_wmax(n1,n2,dψdr,d²ψdr²,rmax,Omega0)
 
-    wval = n1*alpha + n2*beta*alpha
-
-    u = (2*wval - ωmax - ωmin)/(ωmax-ωmin)
-
-    if (n2==0)
-        v = beta
-    else
-        v = alpha
-    end
-
-    return u,v
+    return uv_from_alphabeta(alpha,beta,n1,n2,ωmin,ωmax)
 
 end
 
@@ -116,8 +98,8 @@ using the definitions for (alpha, beta) and (u,v), compute the Jacobian.
 function Jacalphabeta_to_uv(n1::Int64,n2::Int64,w_min::Float64,w_max::Float64,v::Float64)
 
     if n2 ==0
-        return (2.0/(w_max-w_min))*abs((w_max-w_min) * (1/(2n1)))
+        return (2.0/(w_max-w_min))*abs((w_max-w_min) * (1/(2*n1)))
     else
-        return (2.0/(w_max-w_min))*abs((w_max-w_min) * (1/(2n2*v)))
+        return (2.0/(w_max-w_min))*abs((w_max-w_min) * (1/(2*n2*v)))
     end
 end
