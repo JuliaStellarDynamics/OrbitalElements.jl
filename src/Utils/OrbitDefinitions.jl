@@ -56,7 +56,7 @@ initialise an orbit in (a,e) space, returning rperi,rapo,rcirc,L
 @IMPROVE: something better than defaulting to circular below some eccentricity?
 
 """
-function make_orbit_ae(potential::Function,
+function make_orbit_ae(potential::Function, dpotential::Function, ddpotential::Function,
                        a::Float64,
                        ecc::Float64,
                        rmax::Float64=100000.,
@@ -65,8 +65,8 @@ function make_orbit_ae(potential::Function,
     r_peri,r_apo = rpra_from_ae(a,ecc)
 
     # get (E,L)
-    E = E_from_rpra_pot(potential,r_peri,r_apo,TOLECC)
-    L = L_from_rpra_pot(potential,r_peri,r_apo,TOLECC)
+    E = E_from_rpra_pot(potential,dpotential,ddpotential,r_peri,r_apo;TOLECC=TOLECC)
+    L = L_from_rpra_pot(potential,dpotential,ddpotential,r_peri,r_apo;TOLECC=TOLECC)
 
     if ecc<TOLECC
         r_circ = a
