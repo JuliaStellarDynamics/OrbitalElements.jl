@@ -119,3 +119,21 @@ function make_betac(dpotential::Function,ddpotential::Function,numr::Int64=2000,
     return calculate_betac
 
 end
+
+"""beta_circ(alpha_circ, dψ/dr,d²ψ/dr²[Omega0, rmax])
+return \beta_c(\alpha), the frequency O2/O1 frequency ratio as a function of O1.
+
+@IMPROVE: find Omega0 adaptively
+
+"""
+function beta_circ(alpha_circ::Float64,dpotential::Function,ddpotential::Function,Omega0::Float64=1.,rmax::Float64=1000.)
+
+    # define the circular frequencies
+    omega1 = Omega0 * alpha_circ
+    rcirc = Omega1circ_to_radius(omega1,dpotential,ddpotential,rmax)
+
+    omega2 = Omega2_circular(dpotential,rcirc)
+
+    return omega2/omega1
+
+end
