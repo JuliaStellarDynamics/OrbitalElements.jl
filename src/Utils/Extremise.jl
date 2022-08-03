@@ -4,7 +4,7 @@ This should almost certainly be it's own julia tool, but we can keep it here for
 
 """
 
-"""extremise_function
+"""ExtremiseFunction
 
 Find the single extremum of a function between minval and maxval
 
@@ -15,33 +15,34 @@ Requires exactly 2*neps evaluations of the function
 
 
 """
-function extremise_function(func::Function,neps::Int64=32,minval::Float64=0.,maxval::Float64=1.,verbose::Bool=false)
+function ExtremiseFunction(func::Function,neps::Int64=32,minval::Float64=0.,maxval::Float64=1.;verbose::Bool=false,fullreturn::Bool=false)
 
     if neps > 50
         # this should be able to do 53 for double precision, but I've found some bugs before that.
         neps = 50
-        print("extremise_function- reached maximum precision.\n")
+        println("OrbitalElements.Extremise.jl: ExtremiseFunction- reached maximum precision.")
     end
 
+    # set the finite difference derivative step size as the requested minimum
     deps = 1/2^(neps)
 
     width = maxval - minval
 
     # check the endpoint derivatives
-    left_end_derivative = func(minval+deps)-func(minval)
+    left_end_derivative  = func(minval+deps)-func(minval)
     right_end_derivative = func(maxval) - func(maxval-deps)
 
     if left_end_derivative*right_end_derivative > 0
         if verbose
-            print("Monotonic\n")
+            println("OrbitalElements.Extremise.jl: Input function is monotonic")
         end
         return -1
     end
 
     left_derivative  = left_end_derivative
     right_derivative = right_end_derivative
-    leftmin = 0.
-    rightmax = width
+    leftmin  = minval
+    rightmax = minval+width
 
     # set flag for final precision step counter
     rflag = false
@@ -55,6 +56,8 @@ function extremise_function(func::Function,neps::Int64=32,minval::Float64=0.,max
         mid_left_derivative  = midfunc - func(midpoint-deps)
         mid_right_derivative = func(midpoint+deps) - midfunc
 
+        # check here for NaN values:
+
         # consider a special case of equal derivatives to block extra evaluations
         #print(mid_left_derivative,'=',mid_right_derivative)
         # if first step, turn up deps and check that we aren't in a weird locality
@@ -62,7 +65,7 @@ function extremise_function(func::Function,neps::Int64=32,minval::Float64=0.,max
             # we are directly on the extremum!
             if iter==1
                 if verbose
-                    print("Turning up deps\n")
+                    println("OrbitalElements.Extremise.jl: Turning up deps")
                     deps = 1/2^(floor(Int, neps/2))
                     mid_left_derivative  = midfunc - func(midpoint-deps)
                     mid_right_derivative = func(midpoint+deps) - midfunc
@@ -70,7 +73,7 @@ function extremise_function(func::Function,neps::Int64=32,minval::Float64=0.,max
                     # what if we are directly at the midpoint?
                     if mid_left_derivative == -mid_right_derivative
                         if verbose
-                            print("Directly centred at ",midpoint,"\n")
+                            println("OrbitalElements.Extremise.jl: Directly centred at $midpoint")
                         end
                         return midpoint
                     end
@@ -79,7 +82,7 @@ function extremise_function(func::Function,neps::Int64=32,minval::Float64=0.,max
                 continue
             else
                 if verbose
-                    print("Directly centred at ",midpoint,"\n")
+                    println("OrbitalElements.Extremise.jl: Directly centred at $midpoint")
                 end
                 return midpoint
             end
@@ -92,12 +95,16 @@ function extremise_function(func::Function,neps::Int64=32,minval::Float64=0.,max
             # set the right derivative to be the old midpoint left derivative
             right_derivative = mid_left_derivative
         end
-        #else
-        if mid_right_derivative*right_derivative < 0 # if not on left, must be on the right side
+
+        # check if on the right side of the interval
+        # if not on left, must be on the right side!
+        if mid_right_derivative*right_derivative < 0
             # set the left side (minimum) to be the midpoint
             leftmin = midpoint
-
+            # set the left derivative to be the old midpoint right derivative
             left_derivative = mid_right_derivative
+
+            # check if we are at the final step
             if (iter == neps)
                 rflag = true
             end
@@ -105,7 +112,7 @@ function extremise_function(func::Function,neps::Int64=32,minval::Float64=0.,max
 
         # watch the convergence fly by...
         if verbose
-            print(iter,' ',midpoint,' ',leftmin,' ',rightmax,'\n')
+            println("OrbitalElements.Extremise.jl: #$iter: best=$midpoint, min=$leftmin, max=$rightmax")
         end
 
         # can add some fancy check here for oscillatory convergence, if we want
@@ -122,9 +129,17 @@ function extremise_function(func::Function,neps::Int64=32,minval::Float64=0.,max
 
             # take one last midpoint based on which side the derivative is on
             if rflag
-                return midpoint + 1/(2^(neps+1))
+                if fullreturn
+                    return midpoint + 1/(2^(neps+1)),leftmin,rightmax
+                else
+                    return midpoint + 1/(2^(neps+1))
+                end
             else
-                return midpoint - 1/(2^(neps+1))
+                if fullreturn
+                    return midpoint - 1/(2^(neps+1)),leftmin,rightmax
+                else
+                    return midpoint - 1/(2^(neps+1))
+                end
             end
 
         end

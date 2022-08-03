@@ -24,7 +24,7 @@ function find_wmin_wmax(n1::Int64,n2::Int64,
     # define the function to extremise
     extreme(x) = n1*Omega1_circular(dpotential,ddpotential,x) + n2*Omega2_circular(dpotential,x)
 
-    m = extremise_function(extreme,Ziter,0.,rmax,false)
+    m = ExtremiseFunction(extreme,Ziter,0.,rmax,verbose=false)
 
     # for the problem of a cored cluster with an infinite extent, the w minima and maxima are either
     # in the very centre
@@ -48,7 +48,7 @@ function find_vbound(n1::Int64,n2::Int64,
     # define the function to extremise
     extreme(x) = n1*Omega1_circular(dpotential,ddpotential,x) + n2*Omega2_circular(dpotential,x)
 
-    m = extremise_function(extreme,Ziter,0.,rmax,false)
+    m = ExtremiseFunction(extreme,Ziter,0.,rmax,verbose=false)
 
     vbound = Omega1_circular(dpotential,ddpotential,m)/Ω₀
 
@@ -74,9 +74,24 @@ function get_varpi(omg::Complex{Float64},
 
     w_min,w_max = find_wmin_wmax(n1,n2,dpotential,ddpotential,rmax,Ω₀)
 
-    return (2omg - w_max - w_min)/(w_max - w_min)
+    return (2.0*omg - w_max - w_min)/(w_max - w_min)
 
 end
+
+"""
+varpi version with w_min, w_max
+
+"""
+function get_varpi(omg::Complex{Float64},
+                   n1::Int64,n2::Int64,
+                   w_min::Float64,w_max::Float64)
+
+    #w_min,w_max = find_wmin_wmax(n1,n2,dpotential,ddpotential,rmax,Ω₀)
+
+    return (2.0*omg - w_max - w_min)/(w_max - w_min)
+
+end
+
 
 """hu(u,wmin,wmax)
 return h, a helper quantity

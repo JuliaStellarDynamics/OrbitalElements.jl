@@ -66,11 +66,30 @@ end
 
 """Omega1circ_to_radius(Ω₁,dψ/dr,d²ψ/dr²,rmax)
 perform backwards mapping from Omega_1 for a circular orbit to radius
+
+can tune [rmin,rmax] for extra optimisation (but not needed)
 """
-function Omega1circ_to_radius(omega::Float64,dpotential::Function,ddpotential::Function,rmax::Float64=1000.)
-    r_omega1 = optimize(x -> abs(omega - Omega1_circular(dpotential,ddpotential,x)), 0.    ,rmax  , Brent()).minimizer
+function Omega1circ_to_radius(omega::Float64,dpotential::Function,ddpotential::Function;rmin::Float64=0.0,rmax::Float64=10000.0)
+    r_omega1 = optimize(x -> abs(omega - Omega1_circular(dpotential,ddpotential,x)), rmin    ,rmax  , Brent()).minimizer
     return r_omega1
 end
+
+
+function Omega1circ_to_radius_bisect(omega::Float64,dpotential::Function,ddpotential::Function;rmin::Float64=1.0e-8,rmax::Float64=10000.0,Ziter::Int64=32,verbose::Bool=false)
+
+    # the function to extremise
+    extreme(x) = abs(omega - Omega1_circular(dpotential,ddpotential,x))
+
+    # step 1: do a semi-coarse pass over the whole range (24 refinements)
+    m,newrmin,newrmax = ExtremiseFunction(extreme,24,rmin,rmax,verbose=verbose,fullreturn=true)
+
+    # step 2: reset the boundaries and do a fine pass
+    m = ExtremiseFunction(extreme,Ziter,newrmin,newrmax,verbose=verbose)
+
+    return m
+
+end
+
 
 """Omega2circ_to_radius(Ω₂,dψ/dr,d²ψ/dr²[,rmax])
 perform backwards mapping from Omega_2 for a circular orbit to radius
@@ -79,6 +98,24 @@ function Omega2circ_to_radius(omega::Float64,dpotential::Function,rmax::Float64=
     r_omega2 = optimize(x -> abs(omega - Omega2_circular(dpotential,x)), 0.    ,rmax  , Brent()).minimizer
     return r_omega2
 end
+
+
+function Omega2circ_to_radius_bisect(omega::Float64,dpotential::Function;rmin::Float64=1.0e-8,rmax::Float64=10000.0,Ziter::Int64=32,verbose::Bool=false)
+
+    # the function to extremise
+    extreme(x) = abs(omega - Omega2_circular(dpotential,x))
+
+    # step 1: do a semi-coarse pass over the whole range (24 refinements)
+    # the coarse refinement level depends on how small of radii we want to get to
+    m,newrmin,newrmax = ExtremiseFunction(extreme,24,rmin,rmax,verbose=verbose,fullreturn=true)
+
+    # step 2: reset the boundaries and do a fine pass
+    m = ExtremiseFunction(extreme,Ziter,newrmin,newrmax,verbose=verbose)
+
+    return m
+
+end
+
 
 
 """make_betac(dψ/dr,d²ψ/dr²[,numr,Omega0])
@@ -130,7 +167,8 @@ function beta_circ(alpha_circ::Float64,dpotential::Function,ddpotential::Functio
 
     # define the circular frequencies
     omega1 = Omega0 * alpha_circ
-    rcirc = Omega1circ_to_radius(omega1,dpotential,ddpotential,rmax)
+    #rcirc = Omega1circ_to_radius(omega1,dpotential,ddpotential,rmax)
+    rcirc = Omega1circ_to_radius_bisect(omega1,dpotential,ddpotential,rmax)
 
     omega2 = Omega2_circular(dpotential,rcirc)
 
