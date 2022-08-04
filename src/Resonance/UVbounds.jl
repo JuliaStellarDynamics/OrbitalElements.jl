@@ -83,10 +83,7 @@ varpi version with w_min, w_max
 
 """
 function get_varpi(omg::Complex{Float64},
-                   n1::Int64,n2::Int64,
                    w_min::Float64,w_max::Float64)
-
-    #w_min,w_max = find_wmin_wmax(n1,n2,dpotential,ddpotential,rmax,Ω₀)
 
     return (2.0*omg - w_max - w_min)/(w_max - w_min)
 

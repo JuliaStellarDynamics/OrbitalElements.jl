@@ -32,7 +32,7 @@ end
 @IMPROVE fix boundary values when using limited development
 @IMPROVE noisy at the boundaries
 """
-function JacELToAlphaBetaAE(a::Float64,ecc::Float64,ψ::Function,dψdr::Function,d²ψdr²::Function,Ω₀::Float64)
+function JacELToAlphaBetaAE(a::Float64,ecc::Float64,ψ::Function,dψdr::Function,d²ψdr²::Function,Ω₀::Float64;nancheck::Bool=false)
 
     # to be fixed for limited development...
     if ecc>0.99
@@ -44,12 +44,35 @@ function JacELToAlphaBetaAE(a::Float64,ecc::Float64,ψ::Function,dψdr::Function
     end
 
     # get all numerical derivatives
-    f1c,f2c,df1da,df2da,df1de,df2de = compute_frequencies_ae_derivs(ψ,dψdr,d²ψdr²,a,ecc)
-    Ec,Lc,dEda,dEde,dLda,dLde = dEdL_from_ae_pot(ψ,dψdr,d²ψdr²,a,ecc)
+    f1c,f2c,df1da,df2da,df1de,df2de = ComputeFrequenciesAEWithDeriv(ψ,dψdr,d²ψdr²,a,ecc)
+    Ec,Lc,dEda,dEde,dLda,dLde       = dEdL_from_ae_pot(ψ,dψdr,d²ψdr²,a,ecc)
 
     # construct Jacobians
-    J_EL_ae = abs(dEda*dLde - dEde*dLda)
+    J_EL_ae   = abs(dEda*dLde - dEde*dLda)
     J_o1o2_ae = abs(df1da*df2de - df1de*df2da)
+
+    # check for NaN or zero values
+    if nancheck
+        if isnan(J_EL_ae)
+            println("OrbitalElements.Frequencies.JacELToAlphaBetaAE: J_EL_ae is NaN for a=$a,e=$ecc")
+            return 1.0
+        end
+
+        if J_EL_ae == 0.0
+            println("OrbitalElements.Frequencies.JacELToAlphaBetaAE: J_EL_ae is 0 for a=$a,e=$ecc")
+            return 1.0
+        end
+
+        if isnan(J_o1o2_ae)
+            println("OrbitalElements.Frequencies.JacELToAlphaBetaAE: J_o12_ae is NaN for a=$a,e=$ecc")
+            return 1.0
+        end
+
+        if J_o1o2_ae == 0.0
+            println("OrbitalElements.Frequencies.JacELToAlphaBetaAE: J_o12_ae is 0 for a=$a,e=$ecc")
+            return 1.0
+        end
+    end
 
     # combine and return
     return f1c*Ω₀*J_EL_ae/J_o1o2_ae
@@ -108,12 +131,12 @@ function compute_ae_from_frequencies(potential::Function,dpotential::Function,dd
 end
 
 
-"""compute_frequencies_ae_derivs(ψ,dψ/dr,d²ψ/dr²a,ecc[,TOLECC,verbose])
+"""ComputeFrequenciesAEWithDeriv(ψ,dψ/dr,d²ψ/dr²a,ecc[,TOLECC,verbose])
 wrapper to select which type of frequency computation to perform, from (a,e), but DERIVATIVES
 
 @IMPROVE: could add action derivatives here? more copacetic with analytic derivatives anyway
 """
-function compute_frequencies_ae_derivs(potential::Function,
+function ComputeFrequenciesAEWithDeriv(potential::Function,
                                        dpotential::Function,
                                        ddpotential::Function,
                                        a::Float64,
@@ -123,6 +146,8 @@ function compute_frequencies_ae_derivs(potential::Function,
                                        TOLECC::Float64=0.001,
                                        verbose::Int64=0,
                                        NINT::Int64=32)
+
+        # first, check for values that need to be expanded
 
         # grid is structured like
         # (f1h,f2h) [+da]
@@ -144,6 +169,45 @@ function compute_frequencies_ae_derivs(potential::Function,
 
         return f1c,f2c,df1da,df2da,df1de,df2de
 end
+
+
+function ComputeFrequenciesAEWithDerivCircular(potential::Function,
+                                               dpotential::Function,
+                                               ddpotential::Function,
+                                               a::Float64,
+                                               ecc::Float64,
+                                               da::Float64=0.0001,
+                                               de::Float64=0.1,
+                                               TOLECC::Float64=0.001,
+                                               verbose::Int64=0,
+                                               NINT::Int64=32)
+
+        # get the frequencies using the epicyclic approximation
+        f1c = Omega1_circular(dpotential,ddpotential,a)
+        f2c = Omega2_circular(dpotential,a)
+
+        # grid is structured like
+        # (f1h,f2h) [+da]
+        #    ^
+        # (f1c,f2c)-> (f1r,f2r) [+de]
+
+        # @IMPROVE watch out for close to TOLECC, will fail across boundary
+        f1c,f2c = compute_frequencies_henon_ae(potential,dpotential,ddpotential,a,ecc,action=false,TOLECC=TOLECC,verbose=verbose,NINT=NINT)
+
+        f1h,f2h = compute_frequencies_henon_ae(potential,dpotential,ddpotential,a+da,ecc,action=false,TOLECC=TOLECC,verbose=verbose,NINT=NINT)
+
+        f1r,f2r = compute_frequencies_henon_ae(potential,dpotential,ddpotential,a,ecc+de,action=false,TOLECC=TOLECC,verbose=verbose,NINT=NINT)
+
+        df1da = (f1h-f1c)/da
+        df2da = (f2h-f2c)/da
+
+        df1de = (f1r-f1c)/de
+        df2de = (f2r-f2c)/de
+
+        return f1c,f2c,df1da,df2da,df1de,df2de
+end
+
+
 
 
 """compute_frequencies_rpra(ψ,dψ/dr,d²ψ/dr²,r_peri,r_apo[,TOLECC,verbose])

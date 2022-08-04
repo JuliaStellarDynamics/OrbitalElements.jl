@@ -16,7 +16,7 @@ d²ψdr²(r::Float64)::Float64  = OrbitalElements.isochrone_ddpsi_ddr(r,bc,M,G)
 
 
 # select an (a,e) value for the orbit
-a,e = 1.0e3, 0.0
+a,e = 1.0e-3, 0.01
 
 # compute rperi and rapo
 rp,ra = OrbitalElements.rpra_from_ae(a,e); @printf("rp=%f ra=%f\n", rp,ra)

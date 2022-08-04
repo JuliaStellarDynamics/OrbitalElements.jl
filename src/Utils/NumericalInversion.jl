@@ -43,7 +43,7 @@ function ae_from_omega1omega2_brute(omega1::Float64,omega2::Float64,
     iter = 0
     while (((omega1 - f1)^2 + (omega2 - f2)^2) > eps^2)
 
-        f1,f2,df1da,df2da,df1de,df2de = compute_frequencies_ae_derivs(potential,dpotential,ddpotential,aguess,eguess,da,de,TOLECC,verbose)
+        f1,f2,df1da,df2da,df1de,df2de = ComputeFrequenciesAEWithDeriv(potential,dpotential,ddpotential,aguess,eguess,da,de,TOLECC,verbose)
 
         jacobian = [df1da df1de ; df2da df2de]
 
