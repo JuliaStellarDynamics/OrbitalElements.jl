@@ -43,7 +43,7 @@ function henon_theta_frequencies(potential::Function,
     for j=1:((NINT÷2) - 1)
         accum1 += 2 * Theta(potential,dpotential,ddpotential,x[2j],rperi,rapo,EDGE)
         accum2 += 2 * Theta(potential,dpotential,ddpotential,x[2j],rperi,rapo,EDGE)/(ru(x[2j],rperi,rapo)^2)
-        accum3 += 2 * Theta(potential,dpotential,ddpotential,x[2j],rperi,rapo,EDGE) * Q(potential,dpotential,ddpotential,x[2j],rperi,rapo,EDGE)
+        accum3 += 2 * Theta(potential,dpotential,ddpotential,x[2j],rperi,rapo,EDGE) * Q(potential,dpotential,ddpotential,x[2j],rperi,rapo)
     end
 
     # complete the integration with weighting

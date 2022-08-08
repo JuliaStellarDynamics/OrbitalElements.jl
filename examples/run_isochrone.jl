@@ -40,6 +40,7 @@ println("Ω₂ Bisect r=$rcirc1, Brent r=$rcirc0")
 # make a HIGH RES version of the frequencies
 #Ω₁r,Ω₂r = OrbitalElements.compute_frequencies_ae(ψ,dψdr,d²ψdr²,a,e,NINT=1024)
 Ω₁c,Ω₂c,Jrc = OrbitalElements.compute_frequencies_ae(ψ,dψdr,d²ψdr²,a,e,NINT=32,action=true)
+Ω₁c,Ω₂c,Jrc = OrbitalElements.henon_theta_frequencies(ψ,dψdr,d²ψdr²,rp,ra,NINT=32,action=true)
 @printf("O1=%f O1guess=%f O2=%f O2guess=%f\n", Ω₁r,Ω₁c,Ω₂r,Ω₂c)
 
 alpha,beta = Ω₁c/Ω₀,Ω₂c/Ω₁c
