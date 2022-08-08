@@ -16,7 +16,7 @@ d²ψdr²(r::Float64)::Float64  = OrbitalElements.isochrone_ddpsi_ddr(r,bc,M,G)
 
 
 # select an (a,e) value for the orbit
-a,e = 1.0e-3, 0.01
+a,e = 1.0, 0.5
 
 # compute rperi and rapo
 rp,ra = OrbitalElements.rpra_from_ae(a,e); @printf("rp=%f ra=%f\n", rp,ra)
@@ -37,16 +37,10 @@ rcirc0 = OrbitalElements.Omega2circ_to_radius(Ω₂r,dψdr)
 println("Ω₂ Bisect r=$rcirc1, Brent r=$rcirc0")
 
 
-
-extreme(x) = abs(Ω₁r - OrbitalElements.Omega1_circular(dψdr,d²ψdr²,x))
-println(extreme(1.0))
-println(extreme(0.1))
-println(extreme(10.0))
-
-
 # make a HIGH RES version of the frequencies
 #Ω₁r,Ω₂r = OrbitalElements.compute_frequencies_ae(ψ,dψdr,d²ψdr²,a,e,NINT=1024)
 Ω₁c,Ω₂c,Jrc = OrbitalElements.compute_frequencies_ae(ψ,dψdr,d²ψdr²,a,e,NINT=32,action=true)
+Ω₁c,Ω₂c,Jrc = OrbitalElements.henon_theta_frequencies(ψ,dψdr,d²ψdr²,rp,ra,NINT=32,action=true)
 @printf("O1=%f O1guess=%f O2=%f O2guess=%f\n", Ω₁r,Ω₁c,Ω₂r,Ω₂c)
 
 alpha,beta = Ω₁c/Ω₀,Ω₂c/Ω₁c
@@ -55,25 +49,41 @@ J_EL_ab = OrbitalElements.isochrone_JacEL_to_alphabeta(alpha,beta,bc,M,G)
 println("Jacobian(EL,ab):$J_EL_ab")
 
 # get the numerical frequency derivatives at this point
-f1c,f2c,df1da,df2da,df1de,df2de = OrbitalElements.compute_frequencies_ae_derivs(ψ,dψdr,d²ψdr²,a,e)
+f1c,f2c,df1da,df2da,df1de,df2de = OrbitalElements.ComputeFrequenciesAEWithDeriv(ψ,dψdr,d²ψdr²,a,e)
+#f1c,f2c,df1da,df2da,df1de,df2de = OrbitalElements.ComputeFrequenciesAEWithDerivCircular(ψ,dψdr,d²ψdr²,a,e)
+f1c2,f2c2,df1drp,df2drp,df1dra,df2dra = OrbitalElements.ComputeFrequenciesRpRaWithDeriv(ψ,dψdr,d²ψdr²,rp,ra,TOLECC=-1.0)
+
+println("df1drp=$df1drp,df2drp=$df2drp,df1dra=$df1dra,df2dra=$df2dra")
+
 Ec,Lc,dEda,dEde,dLda,dLde = OrbitalElements.dEdL_from_ae_pot(ψ,dψdr,d²ψdr²,a,e)
 
 J_EL_ae = abs(dEda*dLde - dEde*dLda)
 J_o1o2_ae = abs(df1da*df2de - df1de*df2da)
+J_o1o2_rpra = abs(df1drp*df2dra - df1dra*df2drp)
 
 tJ_EL_ab = f1c*Ω₀*J_EL_ae/J_o1o2_ae
+tJ_EL_abT = f1c*Ω₀*J_EL_ae/J_o1o2_rpra/(2*a)
+
 println("NJacobian(EL,ab):$tJ_EL_ab")
-println("Components,$J_EL_ae/$J_o1o2_ae")
+println("NJacobianT(EL,ab):$tJ_EL_abT")
+
+println("Components,$J_EL_ae/$J_o1o2_ae*$f1c*$Ω₀")
 
 # print the analytic and numerical derivatives. who is failing at the boundaries?
 println("Checking O1,O2 derivatives")
 # frequency derivatives are more sensitive, compared to E,L. mitigation strategies?
 # Expansions for frequencies when approaching small values?
-da = 1.e-8
+da = 1.e-6
+de = 1.e-6
+
+if e+de > 1.0
+    de *= -1.0
+end
+
 f1m,f2m = OrbitalElements.IsochroneOmega12FromAE(a,e,bc,M,G)
 f1a,f2a = OrbitalElements.IsochroneOmega12FromAE(a+da,e,bc,M,G)
-f1e,f2e = OrbitalElements.IsochroneOmega12FromAE(a,e+da,bc,M,G)
-df1da2,df1de2,df2da2,df2de2 = (f1a-f1m)/da,(f1e-f1m)/da,(f2a-f2m)/da,(f2e-f2m)/da
+f1e,f2e = OrbitalElements.IsochroneOmega12FromAE(a,e+de,bc,M,G)
+df1da2,df1de2,df2da2,df2de2 = (f1a-f1m)/da,(f1e-f1m)/de,(f2a-f2m)/da,(f2e-f2m)/de
 println("Comp derivatives:df1da=$df1da,df1da2=$df1da2")
 println("Comp derivatives:df1de=$df1de,df1de2=$df1de2")
 println("Comp derivatives:df2da=$df2da,df2da2=$df2da2")
@@ -81,15 +91,21 @@ println("Comp derivatives:df2de=$df2de,df2de2=$df2de2")
 
 println("Checking E,L derivatives")
 #da = 1.e-5
+
 Em,Lm = OrbitalElements.IsochroneELFromAE(a,e,bc,M,G)
 Ea,La = OrbitalElements.IsochroneELFromAE(a+da,e,bc,M,G)
-Ee,Le = OrbitalElements.IsochroneELFromAE(a,e+da,bc,M,G)
-dEda2,dEde2,dLda2,dLde2 = (Ea-Em)/da,(Ee-Em)/da,(La-Lm)/da,(Le-Lm)/da
+Ee,Le = OrbitalElements.IsochroneELFromAE(a,e+de,bc,M,G)
+dEda2,dEde2,dLda2,dLde2 = (Ea-Em)/da,(Ee-Em)/de,(La-Lm)/da,(Le-Lm)/de
 println("Comp derivatives:dEda=$dEda,dEda2=$dEda2")
 println("Comp derivatives:dEde=$dEde,dEde2=$dEde2")
 println("Comp derivatives:dLda=$dLda,dLda2=$dLda2")
 println("Comp derivatives:dLde=$dLde,dLde2=$dLde2")
 
+
+J_EL_aeA = abs(dEda2*dLde2 - dEde2*dLda2)
+J_o1o2_aeA = abs(df1da2*df2de2 - df1de2*df2da2)
+tJ_EL_abA = f1m*Ω₀*J_EL_aeA/J_o1o2_aeA
+println("AJacobian(EL,ab):$tJ_EL_abA")
 # do all Jacobians tend to a value when a->0?
 
 

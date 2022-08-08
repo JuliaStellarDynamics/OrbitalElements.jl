@@ -1,5 +1,10 @@
 
 
+using HypergeometricFunctions
+using SpecialFunctions
+
+
+
 """
 Q(E,L), the variable for anisotropy distribution functions.
 

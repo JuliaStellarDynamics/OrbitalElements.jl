@@ -34,6 +34,19 @@ function ddrddu(u::Float64,rperi::Float64,rapo::Float64)
     return -3*a*e*u
 end
 
+"""dddrdddu(u,rp,ra)
+third derivative of r(u)
+"""
+function dddrdddu(u::Float64,rperi::Float64,rapo::Float64)
+    a,e = (rperi+rapo)/2,(rapo-rperi)/(rapo+rperi)
+
+    return -3*a*e
+end
+
+"""
+all additional derivatives of r(u) are 0
+"""
+
 """Q(ψ,dψ/dr,d²ψ/dr²,u,rp,ra)
 Q \equiv 2(E-psi(r)) - L^2/r^2
 uses mapping r(u)
@@ -65,28 +78,54 @@ function expandThetaNeg(potential::Function,dpotential::Function,ddpotential::Fu
     end
 
     ddr = ddrddu(u,rp,ra)
+    ddr = ddrddu(-1.0,rp,ra)
     dQdrval = dQdr(potential,dpotential,ddpotential,u,rp,ra)
+    dQdrval = dQdr(potential,dpotential,ddpotential,-1.0,rp,ra)
+
+    # third derivative of the anomaly
+    dddr = dddrdddu(u,rp,ra)
+    dddr = dddrdddu(-1.0,rp,ra)
 
     # if the sqrt is about to be zero...don't let it.
     #if ((ddr < 0) ⊻ (dQdrval < 0)) # XOR gate method, is this faster or slower?
     if (ddr*dQdrval < 0)
+
         if verbose>0
             println("OrbitalElements/Ufunc.jl: Bad T-expansion=",ddr,",",dQdrval," (u=",u,",rp=",rp,",ra=",ra,")")
         end
+
         u = -1.
         ddr = ddrddu(u,rp,ra)
         dQdrval = dQdr(potential,dpotential,ddpotential,u,rp,ra)
+
     end
 
-    return sqrt(2*ddr/dQdrval)
+    return sqrt(2*ddr/dQdrval) + sqrt(2)*dddr*(u+1)/(3*sqrt(dQdrval*ddr))
 end
 
 """expandThetaPos(ψ,dψ/dr,d²ψ/dr²,u,rp,ra[,verbose])
 expansion of Theta near u=+1.
 """
-function expandThetaPos(potential::Function,dpotential::Function,ddpotential::Function,u::Float64,rp::Float64,ra::Float64,verbose::Int64=0)
+function expandThetaPos(potential::Function,
+                        dpotential::Function,
+                        ddpotential::Function,
+                        u::Float64,
+                        rp::Float64,
+                        ra::Float64,
+                        verbose::Int64=0)
+
     ddr = ddrddu(u,rp,ra)
     dQdrval = dQdr(potential,dpotential,ddpotential,u,rp,ra)
+
+    # third derivative of the anomaly
+    dddr = dddrdddu(u,rp,ra)
+
+    ddr = ddrddu(1.0,rp,ra)
+    dQdrval = dQdr(potential,dpotential,ddpotential,1.0,rp,ra)
+
+    # third derivative of the anomaly
+    dddr = dddrdddu(1.0,rp,ra)
+
 
     # if the sqrt is about to be zero...don't let it.
     #if ((ddr < 0) ⊻ (dQdrval < 0)) # XOR gate method, is this faster or slower?
@@ -99,7 +138,7 @@ function expandThetaPos(potential::Function,dpotential::Function,ddpotential::Fu
         dQdrval = dQdr(potential,dpotential,ddpotential,u,rp,ra)
     end
 
-    return sqrt(abs(2*ddr/dQdrval))
+    return sqrt(abs(2*ddr/dQdrval)) + sqrt(2)*dddr*(1-u)/(3*sqrt(dQdrval*ddr))
 end
 
 
@@ -173,10 +212,41 @@ function dQdr(potential::Function,dpotential::Function,ddpotential::Function,u::
 
 end
 
+"""ddQddr(ψ,dψ/dr,d²ψ/dr²,u,rp,ra)
+
+Second partial derivative of Q w.r.t. r
+
+@IMPROVE, watch for switch when L==0
+
+"""
+function ddQddr(potential::Function,
+                dpotential::Function,
+                ddpotential::Function,
+                u::Float64,
+                rp::Float64,
+                ra::Float64)
+
+    r   = ru(u,rp,ra)
+    L = L_from_rpra_pot(potential,dpotential,ddpotential,rp,ra)
+
+    if (L==0)
+        return max(0.,-2*dpotential(r)-2*ddpotential(r)*r)
+    else
+        return  ((-6*(L^2)/(r^4)) - 2*ddpotential(r))
+    end
+
+end
+
+
 """dThetadu(ψ,dψ/dr,d²ψ/dr²,u,rp,ra)
 partial derivative of Theta w.r.t. u.
 """
-function dThetadu(potential::Function,dpotential::Function,ddpotential::Function,u::Float64,rp::Float64,ra::Float64)
+function dThetadu(potential::Function,
+                  dpotential::Function,
+                  ddpotential::Function,
+                  u::Float64,
+                  rp::Float64,
+                  ra::Float64)
 
     Qval = Q(potential,dpotential,ddpotential,u,rp,ra)
 
@@ -193,7 +263,14 @@ end
 """dQdrnumerical(ψ,dψ/dr,d²ψ/dr²,u,rp,ra[,eps])
 numerical check version of dQ/dr
 """
-function dQdrnumerical(potential::Function,dpotential::Function,ddpotential::Function,u::Float64,rp::Float64,ra::Float64,eps::Float64=0.001)
+function dQdrnumerical(potential::Function,
+                       dpotential::Function,
+                       ddpotential::Function,
+                       u::Float64,
+                       rp::Float64,
+                       ra::Float64,
+                       eps::Float64=0.001)
+
     Qval1 = Q(potential,dpotential,ddpotential,u,rp,ra)
     Qval2 = Q(potential,dpotential,ddpotential,u+eps,rp,ra)
     r1   = ru(u,rp,ra)
