@@ -32,7 +32,13 @@ end
 @IMPROVE fix boundary values when using limited development
 @IMPROVE noisy at the boundaries
 """
-function JacELToAlphaBetaAE(a::Float64,ecc::Float64,ψ::Function,dψdr::Function,d²ψdr²::Function,Ω₀::Float64;nancheck::Bool=false)
+function JacELToAlphaBetaAE(a::Float64,
+                            ecc::Float64,
+                            ψ::Function,
+                            dψdr::Function,
+                            d²ψdr²::Function,
+                            Ω₀::Float64=1.0;
+                            nancheck::Bool=false)
 
     tmpecc = ecc
     # to be fixed for limited development...
@@ -51,7 +57,8 @@ function JacELToAlphaBetaAE(a::Float64,ecc::Float64,ψ::Function,dψdr::Function
     f1c,f2c,df1da,df2da,df1de,df2de = ComputeFrequenciesAEWithDeriv(ψ,dψdr,d²ψdr²,a,tmpecc)
 
     # this is nearly always save
-    Ec,Lc,dEda,dEde,dLda,dLde       = dEdL_from_ae_pot(ψ,dψdr,d²ψdr²,a,ecc)
+    #Ec,Lc,dEda,dEde,dLda,dLde       = dEdL_from_ae_pot(ψ,dψdr,d²ψdr²,a,ecc)
+    Ec,Lc,dEda,dEde,dLda,dLde       = dELFromAE(ψ,dψdr,d²ψdr²,a,ecc)
 
     # construct Jacobians
     J_EL_ae   = abs(dEda*dLde - dEde*dLda)

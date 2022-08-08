@@ -51,6 +51,9 @@ alpha,beta = Ω₁c/Ω₀,Ω₂c/Ω₁c
 J_EL_ab = OrbitalElements.isochrone_JacEL_to_alphabeta(alpha,beta,bc,M,G)
 println("Jacobian(EL,ab):$J_EL_ab")
 
+J_EL_abT = OrbitalElements.JacELToAlphaBetaAE(a,e,ψ,dψdr,d²ψdr²)
+println("TJacobian(EL,ab):$J_EL_abT")
+
 # get the numerical frequency derivatives at this point
 f1c,f2c,df1da,df2da,df1de,df2de = OrbitalElements.ComputeFrequenciesAEWithDeriv(ψ,dψdr,d²ψdr²,a,e)
 #f1c,f2c,df1da,df2da,df1de,df2de = OrbitalElements.ComputeFrequenciesAEWithDerivCircular(ψ,dψdr,d²ψdr²,a,e)

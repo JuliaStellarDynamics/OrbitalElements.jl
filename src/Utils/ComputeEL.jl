@@ -1,6 +1,10 @@
+"""Definitions for handling energy and angular momentum"""
+
+
+
 """
 energy as a function of (a,e) for a given potential ψ (and its derivatives)
-signature with third derivative of the potential
+INCLUDING third derivative of the potential
 """
 function EFromAE(ψ::Function,
                  dψ::Function,
@@ -21,7 +25,7 @@ end
 
 """
 energy as a function of (rp,ra) for a given potential ψ (and its derivatives)
-signature with third derivative of the potential
+INCLUDING third derivative of the potential
 """
 function EFromRpRa(ψ::Function,
                    dψ::Function,
@@ -38,7 +42,7 @@ end
 
 """
 energy as a function of (rp,ra) for a given potential ψ (and its derivatives)
-signature with NO third derivative of the potential
+EXCLUDING third derivative of the potential
 """
 function EFromRpRa(ψ::Function,
                    dψ::Function,
@@ -79,7 +83,7 @@ end
 
 """
 angular momentum as a function of (rp,ra) for a given potential ψ (and its derivatives)
-signature with third derivative of the potential
+INCLUDING third derivative of the potential
 """
 function LFromRpRa(ψ::Function,
                    dψ::Function,
@@ -96,7 +100,7 @@ end
 
 """
 angular momentum as a function of (rp,ra) for a given potential ψ (and its derivatives)
-signature with NO third derivative of the potential
+EXCLUDING third derivative of the potential
 """
 function LFromRpRa(ψ::Function,
                    dψ::Function,
@@ -133,14 +137,15 @@ end
 
 """
 combined energy + angular momentum as a function of (rp,ra) for a given potenial ψ (and its derivatives)
+INCLUDING third derivative
 """
 function ELFromRpRa(ψ::Function,
-                        dψ::Function,
-                        d2ψ::Function,
-                        d3ψ::Function,
-                        a::Float64,
-                        e::Float64;
-                        TOLECC::Float64=ELTOLECC)
+                    dψ::Function,
+                    d2ψ::Function,
+                    d3ψ::Function,
+                    rp::Float64,
+                    ra::Float64;
+                    TOLECC::Float64=ELTOLECC)
 
     a,e = ae_from_rpra(rp,ra)
     E = EFromAE(ψ,dψ,d2ψ,d3ψ,a,e;TOLECC=TOLECC)
@@ -148,6 +153,30 @@ function ELFromRpRa(ψ::Function,
 
     return E, L
 end
+
+"""
+combined energy + angular momentum as a function of (rp,ra) for a given potenial ψ (and its derivatives)
+EXCLUDING third derivative
+"""
+function ELFromRpRa(ψ::Function,
+                    dψ::Function,
+                    d2ψ::Function,
+                    rp::Float64,
+                    ra::Float64;
+                    TOLECC::Float64=ELTOLECC,
+                    FDIFF::Float64=1.e-8)
+
+    a,e = ae_from_rpra(rp,ra)
+
+    # define a numerical third derivative
+    d3ψ(x::Float64) = (d2ψ(x+FDIFF)-d2ψ(x))/FDIFF
+
+    E = EFromAE(ψ,dψ,d2ψ,d3ψ,a,e;TOLECC=TOLECC)
+    L = LFromAE(ψ,dψ,d2ψ,d3ψ,a,e;TOLECC=TOLECC)
+
+    return E, L
+end
+
 
 """
 Second-order expansion of energy equation near a circular orbit
@@ -216,6 +245,52 @@ function dELFromAE(ψ::Function,
 
         return E, L, ∂E∂a, ∂E∂e, ∂L∂a, ∂L∂e
     end
+end
+
+"""
+energy and angular momentum derivatives w.r.t. (a,e)
+EXCLUDING fourth derivative
+"""
+function dELFromAE(ψ::Function,
+                   dψ::Function,
+                   d2ψ::Function,
+                   d3ψ::Function,
+                   a::Float64,
+                   e::Float64;
+                   TOLECC::Float64=ELTOLECC,
+                   FDIFF::Float64=1.e-8)
+
+   # define a numerical fourth derivative
+   d4ψ(x::Float64) = (d3ψ(x+FDIFF)-d3ψ(x))/FDIFF
+
+    E, L, ∂E∂a, ∂E∂e, ∂L∂a, ∂L∂e = dELFromAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,TOLECC=ELTOLECC)
+
+    return E, L, ∂E∂a, ∂E∂e, ∂L∂a, ∂L∂e
+
+end
+
+"""
+energy and angular momentum derivatives w.r.t. (a,e)
+EXCLUDING third derivative
+"""
+function dELFromAE(ψ::Function,
+                   dψ::Function,
+                   d2ψ::Function,
+                   a::Float64,
+                   e::Float64;
+                   TOLECC::Float64=ELTOLECC,
+                   FDIFF::Float64=1.e-8)
+
+   # define a numerical third derivative
+   d3ψ(x::Float64) = (d2ψ(x+FDIFF)-d2ψ(x))/FDIFF
+
+   # zero out fourth derivative
+   d4ψ(x::Float64) = 0.
+
+    E, L, ∂E∂a, ∂E∂e, ∂L∂a, ∂L∂e = dELFromAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,TOLECC=ELTOLECC)
+
+    return E, L, ∂E∂a, ∂E∂e, ∂L∂a, ∂L∂e
+
 end
 
 """
