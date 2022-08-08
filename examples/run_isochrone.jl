@@ -16,7 +16,7 @@ d²ψdr²(r::Float64)::Float64  = OrbitalElements.isochrone_ddpsi_ddr(r,bc,M,G)
 
 
 # select an (a,e) value for the orbit
-a,e = 1.0, 0.5
+a,e = 0.0001, 0.5
 
 # compute rperi and rapo
 rp,ra = OrbitalElements.rpra_from_ae(a,e); @printf("rp=%f ra=%f\n", rp,ra)
@@ -28,20 +28,21 @@ Jrr = OrbitalElements.isochrone_jr_rpra(rp,ra,bc,M,G)
 println("Ω₁r=$Ω₁r,Ω₂r=$Ω₂r")
 println("Ω₁e=$Ω₁e,Ω₂e=$Ω₂e")
 
-rcirc1 = OrbitalElements.Omega1circ_to_radius_bisect(Ω₁r,dψdr,d²ψdr²,Ziter=32,verbose=false)
+rcirc1 = OrbitalElements.Omega1circ_to_radius_bisect(Ω₁r,dψdr,d²ψdr²)#,Ziter=32,verbose=false)
 rcirc0 = OrbitalElements.Omega1circ_to_radius(Ω₁r,dψdr,d²ψdr²)
 println("Ω₁ Bisect r=$rcirc1, Brent r=$rcirc0")
 
-rcirc1 = OrbitalElements.Omega2circ_to_radius_bisect(Ω₂r,dψdr,Ziter=32,verbose=false)
+rcirc1 = OrbitalElements.Omega2circ_to_radius_bisect(Ω₂r,dψdr)#,Ziter=32,verbose=false)
 rcirc0 = OrbitalElements.Omega2circ_to_radius(Ω₂r,dψdr)
 println("Ω₂ Bisect r=$rcirc1, Brent r=$rcirc0")
 
 
 # make a HIGH RES version of the frequencies
 #Ω₁r,Ω₂r = OrbitalElements.compute_frequencies_ae(ψ,dψdr,d²ψdr²,a,e,NINT=1024)
-Ω₁c,Ω₂c,Jrc = OrbitalElements.compute_frequencies_ae(ψ,dψdr,d²ψdr²,a,e,NINT=32,action=true)
-Ω₁c,Ω₂c,Jrc = OrbitalElements.henon_theta_frequencies(ψ,dψdr,d²ψdr²,rp,ra,NINT=32,action=true)
-@printf("O1=%f O1guess=%f O2=%f O2guess=%f\n", Ω₁r,Ω₁c,Ω₂r,Ω₂c)
+#Ω₁c,Ω₂c,Jrc = OrbitalElements.compute_frequencies_ae(ψ,dψdr,d²ψdr²,a,e,NINT=32,action=true)
+Ω₁c,Ω₂c,Jrc = OrbitalElements.HenonThetaFrequencies(ψ,dψdr,d²ψdr²,rp,ra,NINT=32,action=true)
+println("real  O1=$Ω₁r O2=$Ω₂r Jr=$Jrr")
+println("guess O1=$Ω₁c O2=$Ω₂c Jr=$Jrc")
 
 alpha,beta = Ω₁c/Ω₀,Ω₂c/Ω₁c
 

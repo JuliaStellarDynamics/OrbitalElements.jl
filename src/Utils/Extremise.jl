@@ -203,12 +203,14 @@ end
 
 
 function ExtremiseFunction_mr(fun::Function,
-                                xl::Float64=0.,xu::Float64=1.,dx::Float64=1e-8; 
-                                tolx::Float64=1000.0*eps(Float64), 
+                                xl::Float64=0.,xu::Float64=1.,dx::Float64=1e-8;
+                                tolx::Float64=1000.0*eps(Float64),
                                 tolf::Float64=1000.0*eps(Float64))
 
     dfun = x -> (fun(x+dx)-fun(x))/(dx)
-    xext = try bisection(dfun,xl,xu;tolx=tolx,tolf=tolf); catch -1
+    #xext = try bisection(dfun,xl,xu;tolx=tolx,tolf=tolf); catch -1
+    xext = bisection(dfun,xl,xu;tolx=tolx,tolf=tolf)
+
 
     return xext
 end

@@ -7,10 +7,11 @@ using Roots
 # for interpolations
 using Interpolations
 
-# utils
+# utils: simple function extremisation, input/output, basic orbit coordinate transformations, simple integrators
 include("Utils/Extremise.jl")
 include("Utils/IO.jl")
 include("Utils/OrbitDefinitions.jl")
+include("Utils/Integrators.jl")
 
 # bring in the test potentials (not strictly needed)
 include("Potentials/isochrone.jl")

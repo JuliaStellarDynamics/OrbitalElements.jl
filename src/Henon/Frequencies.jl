@@ -1,68 +1,82 @@
 
 
-function henon_theta_frequencies(potential::Function,
-                                 dpotential::Function,
-                                 ddpotential::Function,
-                                 rperi::Float64,
-                                 rapo::Float64;
-                                 action::Bool=false,
-                                 NINT::Int64=1000,
-                                 EDGE::Float64=0.02)
-
-    # using theta calculations to compute frequencies: leans heavily on Theta from Ufunc.jl
-    # @IMPROVE: EDGE could be adaptive based on circularity and small-ness of rperi
-
-    # currently using Simpson's 1/3 rule for integration: requires that NINT be even.
-    # @IMPROVE: we could use a better integration scheme
-
-    # set integrations to zero: omega1, omega2, action1
-    accum1,accum2,accum3 = 0.0,0.0,0.0
-
-    # build composite Simpson's rule sample points
-    x = LinRange(-1.0,1.0,NINT)
-
-    # start with the endpoint weights
-    accum1 += Theta(potential,dpotential,ddpotential,x[1],rperi,rapo,EDGE)
-    accum1 += Theta(potential,dpotential,ddpotential,x[NINT],rperi,rapo,EDGE)
-
-    accum2 += Theta(potential,dpotential,ddpotential,x[1],rperi,rapo,EDGE)/(ru(x[NINT],rperi,rapo)^2)
-    accum2 += Theta(potential,dpotential,ddpotential,x[NINT],rperi,rapo,EDGE)/(ru(x[NINT],rperi,rapo)^2)
-
-    accum3 += Theta(potential,dpotential,ddpotential,x[1],rperi,rapo,EDGE)*Q(potential,dpotential,ddpotential,x[1],rperi,rapo)
-    accum3 += Theta(potential,dpotential,ddpotential,x[NINT],rperi,rapo,EDGE)*Q(potential,dpotential,ddpotential,x[NINT],rperi,rapo)
 
 
-    # now accumulate first set of interior points
-    for j=1:(NINT÷2)
-        accum1 += 4 * Theta(potential,dpotential,ddpotential,x[2j-1],rperi,rapo,EDGE)
-        accum2 += 4 * Theta(potential,dpotential,ddpotential,x[2j-1],rperi,rapo,EDGE)/(ru(x[2j-1],rperi,rapo)^2)
-        accum3 += 4 * Theta(potential,dpotential,ddpotential,x[2j-1],rperi,rapo,EDGE) * Q(potential,dpotential,ddpotential,x[2j-1],rperi,rapo)
-    end
 
-    # now accumulate second set of interior points
-    for j=1:((NINT÷2) - 1)
-        accum1 += 2 * Theta(potential,dpotential,ddpotential,x[2j],rperi,rapo,EDGE)
-        accum2 += 2 * Theta(potential,dpotential,ddpotential,x[2j],rperi,rapo,EDGE)/(ru(x[2j],rperi,rapo)^2)
-        accum3 += 2 * Theta(potential,dpotential,ddpotential,x[2j],rperi,rapo,EDGE) * Q(potential,dpotential,ddpotential,x[2j],rperi,rapo)
-    end
+"""HenonThetaFrequencies(ψ,dψ,d2ψ,rp,ra[,action=false,NINT=32,EDGE=0.03,TOLECC=0.001])
 
-    # complete the integration with weighting
-    h = 2/(3NINT)
-    accum1 *= h
-    accum2 *= h
-    accum3 *= h
+use the defined function Theta(u) to compute frequency integrals
+"""
+function HenonThetaFrequencies(ψ::Function,
+                               dψ::Function,
+                               d2ψ::Function,
+                               rperi::Float64,
+                               rapo::Float64;
+                               action::Bool=false,
+                               NINT::Int64=32,
+                               EDGE::Float64=0.03,
+                               TOLECC::Float64=0.001)
 
-    #return the values
-    omega1inv = (1/pi)*accum1
-    omega1    = 1/omega1inv
-    omega2    = L_from_rpra_pot(potential,dpotential,ddpotential,rperi,rapo)*accum2*(1/pi)*omega1
-    actionj   = accum3/pi
 
-    if action
-        return omega1,omega2,actionj
+    # check the eccentricity tolerances
+    a,e = ae_from_rpra(rperi,rapo)
+
+    if e<TOLECC
+        # drop into circular frequency calculation
+        if action
+            return Omega1_circular(dψ,d2ψ,a),Omega2_circular(dψ,a),0.0
+        else
+            return Omega1_circular(dψ,d2ψ,a),Omega2_circular(dψ,a)
+        end
+
     else
-        return omega1,omega2
-    end
+        # make a hard barrier for orbit calculation to avoid too radial orbits
+        if e>(1-TOLECC)
+            rperi,rapo = rpra_from_ae(a,1-TOLECC)
+        end
+
+        # standard case, compute the hard integrals
+
+
+        # using theta calculations to compute frequencies: leans heavily on Theta from Ufunc.jl
+        # @IMPROVE: EDGE could be adaptive based on circularity and small-ness of rperi
+
+        # currently using Simpson's 1/3 rule for integration: requires that NINT be even.
+        # @IMPROVE: we could use a better integration scheme
+
+        function u3func(u::Float64)
+            # push integration forward on three different quantities: Theta(u),Theta(u)/r^2(u),Theta(u)*vr(u)
+
+            th = Theta(ψ,dψ,d2ψ,u,rperi,rapo,EDGE=EDGE)
+
+            return (th,
+                    th/(ru(u,rperi,rapo)^2),
+                    th*(Q(ψ,dψ,d2ψ,u,rperi,rapo)))
+
+        end
+
+        accum1,accum2,accum3 = UnitarySimpsonIntegration(u3func,K_O=NINT)
+
+        #return the values
+        omega1inv = (1/pi)*accum1
+        omega1    = 1/omega1inv
+
+        # be careful with omega2 if near radial: use analytic relation
+        if e>(1-TOLECC)
+            omega2 = 0.5*omega1
+        else
+            omega2    = L_from_rpra_pot(ψ,dψ,d2ψ,rperi,rapo)*accum2*(1/pi)*omega1
+        end
+
+        actionj   = (1/pi)*accum3
+
+        if action
+            return omega1,omega2,actionj
+        else
+            return omega1,omega2
+        end
+
+    end # switches for orbits who are too radial or circular
 
 end
 
@@ -93,7 +107,7 @@ use the henon anomaly mapping to compute orbit frequencies
 @IMPROVE, disallow any frequency overshoots with known boundaries
 
 """
-function henon_anomaly_frequencies(potential::Function,
+function henon_anomaly_frequencies(ψ::Function,
                                    rapo::Float64,
                                    rperi::Float64,
                                    E::Float64,
@@ -133,12 +147,12 @@ function henon_anomaly_frequencies(potential::Function,
 
         dr = (3/4)*(rapo-rperi)*(1-(u^2))
 
-        ur = potential(r)
+        ur = ψ(r)
 
         tmp = 2(E-ur) - (L*L)/(r*r)
 
         s    = r/(rapo*rperi);
-        ur1  = potential(1.0/s)
+        ur1  = ψ(1.0/s)
         tmp2 = 2*(E-ur1) - (L*L*s*s)
 
 
@@ -178,11 +192,11 @@ end
 
 """compute_frequences_henon(ψ,dψ/dr,d²ψ/dr²,rp,ra[,TOLECC,verbose])
 """
-function compute_frequencies_henon(potential::Function,dpotential::Function,ddpotential::Function,
+function compute_frequencies_henon(ψ::Function,dψ::Function,d2ψ::Function,
         rperi::Float64,rapo::Float64;action::Bool=false,TOLECC::Float64=0.01,verbose::Int64=0,NINT::Int64=32)
 
-    E = E_from_rpra_pot(potential,dpotential,ddpotential,rperi,rapo)
-    J = L_from_rpra_pot(potential,dpotential,ddpotential,rperi,rapo)
+    E = E_from_rpra_pot(ψ,dψ,d2ψ,rperi,rapo)
+    J = L_from_rpra_pot(ψ,dψ,d2ψ,rperi,rapo)
 
 
     # check the tolerance
@@ -190,38 +204,38 @@ function compute_frequencies_henon(potential::Function,dpotential::Function,ddpo
 
     # don't go into the loop if circular
     if ecc<TOLECC
-        return Omega1_circular(dpotential,ddpotential,a),Omega2_circular(dpotential,a)
+        return Omega1_circular(dψ,d2ψ,a),Omega2_circular(dψ,a)
     end
 
     # don't go into the loop if radial
     if (1-ecc)<TOLECC
         rperi = 1.e-10
         if action
-            E = E_from_rpra_pot(potential,dpotential,ddpotential,rperi,rapo)
-            J = L_from_rpra_pot(potential,dpotential,ddpotential,rperi,rapo)
-            freq1,freq2,action1 = henon_anomaly_frequencies(potential,rapo,rperi,E,J,action=true,NINT=NINT)
+            E = E_from_rpra_pot(ψ,dψ,d2ψ,rperi,rapo)
+            J = L_from_rpra_pot(ψ,dψ,d2ψ,rperi,rapo)
+            freq1,freq2,action1 = henon_anomaly_frequencies(ψ,rapo,rperi,E,J,action=true,NINT=NINT)
             return freq1,freq2
         else
-            E = E_from_rpra_pot(potential,dpotential,ddpotential,rperi,rapo)
-            J = L_from_rpra_pot(potential,dpotential,ddpotential,rperi,rapo)
-            freq1,freq2 = henon_anomaly_frequencies(potential,rapo,rperi,E,J,action=false,NINT=NINT)
+            E = E_from_rpra_pot(ψ,dψ,d2ψ,rperi,rapo)
+            J = L_from_rpra_pot(ψ,dψ,d2ψ,rperi,rapo)
+            freq1,freq2 = henon_anomaly_frequencies(ψ,rapo,rperi,E,J,action=false,NINT=NINT)
             return freq1,freq2
         end
     end
 
     # go to the frequency calculation
     if action
-        freq1,freq2,action1 = henon_anomaly_frequencies(potential,rapo,rperi,E,J,action=true,NINT=NINT)
+        freq1,freq2,action1 = henon_anomaly_frequencies(ψ,rapo,rperi,E,J,action=true,NINT=NINT)
         return freq1,freq2,action1
     else
-        freq1,freq2 = henon_anomaly_frequencies(potential,rapo,rperi,E,J,action=false,NINT=NINT)
+        freq1,freq2 = henon_anomaly_frequencies(ψ,rapo,rperi,E,J,action=false,NINT=NINT)
         return freq1,freq2
     end
 end
 
 """compute_frequences_henon_ae(ψ,dψ/dr,d²ψ/dr²,rp,ra[,TOLECC,verbose])
 """
-function compute_frequencies_henon_ae(potential::Function,dpotential::Function,ddpotential::Function,
+function compute_frequencies_henon_ae(ψ::Function,dψ::Function,d2ψ::Function,
                                       a::Float64,ecc::Float64;action::Bool=false,TOLECC::Float64=0.01,verbose::Int64=0,NINT=32)
     #=compute_frequencies_henon_ae
 
@@ -238,8 +252,8 @@ function compute_frequencies_henon_ae(potential::Function,dpotential::Function,d
     end
 
 
-    E = E_from_rpra_pot(potential,dpotential,ddpotential,rperi,rapo)
-    J = L_from_rpra_pot(potential,dpotential,ddpotential,rperi,rapo)
+    E = E_from_rpra_pot(ψ,dψ,d2ψ,rperi,rapo)
+    J = L_from_rpra_pot(ψ,dψ,d2ψ,rperi,rapo)
 
     if verbose>2
         print("E/J ",E," ",J,"\n")
@@ -248,9 +262,9 @@ function compute_frequencies_henon_ae(potential::Function,dpotential::Function,d
     # don't go into the loop if too circular: use an approximation
     if ecc<TOLECC
         if action
-            return Omega1_circular(dpotential,ddpotential,a),Omega2_circular(dpotential,a),0.0
+            return Omega1_circular(dψ,d2ψ,a),Omega2_circular(dψ,a),0.0
         else
-            return Omega1_circular(dpotential,ddpotential,a),Omega2_circular(dpotential,a)
+            return Omega1_circular(dψ,d2ψ,a),Omega2_circular(dψ,a)
         end
     end
 
@@ -258,10 +272,10 @@ function compute_frequencies_henon_ae(potential::Function,dpotential::Function,d
 
     # go to the frequency calculation
     if action
-        freq1,freq2,action1 = henon_anomaly_frequencies(potential,rapo,rperi,E,J,action=true,NINT=NINT)
+        freq1,freq2,action1 = henon_anomaly_frequencies(ψ,rapo,rperi,E,J,action=true,NINT=NINT)
         return freq1,freq2,action1
     else
-        freq1,freq2 = henon_anomaly_frequencies(potential,rapo,rperi,E,J,action=false,NINT=NINT)
+        freq1,freq2 = henon_anomaly_frequencies(ψ,rapo,rperi,E,J,action=false,NINT=NINT)
         return freq1,freq2
     end
 
