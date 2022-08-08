@@ -7,6 +7,7 @@ examples/*.hf5
 examples/figures/*
 
 src/Utils/GridInversion.jl
+src/Utils/ComputeEL_mp.jl
 
 # very annoying OSX hidden files
 *.DS_Store

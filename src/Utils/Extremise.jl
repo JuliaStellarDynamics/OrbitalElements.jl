@@ -1,6 +1,5 @@
 """Extremise.jl
 
-This should almost certainly be it's own julia tool, but we can keep it here for now.
 
 """
 
@@ -12,10 +11,8 @@ Accuracy will be set by deps, 1/2^neps:
   can never do better than evaluating the function on a grid this fine.
 
 Requires exactly 2*neps evaluations of the function
-
-
 """
-function ExtremiseFunction(func::Function,neps::Int64=32,minval::Float64=0.,maxval::Float64=1.;verbose::Bool=false,fullreturn::Bool=false)
+function ExtremiseFunction_legacy(func::Function,neps::Int64=32,minval::Float64=0.,maxval::Float64=1.;verbose::Bool=false,fullreturn::Bool=false)
 
     if neps > 50
         # this should be able to do 53 for double precision, but I've found some bugs before that.
@@ -147,16 +144,18 @@ function ExtremiseFunction(func::Function,neps::Int64=32,minval::Float64=0.,maxv
 end
 
 
-"""
-    bisection(fun, xl, xu [, tolx, tolf])
+"""bisection(fun, xl, xu [, tolx, tolf])
 used to find zero of a monotonic function.
+A simple bisection algorithm, but it makes no allocations and is sufficiently fast
+@ATTENTION, the tolerances are most likely overkill -- it may prevent convergence for high-order schemes
 """
-# It is a simple bisection algorithm, but it makes no allocations and is sufficiently fast
-# It allows us not to have to use the Roots library that makes a lot of allocations
-# The optional tolerances are set to the same as the ones I found in Roots.jl.
-# @ATTENTION, the tolerances are most likely overkill -- it may prevent convergence for high-order resonances
-# @IMPROVE -- it could be a good idea to put a counter of iterations, to prevent the algorithm from getting stuck?
-function bisection(fun, xl::Float64, xu::Float64; tolx::Float64=1000.0*eps(Float64), tolf::Float64=1000.0*eps(Float64), nitermax::Int64=100)
+function bisection(fun::Function,
+                   xl::Float64,
+                   xu::Float64;
+                   tolx::Float64=1000.0*eps(Float64),
+                   tolf::Float64=1000.0*eps(Float64),
+                   nitermax::Int64=100)
+
     if (xl > xu)
         xl, xu = xu, xl # Ordering the input arguments
     end
@@ -202,15 +201,19 @@ function bisection(fun, xl::Float64, xu::Float64; tolx::Float64=1000.0*eps(Float
 end
 
 
-function ExtremiseFunction_mr(fun::Function,
-                                xl::Float64=0.,xu::Float64=1.,dx::Float64=1e-8;
-                                tolx::Float64=1000.0*eps(Float64),
-                                tolf::Float64=1000.0*eps(Float64))
+"""ExtremiseFunction
+accepts a function to find the zero, or to maximise the derivative
+"""
+function ExtremiseFunction(fun::Function,
+                           xl::Float64=0.,
+                           xu::Float64=1.,
+                           dx::Float64=1e-8;
+                           tolx::Float64=1000.0*eps(Float64),
+                           tolf::Float64=1000.0*eps(Float64))
 
     dfun = x -> (fun(x+dx)-fun(x))/(dx)
     #xext = try bisection(dfun,xl,xu;tolx=tolx,tolf=tolf); catch -1
     xext = bisection(dfun,xl,xu;tolx=tolx,tolf=tolf)
-
 
     return xext
 end

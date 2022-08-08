@@ -172,7 +172,7 @@ function ae_from_EL_brute(E::Float64,L::Float64,
       println("iter=",-1," aguess=",aguess," eguess=",eccguess)
     end
 
-    Eguess,Lguess,dEda,dEde,dLda,dLde = dEdL_from_rpra_pot(potential,dpotential,ddpotential,rpguess,raguess,da=0.0001,de=0.0001,TOLECC=TOLECC)
+    Eguess,Lguess,dEda,dEde,dLda,dLde = dEdLFromRpRa(potential,dpotential,ddpotential,rpguess,raguess,da=0.0001,de=0.0001,TOLECC=TOLECC)
 
 
 
@@ -183,7 +183,7 @@ function ae_from_EL_brute(E::Float64,L::Float64,
         # convert to rp,ra for EL input
         rpguess,raguess = rpra_from_ae(aguess,eccguess)
 
-        Eguess,Lguess,dEda,dEde,dLda,dLde = dEdL_from_rpra_pot(potential,dpotential,ddpotential,rpguess,raguess,da=0.0001,de=0.0001,TOLECC=TOLECC)
+        Eguess,Lguess,dEda,dEde,dLda,dLde = dEdLFromRpRa(potential,dpotential,ddpotential,rpguess,raguess,da=0.0001,de=0.0001,TOLECC=TOLECC)
 
         jacobian = [dEda dEde ; dLda dLde]
         increment = jacobian \ (-([Eguess;Lguess] - [E ; L]))

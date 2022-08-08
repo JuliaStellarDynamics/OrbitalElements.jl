@@ -11,6 +11,8 @@ const bc, M, G = 1.,1. ,1.
 ψ(r::Float64)::Float64       = OrbitalElements.isochrone_psi(r,bc,M,G)
 dψdr(r::Float64)::Float64    = OrbitalElements.isochrone_dpsi_dr(r,bc,M,G)
 d²ψdr²(r::Float64)::Float64  = OrbitalElements.isochrone_ddpsi_ddr(r,bc,M,G)
+d³ψdr³(r::Float64)::Float64  = OrbitalElements.isochrone_dddpsi_dddr(r,bc,M,G)
+d⁴ψdr⁴(r::Float64)::Float64  = OrbitalElements.isochrone_ddddpsi_ddddr(r,bc,M,G)
 
 Ω₀      = OrbitalElements.isochrone_Omega0(bc,M,G)
 
@@ -56,7 +58,7 @@ f1c2,f2c2,df1drp,df2drp,df1dra,df2dra = OrbitalElements.ComputeFrequenciesRpRaWi
 
 println("df1drp=$df1drp,df2drp=$df2drp,df1dra=$df1dra,df2dra=$df2dra")
 
-Ec,Lc,dEda,dEde,dLda,dLde = OrbitalElements.dEdL_from_ae_pot(ψ,dψdr,d²ψdr²,a,e)
+Ec,Lc,dEda,dEde,dLda,dLde = OrbitalElements.dELFromAE(ψ,dψdr,d²ψdr²,d³ψdr³,d⁴ψdr⁴,a,e)
 
 J_EL_ae = abs(dEda*dLde - dEde*dLda)
 J_o1o2_ae = abs(df1da*df2de - df1de*df2da)

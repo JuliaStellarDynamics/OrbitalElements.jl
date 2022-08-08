@@ -65,7 +65,7 @@ function HenonThetaFrequencies(ψ::Function,
         if e>(1-TOLECC)
             omega2 = 0.5*omega1
         else
-            omega2    = L_from_rpra_pot(ψ,dψ,d2ψ,rperi,rapo)*accum2*(1/pi)*omega1
+            omega2    = LFromRpRa(ψ,dψ,d2ψ,rperi,rapo)*accum2*(1/pi)*omega1
         end
 
         actionj   = (1/pi)*accum3
@@ -195,8 +195,8 @@ end
 function compute_frequencies_henon(ψ::Function,dψ::Function,d2ψ::Function,
         rperi::Float64,rapo::Float64;action::Bool=false,TOLECC::Float64=0.01,verbose::Int64=0,NINT::Int64=32)
 
-    E = E_from_rpra_pot(ψ,dψ,d2ψ,rperi,rapo)
-    J = L_from_rpra_pot(ψ,dψ,d2ψ,rperi,rapo)
+    E = EFromRpRa(ψ,dψ,d2ψ,rperi,rapo)
+    J = LFromRpRa(ψ,dψ,d2ψ,rperi,rapo)
 
 
     # check the tolerance
@@ -211,13 +211,13 @@ function compute_frequencies_henon(ψ::Function,dψ::Function,d2ψ::Function,
     if (1-ecc)<TOLECC
         rperi = 1.e-10
         if action
-            E = E_from_rpra_pot(ψ,dψ,d2ψ,rperi,rapo)
-            J = L_from_rpra_pot(ψ,dψ,d2ψ,rperi,rapo)
+            E = EFromRpRa(ψ,dψ,d2ψ,rperi,rapo)
+            J = LFromRpRa(ψ,dψ,d2ψ,rperi,rapo)
             freq1,freq2,action1 = henon_anomaly_frequencies(ψ,rapo,rperi,E,J,action=true,NINT=NINT)
             return freq1,freq2
         else
-            E = E_from_rpra_pot(ψ,dψ,d2ψ,rperi,rapo)
-            J = L_from_rpra_pot(ψ,dψ,d2ψ,rperi,rapo)
+            E = EFromRpRa(ψ,dψ,d2ψ,rperi,rapo)
+            J = LFromRpRa(ψ,dψ,d2ψ,rperi,rapo)
             freq1,freq2 = henon_anomaly_frequencies(ψ,rapo,rperi,E,J,action=false,NINT=NINT)
             return freq1,freq2
         end
@@ -252,8 +252,8 @@ function compute_frequencies_henon_ae(ψ::Function,dψ::Function,d2ψ::Function,
     end
 
 
-    E = E_from_rpra_pot(ψ,dψ,d2ψ,rperi,rapo)
-    J = L_from_rpra_pot(ψ,dψ,d2ψ,rperi,rapo)
+    E = EFromRpRa(ψ,dψ,d2ψ,rperi,rapo)
+    J = LFromRpRa(ψ,dψ,d2ψ,rperi,rapo)
 
     if verbose>2
         print("E/J ",E," ",J,"\n")

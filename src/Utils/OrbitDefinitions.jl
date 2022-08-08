@@ -65,8 +65,8 @@ function make_orbit_ae(potential::Function, dpotential::Function, ddpotential::F
     r_peri,r_apo = rpra_from_ae(a,ecc)
 
     # get (E,L)
-    E = E_from_rpra_pot(potential,dpotential,ddpotential,r_peri,r_apo;TOLECC=TOLECC)
-    L = L_from_rpra_pot(potential,dpotential,ddpotential,r_peri,r_apo;TOLECC=TOLECC)
+    E = EFromRpRa(potential,dpotential,ddpotential,r_peri,r_apo;TOLECC=TOLECC)
+    L = LFromRpRa(potential,dpotential,ddpotential,r_peri,r_apo;TOLECC=TOLECC)
 
     if ecc<TOLECC
         r_circ = a

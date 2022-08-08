@@ -55,8 +55,8 @@ function Q(ψ::Function,
            rp::Float64,
            ra::Float64)
 
-    E = E_from_rpra_pot(ψ,dψ,d2ψ,rp,ra)
-    L = L_from_rpra_pot(ψ,dψ,d2ψ,rp,ra)
+    E = EFromRpRa(ψ,dψ,d2ψ,rp,ra)
+    L = LFromRpRa(ψ,dψ,d2ψ,rp,ra)
 
     r  = ru(u,rp,ra)
 
@@ -80,7 +80,7 @@ function expandTheta(ψ::Function,
                      SECONDORDER::Bool=true)
 
     # check for radial orbits
-    L = L_from_rpra_pot(ψ,dψ,d2ψ,rp,ra)
+    L = LFromRpRa(ψ,dψ,d2ψ,rp,ra)
 
     if (L==0)
         return 0.
@@ -145,7 +145,7 @@ function Theta(ψ::Function,
                VERBOSE::Int64=0,
                SECONDORDER::Bool=true)
 
-    L = L_from_rpra_pot(ψ,dψ,d2ψ,rp,ra)
+    L = LFromRpRa(ψ,dψ,d2ψ,rp,ra)
 
     if (L==0)
         EDGE=1.e-10
@@ -185,10 +185,15 @@ Partial derivative of Q w.r.t. r
 @IMPROVE, watch for switch when L==0
 
 """
-function dQdr(ψ::Function,dψ::Function,d2ψ::Function,u::Float64,rp::Float64,ra::Float64)
+function dQdr(ψ::Function,
+              dψ::Function,
+              d2ψ::Function,
+              u::Float64,
+              rp::Float64,
+              ra::Float64)
 
-    r   = ru(u,rp,ra)
-    L = L_from_rpra_pot(ψ,dψ,d2ψ,rp,ra)
+    r = ru(u,rp,ra)
+    L = LFromRpRa(ψ,dψ,d2ψ,rp,ra)
 
     if (L==0)
         return max(0.,-2*dψ(r)-2*d2ψ(r)*r)
@@ -213,7 +218,7 @@ function ddQddr(ψ::Function,
                 ra::Float64)
 
     r   = ru(u,rp,ra)
-    L = L_from_rpra_pot(ψ,dψ,d2ψ,rp,ra)
+    L = LFromRpRa(ψ,dψ,d2ψ,rp,ra)
 
     if (L==0)
         return max(0.,-2*dψ(r)-2*d2ψ(r)*r)
@@ -267,18 +272,33 @@ end
 """dQdunumerical(ψ,dψ/dr,d²ψ/dr²,u,rp,ra[,eps])
 numerical check version of dQ/du
 """
-function dQdunumerical(ψ::Function,dψ::Function,d2ψ::Function,u::Float64,rp::Float64,ra::Float64,eps::Float64=0.001)
+function dQdunumerical(ψ::Function,
+                       dψ::Function,
+                       d2ψ::Function,
+                       u::Float64,
+                       rp::Float64,
+                       ra::Float64;
+                       eps::Float64=0.001)
+
     Qval1 = Q(ψ,dψ,d2ψ,u,rp,ra)
     Qval2 = Q(ψ,dψ,d2ψ,u+eps,rp,ra)
     return (Qval2-Qval1)/(eps)
+
 end
 
 """dThetadunumerical(ψ,dψ/dr,d²ψ/dr²,u,rp,ra)
 numerical check version of dTheta/du
 """
-function dThetadunumerical(ψ::Function,dψ::Function,d2ψ::Function,u::Float64,rp::Float64,ra::Float64)
-    eps = 0.001
+function dThetadunumerical(ψ::Function,
+                           dψ::Function,
+                           d2ψ::Function,
+                           u::Float64,
+                           rp::Float64,
+                           ra::Float64;
+                           epse::Float64=0.001)
+
     Tval1 = Theta(ψ,dψ,d2ψ,u,rp,ra,0.)
     Tval2 = Theta(ψ,dψ,d2ψ,u+eps,rp,ra,0.)
     return (Tval2-Tval1)/(eps)
+    
 end
