@@ -75,19 +75,14 @@ function Omega1circ_to_radius(omega::Float64,dpotential::Function,ddpotential::F
 end
 
 
-function Omega1circ_to_radius_bisect(omega::Float64,dpotential::Function,ddpotential::Function;rmin::Float64=1.0e-8,rmax::Float64=10000.0,Ziter::Int64=32,verbose::Bool=false)
+function Omega1circ_to_radius_bisect(omega::Float64,dpotential::Function,ddpotential::Function;rmin::Float64=1.0e-8,rmax::Float64=10000.0)
 
-    # the function to extremise
-    extreme(x) = abs(omega - Omega1_circular(dpotential,ddpotential,x))
+    rcirc = try bisection(r -> omega - Omega1_circular(dpotential,ddpotential,r), rmin, rmax) catch;  rmax end
+    if rcirc == rmax
+        error("To high or low frequency omega = ",omega)
+    end
 
-    # step 1: do a semi-coarse pass over the whole range (24 refinements)
-    m,newrmin,newrmax = ExtremiseFunction(extreme,24,rmin,rmax,verbose=verbose,fullreturn=true)
-
-    # step 2: reset the boundaries and do a fine pass
-    m = ExtremiseFunction(extreme,Ziter,newrmin,newrmax,verbose=verbose)
-
-    return m
-
+    return rcirc
 end
 
 
@@ -100,20 +95,14 @@ function Omega2circ_to_radius(omega::Float64,dpotential::Function,rmax::Float64=
 end
 
 
-function Omega2circ_to_radius_bisect(omega::Float64,dpotential::Function;rmin::Float64=1.0e-8,rmax::Float64=10000.0,Ziter::Int64=32,verbose::Bool=false)
+function Omega2circ_to_radius_bisect(omega::Float64,dpotential::Function;rmin::Float64=1.0e-8,rmax::Float64=10000.0)
 
-    # the function to extremise
-    extreme(x) = abs(omega - Omega2_circular(dpotential,x))
+    rcirc = try bisection(r -> omega - Omega2_circular(dpotential,r), rmin, rmax) catch;  rmax end
+    if rcirc == rmax
+        error("To high or low frequency omega = ",omega)
+    end
 
-    # step 1: do a semi-coarse pass over the whole range (24 refinements)
-    # the coarse refinement level depends on how small of radii we want to get to
-    m,newrmin,newrmax = ExtremiseFunction(extreme,24,rmin,rmax,verbose=verbose,fullreturn=true)
-
-    # step 2: reset the boundaries and do a fine pass
-    m = ExtremiseFunction(extreme,Ziter,newrmin,newrmax,verbose=verbose)
-
-    return m
-
+    return rcirc
 end
 
 
@@ -163,12 +152,12 @@ return \beta_c(\alpha), the frequency O2/O1 frequency ratio as a function of O1.
 @IMPROVE: find Omega0 adaptively
 
 """
-function beta_circ(alpha_circ::Float64,dpotential::Function,ddpotential::Function,Omega0::Float64=1.,rmax::Float64=1000.)
+function beta_circ(alpha_circ::Float64,dpotential::Function,ddpotential::Function,Omega0::Float64=1.;rmin::Float64=1.0e-8,rmax::Float64=10000.)
 
     # define the circular frequencies
     omega1 = Omega0 * alpha_circ
     #rcirc = Omega1circ_to_radius(omega1,dpotential,ddpotential,rmax)
-    rcirc = Omega1circ_to_radius_bisect(omega1,dpotential,ddpotential,rmax)
+    rcirc = Omega1circ_to_radius_bisect(omega1,dpotential,ddpotential;rmin=rmin,rmax=rmax)
 
     omega2 = Omega2_circular(dpotential,rcirc)
 
