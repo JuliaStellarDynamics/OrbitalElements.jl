@@ -156,7 +156,7 @@ used to find zero of a monotonic function.
 # The optional tolerances are set to the same as the ones I found in Roots.jl.
 # @ATTENTION, the tolerances are most likely overkill -- it may prevent convergence for high-order resonances
 # @IMPROVE -- it could be a good idea to put a counter of iterations, to prevent the algorithm from getting stuck?
-function bisection(fun, xl::Float64, xu::Float64; tolx::Float64=1000.0*eps(Float64), tolf::Float64=1000.0*eps(Float64))
+function bisection(fun, xl::Float64, xu::Float64; tolx::Float64=1000.0*eps(Float64), tolf::Float64=1000.0*eps(Float64), nitermax::Int64=100)
     if (xl > xu)
         xl, xu = xu, xl # Ordering the input arguments
     end
@@ -173,7 +173,7 @@ function bisection(fun, xl::Float64, xu::Float64; tolx::Float64=1000.0*eps(Float
     #####
     @assert fl*fu < 0.0 "bisection: NOT A BRACKET"
     #####
-    while true # Bisection loop
+    for k = 1:nitermax # Bisection loop
         #####
         xm = (xl+xu)*0.5 # Middle value
         #####
@@ -193,7 +193,12 @@ function bisection(fun, xl::Float64, xu::Float64; tolx::Float64=1000.0*eps(Float
         else
             xl, fl = xm, fm # The lower point becomes the midpoint
         end
+        if k == nitermax
+            println("Warning : Maximal number of iteration reached in bisection.")
+            return xm
+        end
     end
+
 end
 
 
