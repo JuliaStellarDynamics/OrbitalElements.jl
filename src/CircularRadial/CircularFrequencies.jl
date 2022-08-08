@@ -25,22 +25,29 @@ function Omega2_circular(dpotential::Function,r::Float64)
 end
 
 """Omega1_expansion(dψ/dr,d²ψ/dr²,r,rcirc)
-first-order Taylor expansion for the radial frequency
+first-order Taylor expansion for the radial frequency: at da
 """
 function Omega1_expansion(dpotential::Function,ddpotential::Function,
                           r::Float64,rcirc::Float64,
                           dddpotential::Function=f(x)=x+1)
 
     omega1_circular = Omega1_circular(dpotential,ddpotential,r)
-    dudr = dpotential(rcirc)
-    dduddr = ddpotential(rcirc)
-    h    = r-rcirc
+    dudr            = dpotential(rcirc)
+    dduddr          = ddpotential(rcirc)
+    h               = r-rcirc
 
     # did the user provide a third derivative?
     if dddpotential(1)==2
-        dddudddr = 0.
+
+        # do a finite derivative
+        drapprox = 1.e-5
+        dddudddr = (ddpotential(rcirc+drapprox) - ddpotential(rcirc))/drapprox
+
     else
+
+        # use the given analytic potential
         dddudddr = dddpotential(rcirc)
+
     end
 
     return omega1_circular + (r-rcirc)*((dddudddr + (3/rcirc)*dduddr - (3/rcirc^2)*dudr)/(2*omega1_circular))

@@ -34,17 +34,23 @@ end
 """
 function JacELToAlphaBetaAE(a::Float64,ecc::Float64,ψ::Function,dψdr::Function,d²ψdr²::Function,Ω₀::Float64;nancheck::Bool=false)
 
+    tmpecc = ecc
     # to be fixed for limited development...
     if ecc>0.99
-        ecc=0.99
+        tmpecc=0.5
     end
 
     if ecc<0.01
-        ecc=0.01
+        println("faking the eccentricity...")
+        tmpecc=0.5
     end
 
     # get all numerical derivatives
-    f1c,f2c,df1da,df2da,df1de,df2de = ComputeFrequenciesAEWithDeriv(ψ,dψdr,d²ψdr²,a,ecc)
+
+    # these are dangerous, and break down fairly easily.
+    f1c,f2c,df1da,df2da,df1de,df2de = ComputeFrequenciesAEWithDeriv(ψ,dψdr,d²ψdr²,a,tmpecc)
+
+    # this is nearly always save
     Ec,Lc,dEda,dEde,dLda,dLde       = dEdL_from_ae_pot(ψ,dψdr,d²ψdr²,a,ecc)
 
     # construct Jacobians
@@ -136,6 +142,58 @@ wrapper to select which type of frequency computation to perform, from (a,e), bu
 
 @IMPROVE: could add action derivatives here? more copacetic with analytic derivatives anyway
 """
+function ComputeFrequenciesRpRaWithDeriv(potential::Function,
+                                         dpotential::Function,
+                                         ddpotential::Function,
+                                         rp::Float64,
+                                         ra::Float64;
+                                         dr::Float64=0.0001,
+                                         TOLECC::Float64=0.001,
+                                         verbose::Int64=0,
+                                         NINT::Int64=32)
+
+
+
+        # grid is structured like
+        # (f1h,f2h) [+da]
+        #    ^
+        # (f1c,f2c)-> (f1r,f2r) [+de]
+
+        # @IMPROVE watch out for close to TOLECC, will fail across boundary
+        a,e = 0.5*(rp+ra),(ra-rp)/(rp+ra)
+        #f1c,f2c = compute_frequencies_henon(potential,dpotential,ddpotential,rp,ra,action=false,TOLECC=TOLECC,verbose=verbose,NINT=NINT)
+        f1c,f2c = compute_frequencies_henon_ae(potential,dpotential,ddpotential,a,e,action=false,TOLECC=TOLECC,verbose=verbose,NINT=NINT)
+        #println("HARD CHECK $f1c,$f2c,$a,$e")
+
+        # need to check 'polarity': that is, if a circular orbit, don't do rp+dr; do rp-dr
+        if (rp+dr > ra)
+            dr *= -1.0
+        end
+
+        f1h,f2h = compute_frequencies_henon(potential,dpotential,ddpotential,rp+dr,ra,action=false,TOLECC=TOLECC,verbose=verbose,NINT=NINT)
+
+        df1drp = (f1h-f1c)/dr
+        df2drp = (f2h-f2c)/dr
+
+        # need to check 'polarity': that is, if a circular orbit, don't do ra-dr; do ra+dr
+        if (ra+dr < rp)
+            dr *= -1.0
+        end
+
+        f1r,f2r = compute_frequencies_henon(potential,dpotential,ddpotential,rp,ra+dr,action=false,TOLECC=TOLECC,verbose=verbose,NINT=NINT)
+
+        df1dra = (f1r-f1c)/dr
+        df2dra = (f2r-f2c)/dr
+
+        return f1c,f2c,df1drp,df2drp,df1dra,df2dra
+end
+
+
+"""ComputeFrequenciesAEWithDeriv(ψ,dψ/dr,d²ψ/dr²a,ecc[,TOLECC,verbose])
+wrapper to select which type of frequency computation to perform, from (a,e), but DERIVATIVES
+
+@IMPROVE: could add action derivatives here? more copacetic with analytic derivatives anyway
+"""
 function ComputeFrequenciesAEWithDeriv(potential::Function,
                                        dpotential::Function,
                                        ddpotential::Function,
@@ -159,6 +217,11 @@ function ComputeFrequenciesAEWithDeriv(potential::Function,
 
         f1h,f2h = compute_frequencies_henon_ae(potential,dpotential,ddpotential,a+da,ecc,action=false,TOLECC=TOLECC,verbose=verbose,NINT=NINT)
 
+        # if this is already a radial orbit, don't go to super radial
+        if ecc+de > 1.0
+            de *= -1.0
+        end
+
         f1r,f2r = compute_frequencies_henon_ae(potential,dpotential,ddpotential,a,ecc+de,action=false,TOLECC=TOLECC,verbose=verbose,NINT=NINT)
 
         df1da = (f1h-f1c)/da
@@ -177,26 +240,29 @@ function ComputeFrequenciesAEWithDerivCircular(potential::Function,
                                                a::Float64,
                                                ecc::Float64,
                                                da::Float64=0.0001,
-                                               de::Float64=0.1,
+                                               de::Float64=0.001,
                                                TOLECC::Float64=0.001,
                                                verbose::Int64=0,
                                                NINT::Int64=32)
 
-        # get the frequencies using the epicyclic approximation
-        f1c = Omega1_circular(dpotential,ddpotential,a)
-        f2c = Omega2_circular(dpotential,a)
+
 
         # grid is structured like
         # (f1h,f2h) [+da]
         #    ^
         # (f1c,f2c)-> (f1r,f2r) [+de]
 
-        # @IMPROVE watch out for close to TOLECC, will fail across boundary
-        f1c,f2c = compute_frequencies_henon_ae(potential,dpotential,ddpotential,a,ecc,action=false,TOLECC=TOLECC,verbose=verbose,NINT=NINT)
+        # get the frequencies using the epicyclic approximation
+        f1c = Omega1_circular(dpotential,ddpotential,a)
+        f2c = Omega2_circular(dpotential,a)
 
-        f1h,f2h = compute_frequencies_henon_ae(potential,dpotential,ddpotential,a+da,ecc,action=false,TOLECC=TOLECC,verbose=verbose,NINT=NINT)
+        # use the epicyclic approximation to step forward a tiny bit in radius
+        f1h = Omega1_circular(dpotential,ddpotential,a+da)
+        f2h = Omega2_circular(dpotential,a+da)
 
-        f1r,f2r = compute_frequencies_henon_ae(potential,dpotential,ddpotential,a,ecc+de,action=false,TOLECC=TOLECC,verbose=verbose,NINT=NINT)
+        # take a fairly large step in eccentricity to make sure we reach a safe zone
+        # @ATTENTION, TOLECC needs to be smaller than de for this to work
+        f1r,f2r = compute_frequencies_henon_ae(potential,dpotential,ddpotential,a,de,action=false,TOLECC=TOLECC,verbose=verbose,NINT=NINT)
 
         df1da = (f1h-f1c)/da
         df2da = (f2h-f2c)/da

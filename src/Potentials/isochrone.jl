@@ -276,3 +276,9 @@ function isochrone_JacEL_to_alphabeta(alpha::Float64,beta::Float64,bc::Float64=1
     Omega0      = isochrone_Omega0(bc,M,astronomicalG)
     return abs((1.0/6.0)*scaleEnergy*scaleAction/(alpha^(1/3)*(beta*(1.0-beta))^(3/2)))#*(1.0/Omega0)) # Output of the ABSOLUTE VALUE of the Jacobian. ATTENTION, contains the rescaling factor 1/Omega0
 end
+
+
+"""analytic definition of beta_c"""
+function analytic_beta_c(x::Float64)::Float64
+    return 1/(1 + x^(2/3))
+end

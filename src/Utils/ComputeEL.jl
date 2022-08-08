@@ -177,25 +177,17 @@ function dEdL_from_ae_pot(potential::Function,dpotential::Function,ddpotential::
         ecc = 1-TOLECC
     end
 
-    # compute the varying values
-    #rp,ra = rpra_from_ae(a,ecc)
-    #rph,rah = rpra_from_ae(a+da,ecc)
-    #rpr,rar = rpra_from_ae(a,ecc+de)
-
     # the central values
     Ec,Lc = EL_from_ae_pot(potential,dpotential,ddpotential,a,ecc,TOLECC=ELTOLECC)
-    #Ec = ((ra^2)*potential(ra) - (rp^2)*potential(rp))/(ra^2 - rp^2)
-    #Lc = sqrt(2*(potential(ra) - potential(rp))/(rp^(-2) - ra^(-2)))
 
     # the da values
     Eh,Lh = EL_from_ae_pot(potential,dpotential,ddpotential,a+da,ecc,TOLECC=ELTOLECC)
-    #Eh = ((rah^2)*potential(rah) - (rph^2)*potential(rph))/(rah^2 - rph^2)
-    #Lh = sqrt(2*(potential(rah) - potential(rph))/(rph^(-2) - rah^(-2)))
 
     # the de values
+    if ecc+de > 1.0
+        de *= -1.0
+    end
     Er,Lr = EL_from_ae_pot(potential,dpotential,ddpotential,a,ecc+de,TOLECC=ELTOLECC)
-    #Er = ((rar^2)*potential(rar) - (rpr^2)*potential(rpr))/(rar^2 - rpr^2)
-    #Lr = sqrt(2*(potential(rar) - potential(rpr))/(rpr^(-2) - rar^(-2)))
 
     dEda = (Eh-Ec)/(da)
     dLda = (Lh-Lc)/(da)
