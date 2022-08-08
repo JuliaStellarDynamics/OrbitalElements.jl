@@ -178,16 +178,16 @@ function dEdL_from_ae_pot(potential::Function,dpotential::Function,ddpotential::
     end
 
     # the central values
-    Ec,Lc = EL_from_ae_pot(potential,dpotential,ddpotential,a,ecc,TOLECC=ELTOLECC)
+    Ec,Lc = EL_from_ae_pot(potential,dpotential,ddpotential,a,ecc,TOLECC=TOLECC)
 
     # the da values
-    Eh,Lh = EL_from_ae_pot(potential,dpotential,ddpotential,a+da,ecc,TOLECC=ELTOLECC)
+    Eh,Lh = EL_from_ae_pot(potential,dpotential,ddpotential,a+da,ecc,TOLECC=TOLECC)
 
     # the de values
     if ecc+de > 1.0
         de *= -1.0
     end
-    Er,Lr = EL_from_ae_pot(potential,dpotential,ddpotential,a,ecc+de,TOLECC=ELTOLECC)
+    Er,Lr = EL_from_ae_pot(potential,dpotential,ddpotential,a,ecc+de,TOLECC=TOLECC)
 
     dEda = (Eh-Ec)/(da)
     dLda = (Lh-Lc)/(da)
