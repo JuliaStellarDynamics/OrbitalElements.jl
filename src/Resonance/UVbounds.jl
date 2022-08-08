@@ -74,7 +74,7 @@ function get_varpi(omg::Complex{Float64},
 
     w_min,w_max = find_wmin_wmax(n1,n2,dpotential,ddpotential,rmax,Ω₀)
 
-    return (2.0*omg - w_max - w_min)/(w_max - w_min)
+    return get_varpi(omg,w_min,w_max)
 
 end
 
