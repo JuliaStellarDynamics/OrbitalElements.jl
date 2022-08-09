@@ -153,8 +153,7 @@ function bisection(fun::Function,
                    xl::Float64,
                    xu::Float64;
                    tolx::Float64=1000.0*eps(Float64),
-                   tolf::Float64=1000.0*eps(Float64),
-                   nitermax::Int64=100)
+                   tolf::Float64=1000.0*eps(Float64))
 
     if (xl > xu)
         xl, xu = xu, xl # Ordering the input arguments
@@ -172,6 +171,8 @@ function bisection(fun::Function,
     #####
     @assert fl*fu < 0.0 "bisection: NOT A BRACKET"
     #####
+    # Maximal number of steps to get to the tolerance in x
+    nitermax = convert(Int64,ceil(log2(abs(xl-xu)/tolx)))
     for k = 1:nitermax # Bisection loop
         #####
         xm = (xl+xu)*0.5 # Middle value
@@ -206,14 +207,12 @@ accepts a function to find the zero, or to maximise the derivative
 """
 function ExtremiseFunction(fun::Function,
                            xl::Float64=0.,
-                           xu::Float64=1.,
-                           dx::Float64=1e-8;
+                           xu::Float64=1.;
                            tolx::Float64=1000.0*eps(Float64),
                            tolf::Float64=1000.0*eps(Float64))
 
+    dx = tolx
     dfun = x -> (fun(x+dx)-fun(x))/(dx)
-    #xext = try bisection(dfun,xl,xu;tolx=tolx,tolf=tolf); catch -1
-    xext = bisection(dfun,xl,xu;tolx=tolx,tolf=tolf)
 
-    return xext
+    return bisection(dfun,xl,xu;tolx=tolx,tolf=tolf)
 end
