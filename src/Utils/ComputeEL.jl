@@ -122,12 +122,12 @@ end
 combined energy + angular momentum as a function of (a,e) for a given potenial ψ (and its derivatives)
 """
 function ELFromAE(ψ::Function,
-                        dψ::Function,
-                        d2ψ::Function,
-                        d3ψ::Function,
-                        a::Float64,
-                        e::Float64;
-                        TOLECC::Float64=ELTOLECC)
+                  dψ::Function,
+                  d2ψ::Function,
+                  d3ψ::Function,
+                  a::Float64,
+                  e::Float64;
+                  TOLECC::Float64=ELTOLECC)
 
     E = EFromAE(ψ,dψ,d2ψ,d3ψ,a,e;TOLECC=TOLECC)
     L = LFromAE(ψ,dψ,d2ψ,d3ψ,a,e;TOLECC=TOLECC)
@@ -182,11 +182,11 @@ end
 Second-order expansion of energy equation near a circular orbit
 """
 function EcircExpansion(ψ::Function,
-                         dψ::Function,
-                         d2ψ::Function,
-                         d3ψ::Function,
-                         a::Float64,
-                         e::Float64)
+                        dψ::Function,
+                        d2ψ::Function,
+                        d3ψ::Function,
+                        a::Float64,
+                        e::Float64)
 
     # compute the Taylor expansion of E
     return (0.5*a*dψ(a) + ψ(a)) + (0.5*a*dψ(a) + 0.5*(a)^(2)*d2ψ(a) + (a)^(3)*d3ψ(a)/12) * (e)^(2)
@@ -196,11 +196,11 @@ end
 Second-order expansion of angular momentum equation near a circular orbit
 """
 function LcircExpansion(ψ::Function,
-                         dψ::Function,
-                         d2ψ::Function,
-                         d3ψ::Function,
-                         a::Float64,
-                         e::Float64)
+                        dψ::Function,
+                        d2ψ::Function,
+                        d3ψ::Function,
+                        a::Float64,
+                        e::Float64)
 
     # compute the Taylor expansion of L
     Lcirc = (sqrt(a))^(3)*sqrt(dψ(a))

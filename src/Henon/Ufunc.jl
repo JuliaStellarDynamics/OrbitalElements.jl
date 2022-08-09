@@ -67,17 +67,17 @@ function Q(ψ::Function,
     end
 end
 
-"""expandTheta(ψ,dψ/dr,d²ψ/dr²,u,rp,ra[,VERBOSE])
+"""ExpandThetaRpRa(ψ,dψ/dr,d²ψ/dr²,u,rp,ra[,VERBOSE])
 expansion of Theta near u=pm1.
 """
-function expandTheta(ψ::Function,
-                     dψ::Function,
-                     d2ψ::Function,
-                     u::Float64,
-                     rp::Float64,
-                     ra::Float64;
-                     VERBOSE::Int64=0,
-                     SECONDORDER::Bool=true)
+function ExpandThetaRpRa(ψ::Function,
+                         dψ::Function,
+                         d2ψ::Function,
+                         u::Float64,
+                         rp::Float64,
+                         ra::Float64;
+                         VERBOSE::Int64=0,
+                         SECONDORDER::Bool=true)
 
     # check for radial orbits
     L = LFromRpRa(ψ,dψ,d2ψ,rp,ra)
@@ -135,15 +135,15 @@ end
 EDGE sets the switch to the expanded approximation near the boundaries
 for radial orbits, the pericentre limit is overridden and set to 0.
 """
-function Theta(ψ::Function,
-               dψ::Function,
-               d2ψ::Function,
-               u::Float64,
-               rp::Float64,
-               ra::Float64;
-               EDGE::Float64=0.01,
-               VERBOSE::Int64=0,
-               SECONDORDER::Bool=true)
+function ThetaRpRa(ψ::Function,
+                   dψ::Function,
+                   d2ψ::Function,
+                   u::Float64,
+                   rp::Float64,
+                   ra::Float64;
+                   EDGE::Float64=0.01,
+                   VERBOSE::Int64=0,
+                   SECONDORDER::Bool=true)
 
     L = LFromRpRa(ψ,dψ,d2ψ,rp,ra)
 
@@ -153,7 +153,7 @@ function Theta(ψ::Function,
 
     if ((1-abs(u))<EDGE)
         # if near the edge, use the expanded approximations
-        res = expandTheta(ψ,dψ,d2ψ,u,rp,ra)
+        res = ExpandThetaRpRa(ψ,dψ,d2ψ,u,rp,ra)
 
     else # main branch, direct calculation
 
@@ -165,7 +165,7 @@ function Theta(ψ::Function,
                 println("OrbitalElements/Ufunc.jl: Bad Q=",Qval," (u=",u,",rp=",rp,",ra=",ra,")")
             end
 
-            res = expandTheta(ψ,dψ,d2ψ,u,rp,ra)
+            res = ExpandThetaRpRa(ψ,dψ,d2ψ,u,rp,ra)
 
         # if not negative, proceed along main branch
         else
@@ -300,5 +300,5 @@ function dThetadunumerical(ψ::Function,
     Tval1 = Theta(ψ,dψ,d2ψ,u,rp,ra,0.)
     Tval2 = Theta(ψ,dψ,d2ψ,u+eps,rp,ra,0.)
     return (Tval2-Tval1)/(eps)
-    
+
 end

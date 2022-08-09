@@ -60,15 +60,14 @@ function HenonThetaFrequencies(ψ::Function,
         #return the values
         omega1inv = (1/pi)*accum1
         omega1    = 1/omega1inv
+        actionj   = (1/pi)*accum3
 
         # be careful with omega2 if near radial: use analytic relation
         if e>(1-TOLECC)
             omega2 = 0.5*omega1
         else
-            omega2    = LFromRpRa(ψ,dψ,d2ψ,rperi,rapo)*accum2*(1/pi)*omega1
+            omega2 = LFromRpRa(ψ,dψ,d2ψ,rperi,rapo)*accum2*(1/pi)*omega1
         end
-
-        actionj   = (1/pi)*accum3
 
         if action
             return omega1,omega2,actionj
