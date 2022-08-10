@@ -370,19 +370,19 @@ function ThetaExpansionAE(ψ::Function,
 
     E, L = ELFromAE(ψ,dψ,d2ψ,d3ψ,a,e;TOLECC=TOLECC)
 
-    ψeffl, dψeffl, d2ψeffl = ψeff(ψ,rl,L), dψeffdr(dψ,rl,L), d2ψeffdr2(d2ψ,rl,L)
+    dψeffl, d2ψeffl = dψeffdr(dψ,rl,L), d2ψeffdr2(d2ψ,rl,L)
 
-    fl, dfl, d2fl, d3fl, d4fl = f(ul), df(ul), d2f(ul), d3f(ul), d4f(ul)
+    d2fl, d3fl, d4fl = d2f(ul), d3f(ul), d4f(ul)
 
-    pref = - ul * sqrt(2.0) * a * e
+    pref = - ul * a * e
     denom = sqrt(- a * e * dψeffl * d2fl)
 
-    a = d2fl
-    b = d3fl / 3.0
-    c = (3.0 * (dψeffl * d2fl * d4fl - a * e * d2ψeffl * (d2fl)^(3)) - dψeffl * (d3fl)^(2) ) / (24 * dψeffl * d2fl)
+    zeroorder   = d2fl
+    firstorder  = d3fl / 3.0
+    secondorder = (3.0 * (dψeffl * d2fl * d4fl - a * e * d2ψeffl * (d2fl)^(3)) -  dψeffl * (d3fl)^(2)) / (24 * dψeffl * d2fl)
 
     # in this line, denom used to be 'den'? maybe that was something different?
-    return pref / denom * ( a + b * (u - ul) + c * (u - ul)^(2) )
+    return pref / denom * ( zeroorder + firstorder * (u - ul) + secondorder * (u - ul)^(2) )
 end
 
 
@@ -411,7 +411,7 @@ function ThetaAE(ψ::Function,
 
     # use the expanded approximation
     if ((1-abs(u))<EDGE)
-        return ThetaExpansionAE(ψ,dψ,d2ψ,d3ψ,u,a,e)#;fun=fun,TOLECC=TOLECC)
+        return ThetaExpansionAE(ψ,dψ,d2ψ,d3ψ,u,a,e;TOLECC=TOLECC,f=f,d2f=d2f,d3f=d3f,d4f=d4f)
 
     # if not close to the boundary, can calculate as normal
     else
@@ -419,7 +419,7 @@ function ThetaAE(ψ::Function,
         #r = ru(f,u,a,e)
         r = ru(u,a,e)
 
-        return a * e * df(u) / sqrt(E - ψeff(ψ,r,L))
+        return a * e * df(u) / sqrt(2*(E - ψeff(ψ,r,L)))
     end
 
 end
