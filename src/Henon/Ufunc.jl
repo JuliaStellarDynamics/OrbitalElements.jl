@@ -7,13 +7,26 @@ Specific to Henon mapping.
 
 """
 
-"""ru(u,rp,ra)
+"""ruRpRa(u,rp,ra)
 mapping from u->r in Henon variables
 """
-function ru(u::Float64,rp::Float64,ra::Float64)
+function ruRpRa(u::Float64,rp::Float64,ra::Float64)
     a,e = ae_from_rpra(rp,ra)
     fu = u*(3/2 - (u^2)/2)
     return a*(1+e*fu)
+end
+
+"""ru(u,a,e)
+mapping from u->r in Henon variables
+
+one might also consider making a version that takes a passable function (i.e. if not using Henon)
+function ru(fun::Function,u::Float64,a::Float64,e::Float64)
+    return a*(1+e*fun(u))
+end
+
+"""
+function ru(u::Float64,a::Float64,e::Float64)
+    return a*(1+e*henon_f(u))
 end
 
 """drdu(u,rp,ra)
@@ -44,6 +57,30 @@ end
 all additional derivatives of r(u) are 0
 """
 
+
+"""
+the effective potential: note the relationship to Q
+"""
+function ψeff(ψ::Function,r::Float64,L::Float64)::Float64
+    return ψ(r) + (1/2) * (L/r)^(2)
+end
+
+"""
+the derivative of the effective potential
+"""
+function dψeffdr(dψ::Function,r::Float64,L::Float64)::Float64
+    return dψ(r) - (L)^(2) / (r^3)
+end
+
+"""
+the second derivative of the effective potential
+"""
+function d2ψeffdr2(d2ψ::Function,r::Float64,L::Float64)::Float64
+    return d2ψ(r) + 3 * (L)^(2) / (r^4)
+end
+
+
+
 """Q(ψ,dψ/dr,d²ψ/dr²,u,rp,ra)
 Q \equiv 2(E-psi(r)) - L^2/r^2
 uses mapping r(u)
@@ -53,12 +90,12 @@ function Q(ψ::Function,
            d2ψ::Function,
            u::Float64,
            rp::Float64,
-           ra::Float64)
+           ra::Float64)::Float64
 
     E = EFromRpRa(ψ,dψ,d2ψ,rp,ra)
     L = LFromRpRa(ψ,dψ,d2ψ,rp,ra)
 
-    r  = ru(u,rp,ra)
+    r  = ruRpRa(u,rp,ra)
 
     if L==0
         return 2*(E-ψ(r))
@@ -192,7 +229,7 @@ function dQdr(ψ::Function,
               rp::Float64,
               ra::Float64)
 
-    r = ru(u,rp,ra)
+    r = ruRpRa(u,rp,ra)
     L = LFromRpRa(ψ,dψ,d2ψ,rp,ra)
 
     if (L==0)
@@ -217,7 +254,7 @@ function ddQddr(ψ::Function,
                 rp::Float64,
                 ra::Float64)
 
-    r   = ru(u,rp,ra)
+    r   = ruRpRa(u,rp,ra)
     L = LFromRpRa(ψ,dψ,d2ψ,rp,ra)
 
     if (L==0)
@@ -241,7 +278,7 @@ function dThetadu(ψ::Function,
 
     Qval = Q(ψ,dψ,d2ψ,u,rp,ra)
 
-    r   = ru(u,rp,ra)
+    r   = ruRpRa(u,rp,ra)
     dr  = drdu(u,rp,ra)
     ddr = d2rdu(u,rp,ra)
 
@@ -264,8 +301,8 @@ function dQdrnumerical(ψ::Function,
 
     Qval1 = Q(ψ,dψ,d2ψ,u,rp,ra)
     Qval2 = Q(ψ,dψ,d2ψ,u+eps,rp,ra)
-    r1   = ru(u,rp,ra)
-    r2   = ru(u+eps,rp,ra)
+    r1   = ruRpRa(u,rp,ra)
+    r2   = ruRpRa(u+eps,rp,ra)
     return (Qval2-Qval1)/(r2-r1)
 end
 
@@ -300,5 +337,129 @@ function dThetadunumerical(ψ::Function,
     Tval1 = Theta(ψ,dψ,d2ψ,u,rp,ra,0.)
     Tval2 = Theta(ψ,dψ,d2ψ,u+eps,rp,ra,0.)
     return (Tval2-Tval1)/(eps)
+
+end
+
+
+
+"""
+
+ThetaExpansion, the anomaly for computing orbit averages
+as a function of (a,e)
+
+@IMPROVE, once happy with this version, remove ThetaRpRa
+
+"""
+function ThetaExpansionAE(ψ::Function,
+                          dψ::Function,
+                          d2ψ::Function,
+                          d3ψ::Function,
+                          u::Float64,
+                          a::Float64,
+                          e::Float64;
+                          TOLECC::Float64=ELTOLECC,
+                          f::Function=henon_f,
+                          df::Function=henon_df,
+                          d2f::Function=henon_d2f,
+                          d3f::Function=henon_d3f,
+                          d4f::Function=henon_d4f)
+
+    ul = (u > 0) ? 1.0 : -1.0
+    #rl = ru(f,ul,a,e)
+    rl = ru(ul,a,e)
+
+    E, L = ELFromAE(ψ,dψ,d2ψ,d3ψ,a,e;TOLECC=TOLECC)
+
+    ψeffl, dψeffl, d2ψeffl = ψeff(ψ,rl,L), dψeffdr(dψ,rl,L), d2ψeffdr2(d2ψ,rl,L)
+
+    fl, dfl, d2fl, d3fl, d4fl = f(ul), df(ul), d2f(ul), d3f(ul), d4f(ul)
+
+    pref = - ul * sqrt(2.0) * a * e
+    denom = sqrt(- a * e * dψeffl * d2fl)
+
+    a = d2fl
+    b = d3fl / 3.0
+    c = (3.0 * (dψeffl * d2fl * d4fl - a * e * d2ψeffl * (d2fl)^(3)) - dψeffl * (d3fl)^(2) ) / (24 * dψeffl * d2fl)
+
+    # in this line, denom used to be 'den'? maybe that was something different?
+    return pref / denom * ( a + b * (u - ul) + c * (u - ul)^(2) )
+end
+
+
+"""
+
+Theta, the anomaly for computing orbit averages
+as a function of (a,e)
+
+@IMPROVE, once happy with this version, remove ThetaRpRa
+
+"""
+function ThetaAE(ψ::Function,
+                 dψ::Function,
+                 d2ψ::Function,
+                 d3ψ::Function,
+                 u::Float64,
+                 a::Float64,
+                 e::Float64;
+                 EDGE::Float64=0.01,
+                 TOLECC::Float64=ELTOLECC,
+                 f::Function=henon_f,
+                 df::Function=henon_df,
+                 d2f::Function=henon_d2f,
+                 d3f::Function=henon_d3f,
+                 d4f::Function=henon_d4f)
+
+    # use the expanded approximation
+    if ((1-abs(u))<EDGE)
+        return ThetaExpansionAE(ψ,dψ,d2ψ,d3ψ,u,a,e)#;fun=fun,TOLECC=TOLECC)
+
+    # if not close to the boundary, can calculate as normal
+    else
+        E, L = ELFromAE(ψ,dψ,d2ψ,d3ψ,a,e;TOLECC=TOLECC)
+        #r = ru(f,u,a,e)
+        r = ru(u,a,e)
+
+        return a * e * df(u) / sqrt(E - ψeff(ψ,r,L))
+    end
+
+end
+
+
+"""
+numerical differentiation of Theta w.r.t. semimajor axis and eccentricity
+
+"""
+function ThetaAEdade(ψ::Function,
+                     dψ::Function,
+                     d2ψ::Function,
+                     d3ψ::Function,
+                     u::Float64,
+                     a::Float64,
+                     e::Float64;
+                     EDGE::Float64=0.01,
+                     TOLECC::Float64=ELTOLECC,
+                     f::Function=henon_f,
+                     df::Function=henon_df,
+                     d2f::Function=henon_d2f,
+                     d3f::Function=henon_d3f,
+                     d4f::Function=henon_d4f,
+                     da::Float64=1.0e-8,
+                     de::Float64=1.0e-8)
+
+    # derivative w.r.t. semimajor axis: always safe
+    thHa = ThetaAE(ψ,dψ,d2ψ,d3ψ,u,a+da,e,EDGE=EDGE,TOLECC=TOLECC,f=f,df=df,d2f=d2f,d3f=d3f,d4f=d4f)
+    thLa = ThetaAE(ψ,dψ,d2ψ,d3ψ,u,a   ,e,EDGE=EDGE,TOLECC=TOLECC,f=f,df=df,d2f=d2f,d3f=d3f,d4f=d4f)
+    dThetada = (thHa-thLa)/da
+
+    # derivative w.r.t. semimajor axis: safe unless too close to e=1
+    if e>(1-de)
+        de *= -1
+    end
+
+    thHe = ThetaAE(ψ,dψ,d2ψ,d3ψ,u,a,e+de,EDGE=EDGE,TOLECC=TOLECC,f=f,df=df,d2f=d2f,d3f=d3f,d4f=d4f)
+    thLe = ThetaAE(ψ,dψ,d2ψ,d3ψ,u,a,e   ,EDGE=EDGE,TOLECC=TOLECC,f=f,df=df,d2f=d2f,d3f=d3f,d4f=d4f)
+    dThetade = (thHe-thLe)/de
+
+    return dThetada,dThetade
 
 end

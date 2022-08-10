@@ -85,15 +85,32 @@ end
 """the henon anomaly increment
 """
 function henon_f(u::Float64)
-    u*(1.5 - 0.5*u^(2))
+    u*(3/2 - (u^2)/2)
 end
 
 """the derivative of the henon anomaly increment
 """
-function henon_dfdu(u::Float64)
+function henon_df(u::Float64)
     1.5*(1.0 - u^(2))
 end
 
+"""the second derivative of the henon anomaly increment
+"""
+function henon_d2f(u::Float64)
+    return -3u
+end
+
+"""the third derivative of the henon anomaly increment
+"""
+function henon_d3f(u::Float64)
+    return -3.
+end
+
+"""the fourth derivative of the henon anomaly increment
+"""
+function henon_d4f(u::Float64)
+    return 0.
+end
 
 
 """henon_anomaly_frequencies
