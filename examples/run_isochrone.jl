@@ -18,7 +18,7 @@ d⁴ψdr⁴(r::Float64)::Float64  = OrbitalElements.isochrone_ddddpsi_ddddr(r,bc
 
 
 # select an (a,e) value for the orbit
-a,e = 0.0001, 0.5
+a,e = 0.1, 0.5
 
 # compute rperi and rapo
 rp,ra = OrbitalElements.rpra_from_ae(a,e); @printf("rp=%f ra=%f\n", rp,ra)
@@ -42,13 +42,19 @@ println("Ω₂ Bisect r=$rcirc1, Brent r=$rcirc0")
 # make a HIGH RES version of the frequencies
 #Ω₁r,Ω₂r = OrbitalElements.compute_frequencies_ae(ψ,dψdr,d²ψdr²,a,e,NINT=1024)
 #Ω₁c,Ω₂c,Jrc = OrbitalElements.compute_frequencies_ae(ψ,dψdr,d²ψdr²,a,e,NINT=32,action=true)
-Ω₁c,Ω₂c,Jrc = OrbitalElements.HenonThetaFrequencies(ψ,dψdr,d²ψdr²,rp,ra,NINT=32,action=true)
+Ω₁c,Ω₂c,Jrc = OrbitalElements.HenonThetaFrequenciesRpRa(ψ,dψdr,d²ψdr²,rp,ra,NINT=32,action=true)
 println("real  O1=$Ω₁r O2=$Ω₂r Jr=$Jrr")
 println("guess O1=$Ω₁c O2=$Ω₂c Jr=$Jrc")
 
-alpha,beta = Ω₁c/Ω₀,Ω₂c/Ω₁c
+Ec,Lc,dEda,dEde,dLda,dLde = OrbitalElements.dELFromAE(ψ,dψdr,d²ψdr²,d³ψdr³,d⁴ψdr⁴,a,e)
+Em,Lm = OrbitalElements.IsochroneELFromAE(a,e,bc,M,G)
+println("estimated E=$Ec,L=$Lc")
+println("true      E=$Em,L=$Lm")
 
-J_EL_ab = OrbitalElements.isochrone_JacEL_to_alphabeta(alpha,beta,bc,M,G)
+alpha,beta = Ω₁c/Ω₀,Ω₂c/Ω₁c
+println("alpha=$alpha,beta=$beta")
+
+J_EL_ab = OrbitalElements.IsochroneJacELtoAlphaBeta(alpha,beta,bc,M,G)
 println("Jacobian(EL,ab):$J_EL_ab")
 
 J_EL_abT = OrbitalElements.JacELToAlphaBetaAE(a,e,ψ,dψdr,d²ψdr²)
@@ -61,7 +67,6 @@ f1c2,f2c2,df1drp,df2drp,df1dra,df2dra = OrbitalElements.ComputeFrequenciesRpRaWi
 
 println("df1drp=$df1drp,df2drp=$df2drp,df1dra=$df1dra,df2dra=$df2dra")
 
-Ec,Lc,dEda,dEde,dLda,dLde = OrbitalElements.dELFromAE(ψ,dψdr,d²ψdr²,d³ψdr³,d⁴ψdr⁴,a,e)
 
 J_EL_ae = abs(dEda*dLde - dEde*dLda)
 J_o1o2_ae = abs(df1da*df2de - df1de*df2da)

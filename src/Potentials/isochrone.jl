@@ -312,12 +312,18 @@ end
 
 
 """
-this is for the change of variables from E,L to alpha,beta
+analytic jacobian for the change of variables from E,L to alpha,beta
 """
-function isochrone_JacEL_to_alphabeta(alpha::Float64,beta::Float64,bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
+function IsochroneJacELtoAlphaBeta(alpha::Float64,
+                                   beta::Float64,
+                                   bc::Float64=1.,
+                                   M::Float64=1.,
+                                   astronomicalG::Float64=1.)
+
     scaleEnergy = isochrone_E0(bc,M,astronomicalG)
     scaleAction = isochrone_L0(bc,M,astronomicalG)
     Omega0      = isochrone_Omega0(bc,M,astronomicalG)
+    
     return abs((1.0/6.0)*scaleEnergy*scaleAction/(alpha^(1/3)*(beta*(1.0-beta))^(3/2)))#*(1.0/Omega0)) # Output of the ABSOLUTE VALUE of the Jacobian. ATTENTION, contains the rescaling factor 1/Omega0
 end
 

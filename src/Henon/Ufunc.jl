@@ -29,26 +29,26 @@ function ru(u::Float64,a::Float64,e::Float64)
     return a*(1+e*henon_f(u))
 end
 
-"""drdu(u,rp,ra)
+"""drduRpRa(u,rp,ra)
 first derivative of r(u)
 """
-function drdu(u::Float64,rp::Float64,ra::Float64)
+function drduRpRa(u::Float64,rp::Float64,ra::Float64)
     a,e = ae_from_rpra(rp,ra)
     return (3/2)*a*e*(1-(u^2))
 end
 
-"""d2rdu(u,rp,ra)
+"""d2rduRpRa(u,rp,ra)
 second derivative of r(u)
 """
-function d2rdu(u::Float64,rp::Float64,ra::Float64)
+function d2rduRpRa(u::Float64,rp::Float64,ra::Float64)
     a,e = ae_from_rpra(rp,ra)
     return -3*a*e*u
 end
 
-"""d3rdu(u,rp,ra)
+"""d3rduRpRa(u,rp,ra)
 third derivative of r(u)
 """
-function d3rdu(u::Float64,rp::Float64,ra::Float64)
+function d3rduRpRa(u::Float64,rp::Float64,ra::Float64)
     a,e = ae_from_rpra(rp,ra)
     return -3*a*e
 end
@@ -135,8 +135,8 @@ function ExpandThetaRpRa(ψ::Function,
     ddQddrval = ddQddr(ψ,dψ,d2ψ,usign,rp,ra)
 
     # derivative of the anomaly
-    ddr = d2rdu(usign,rp,ra)
-    dddr = d3rdu(usign,rp,ra)
+    ddr = d2rduRpRa(usign,rp,ra)
+    dddr = d3rduRpRa(usign,rp,ra)
 
     # if the sqrt is about to be zero...don't let it.
     #if ((ddr < 0) ⊻ (dQdrval < 0)) # XOR gate method, is this faster or slower?
@@ -147,7 +147,7 @@ function ExpandThetaRpRa(ψ::Function,
         end
 
         u = -1.
-        ddr = d2rdu(u,rp,ra)
+        ddr = d2rduRpRa(u,rp,ra)
         dQdrval = dQdr(ψ,dψ,d2ψ,u,rp,ra)
 
     end
@@ -206,7 +206,7 @@ function ThetaRpRa(ψ::Function,
 
         # if not negative, proceed along main branch
         else
-            dr  = drdu(u,rp,ra)
+            dr  = drduRpRa(u,rp,ra)
             res = (1/sqrt(Qval))*dr
         end
 
@@ -279,10 +279,10 @@ function dThetadu(ψ::Function,
     Qval = Q(ψ,dψ,d2ψ,u,rp,ra)
 
     r   = ruRpRa(u,rp,ra)
-    dr  = drdu(u,rp,ra)
-    ddr = d2rdu(u,rp,ra)
+    dr  = drduRpRa(u,rp,ra)
+    ddr = d2rduRpRa(u,rp,ra)
 
-    dQdu = dQdr(ψ,dψ,d2ψ,u,rp,ra)*drdu(u,rp,ra)
+    dQdu = dQdr(ψ,dψ,d2ψ,u,rp,ra)*drduRpRa(u,rp,ra)
 
     return (Qval^(-1/2))*ddr + dr*((-1/2)*dQdu*(Qval^(-3/2)))
 
@@ -452,6 +452,7 @@ function ThetaAEdade(ψ::Function,
     dThetada = (thHa-thLa)/da
 
     # derivative w.r.t. semimajor axis: safe unless too close to e=1
+    # in that case, reverse de
     if e>(1-de)
         de *= -1
     end

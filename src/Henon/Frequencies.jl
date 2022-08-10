@@ -7,15 +7,15 @@
 
 use the defined function Theta(u) to compute frequency integrals
 """
-function HenonThetaFrequencies(ψ::Function,
-                               dψ::Function,
-                               d2ψ::Function,
-                               rperi::Float64,
-                               rapo::Float64;
-                               action::Bool=false,
-                               NINT::Int64=32,
-                               EDGE::Float64=0.03,
-                               TOLECC::Float64=0.001)
+function HenonThetaFrequenciesRpRa(ψ::Function,
+                                   dψ::Function,
+                                   d2ψ::Function,
+                                   rperi::Float64,
+                                   rapo::Float64;
+                                   action::Bool=false,
+                                   NINT::Int64=32,
+                                   EDGE::Float64=0.03,
+                                   TOLECC::Float64=0.001)
 
 
     # check the eccentricity tolerances
@@ -47,10 +47,10 @@ function HenonThetaFrequencies(ψ::Function,
         function u3func(u::Float64)
             # push integration forward on three different quantities: Theta(u),Theta(u)/r^2(u),Theta(u)*vr(u)
 
-            th = Theta(ψ,dψ,d2ψ,u,rperi,rapo,EDGE=EDGE)
+            th = ThetaRpRa(ψ,dψ,d2ψ,u,rperi,rapo,EDGE=EDGE)
 
             return (th,
-                    th/(ru(u,rperi,rapo)^2),
+                    th/(ruRpRa(u,rperi,rapo)^2),
                     th*(Q(ψ,dψ,d2ψ,u,rperi,rapo)))
 
         end
