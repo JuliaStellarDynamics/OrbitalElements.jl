@@ -29,6 +29,10 @@ function ru(u::Float64,a::Float64,e::Float64)
     return a*(1+e*henon_f(u))
 end
 
+function ruAE(u::Float64,a::Float64,e::Float64)
+    return a*(1+e*henon_f(u))
+end
+
 """drduRpRa(u,rp,ra)
 first derivative of r(u)
 """
@@ -97,6 +101,7 @@ function Q(ψ::Function,
 
     r  = ruRpRa(u,rp,ra)
 
+    # if radial orbits, ignore the contribution from the second term
     if L==0
         return 2*(E-ψ(r))
     else

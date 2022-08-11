@@ -18,7 +18,7 @@ d⁴ψdr⁴(r::Float64)::Float64  = OrbitalElements.isochrone_ddddpsi_ddddr(r,bc
 
 
 # select an (a,e) value for the orbit
-a,e = 0.1, 0.5
+a,e = 0.1, 0.3
 
 # compute rperi and rapo
 rp,ra = OrbitalElements.rpra_from_ae(a,e); @printf("rp=%f ra=%f\n", rp,ra)
@@ -46,11 +46,17 @@ println("Ω₂ Bisect r=$rcirc1, Brent r=$rcirc0")
 println("real  O1=$Ω₁r O2=$Ω₂r Jr=$Jrr")
 println("guess O1=$Ω₁c O2=$Ω₂c Jr=$Jrc")
 
+Ω₁c2,Ω₂c2,Jrc2 = OrbitalElements.HenonThetaFrequenciesAE(ψ,dψdr,d²ψdr²,d³ψdr³,a,e,NINT=32,action=true)
+println("guess O1=$Ω₁c2 O2=$Ω₂c2 Jr=$Jrc2")
+
+
 Ec,Lc,dEda,dEde,dLda,dLde = OrbitalElements.dELFromAE(ψ,dψdr,d²ψdr²,d³ψdr³,d⁴ψdr⁴,a,e)
 Em,Lm = OrbitalElements.IsochroneELFromAE(a,e,bc,M,G)
 println("estimated E=$Ec,L=$Lc")
 println("true      E=$Em,L=$Lm")
 
+
+#=
 alpha,beta = Ω₁c/Ω₀,Ω₂c/Ω₁c
 println("alpha=$alpha,beta=$beta")
 
@@ -59,12 +65,35 @@ println("Jacobian(EL,ab):$J_EL_ab")
 
 J_EL_abT = OrbitalElements.JacELToAlphaBetaAE(a,e,ψ,dψdr,d²ψdr²)
 println("TJacobian(EL,ab):$J_EL_abT")
+=#
+
 
 # get the numerical frequency derivatives at this point
 f1c,f2c,df1da,df2da,df1de,df2de = OrbitalElements.ComputeFrequenciesAEWithDeriv(ψ,dψdr,d²ψdr²,a,e)
 #f1c,f2c,df1da,df2da,df1de,df2de = OrbitalElements.ComputeFrequenciesAEWithDerivCircular(ψ,dψdr,d²ψdr²,a,e)
 f1c2,f2c2,df1drp,df2drp,df1dra,df2dra = OrbitalElements.ComputeFrequenciesRpRaWithDeriv(ψ,dψdr,d²ψdr²,rp,ra,TOLECC=-1.0)
 
+f1h,f2h,df1dah,df1deh,df2dah,df2deh = OrbitalElements.DHenonThetaFrequenciesAE(ψ,dψdr,d²ψdr²,d³ψdr³,d⁴ψdr⁴,a,e,NINT=64,EDGE=0.3)
+
+println("Compare derivatives:")
+println("Numerical: df1da=$df1da,df2da=$df2da,df1de=$df1de,df2de=$df2de")
+println("Sanalytic: df1da=$df1dah,df2da=$df2dah,df1de=$df1deh,df2de=$df2deh")
+
+# check isochrone numerical diff for frequencies
+da = 1.e-6
+de = 1.e-6
+
+if e+de > 1.0
+    de *= -1.0
+end
+f1m,f2m = OrbitalElements.IsochroneOmega12FromAE(a,e,bc,M,G)
+f1a,f2a = OrbitalElements.IsochroneOmega12FromAE(a+da,e,bc,M,G)
+f1e,f2e = OrbitalElements.IsochroneOmega12FromAE(a,e+de,bc,M,G)
+df1da2,df1de2,df2da2,df2de2 = (f1a-f1m)/da,(f1e-f1m)/de,(f2a-f2m)/da,(f2e-f2m)/de
+println("Nanalytic: df1da=$df1da2,df2da=$df2da2,df1de=$df1de2,df2de=$df2de2")
+
+
+#=
 println("df1drp=$df1drp,df2drp=$df2drp,df1dra=$df1dra,df2dra=$df2dra")
 
 
@@ -118,6 +147,10 @@ J_o1o2_aeA = abs(df1da2*df2de2 - df1de2*df2da2)
 tJ_EL_abA = f1m*Ω₀*J_EL_aeA/J_o1o2_aeA
 println("AJacobian(EL,ab):$tJ_EL_abA")
 # do all Jacobians tend to a value when a->0?
+
+=#
+
+
 
 
 #=

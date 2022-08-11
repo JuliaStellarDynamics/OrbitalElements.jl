@@ -1,9 +1,192 @@
 
 
+"""HenonThetaFrequenciesAE(ψ,dψ,d2ψ,d3ψ,a,e,[,action=false,NINT=32,EDGE=0.03,TOLECC=0.001])
+
+use the defined function Theta(u) to compute frequency integrals
+"""
+function HenonThetaFrequenciesAE(ψ::Function,
+                                 dψ::Function,
+                                 d2ψ::Function,
+                                 d3ψ::Function,
+                                 a::Float64,
+                                 e::Float64;
+                                 action::Bool=false,
+                                 NINT::Int64=32,
+                                 EDGE::Float64=0.03,
+                                 TOLECC::Float64=0.001)
+
+    if e<TOLECC
+        # drop into circular frequency calculation
+        if action
+            return Omega1_circular(dψ,d2ψ,a),Omega2_circular(dψ,a),0.0
+        else
+            return Omega1_circular(dψ,d2ψ,a),Omega2_circular(dψ,a)
+        end
+
+    else
+        # make a hard barrier for orbit calculation to avoid too radial orbits
+        if e>(1-TOLECC)
+            rperi,rapo = rpra_from_ae(a,1-TOLECC)
+        end
+
+        # standard case, compute the hard integrals
+
+
+        # using theta calculations to compute frequencies: leans heavily on Theta from Ufunc.jl
+        # @IMPROVE: EDGE could be adaptive based on circularity and small-ness of rperi
+
+        # currently using Simpson's 1/3 rule for integration: requires that NINT be even.
+        # @IMPROVE: we could use a better integration scheme
+
+        rperi,rapo = rpra_from_ae(a,e)
+
+        function u3func(u::Float64)
+            # push integration forward on three different quantities: Theta(u),Theta(u)/r^2(u),Theta(u)*vr(u)
+
+            th = ThetaAE(ψ,dψ,d2ψ,d3ψ,u,a,e,EDGE=EDGE)
+
+            return (th,
+                    th/(ruAE(u,a,e)^2),
+                    th*(Q(ψ,dψ,d2ψ,u,rperi,rapo)))
+
+        end
+
+        accum1,accum2,accum3 = UnitarySimpsonIntegration(u3func,K_O=NINT)
+
+        #return the values
+        omega1inv = (1/pi)*accum1
+        omega1    = 1/omega1inv
+        actionj   = (1/pi)*accum3
+
+        # be careful with omega2 if near radial: use analytic relation
+        if e>(1-TOLECC)
+            omega2 = 0.5*omega1
+        else
+            omega2 = LFromAE(ψ,dψ,d2ψ,d3ψ,a,e)*accum2*(1/pi)*omega1
+        end
+
+        if action
+            return omega1,omega2,actionj
+        else
+            return omega1,omega2
+        end
+
+    end # switches for orbits who are too radial or circular
+
+end
+
+
+"""DHenonThetaFrequenciesAE(ψ,dψ,d2ψ,d3ψ,a,e,[da,de,action=false,NINT=32,EDGE=0.03,TOLECC=0.001])
+
+use the defined function Theta(u) to compute frequency integrals
+AND DERIVATIVES
+
+"""
+function DHenonThetaFrequenciesAE(ψ::Function,
+                                  dψ::Function,
+                                  d2ψ::Function,
+                                  d3ψ::Function,
+                                  d4ψ::Function,
+                                  a::Float64,
+                                  e::Float64;
+                                  da::Float64=1.0e-6,
+                                  de::Float64=1.0e-6,
+                                  action::Bool=false,
+                                  NINT::Int64=32,
+                                  EDGE::Float64=0.01,
+                                  TOLECC::Float64=0.001)
+
+    if e<TOLECC
+        # drop into circular frequency calculation:
+        #   these need expansions.
+        return Omega1_circular(dψ,d2ψ,a),Omega2_circular(dψ,a),0.,0.,0.,0.
+
+    else
+        # make a hard barrier for orbit calculation to avoid too radial orbits
+        if e>(1-TOLECC)
+            rperi,rapo = rpra_from_ae(a,1-TOLECC)
+        end
+
+        # standard case, compute the hard integrals
+
+
+        # using theta calculations to compute frequencies: leans heavily on Theta from Ufunc.jl
+        # @IMPROVE: EDGE could be adaptive based on circularity and small-ness of rperi
+
+        # currently using Simpson's 1/3 rule for integration: requires that NINT be even.
+        # @IMPROVE: we could use a better integration scheme
+
+        rperi,rapo = rpra_from_ae(a,e)
+
+        function u8func(u::Float64)
+            # push integration forward on eight different quantities:
+            # 1. Theta(u)
+            # 2. Theta(u)/r^2(u)
+            # 3. Theta(u)*vr(u)
+            # 4. dTheta(u)/da
+            # 5. dTheta(u)/da
+            # 6. dTheta(u)/da/r(u)^2
+            # 7. Theta(u)/r^3(u)
+            # 8. dTheta(u)/de/r(u)^2
+
+            th = ThetaAE(ψ,dψ,d2ψ,d3ψ,u,a,e,EDGE=EDGE)
+            dthda,dthde = ThetaAEdade(ψ,dψ,d2ψ,d3ψ,u,a,e,EDGE=EDGE,da=da,de=de)
+
+            return (th,
+                    th/(ruAE(u,a,e)^2),
+                    th*(Q(ψ,dψ,d2ψ,u,rperi,rapo)),
+                    dthda,
+                    dthde,
+                    dthda/(ruAE(u,a,e)^2),
+                    th/(ruAE(u,a,e)^3),
+                    dthde/(ruAE(u,a,e)^2))
+
+        end
+
+        accum1,accum2,accum3,accum4,accum5,accum6,accum7,accum8 = UnitarySimpsonIntegration(u8func,K_O=NINT)
+
+        #return the values
+        omega1inv = (1/pi)*accum1
+        omega1    = 1/omega1inv
+        actionj   = (1/pi)*accum3
+
+        Eval, Lval, ∂E∂a, ∂E∂e, ∂L∂a, ∂L∂e = dELFromAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e)
+
+        # be careful with omega2 if near radial: use analytic relation
+        if e>(1-TOLECC)
+            omega2 = 0.5*omega1
+        else
+            omega2 = Lval*accum2*(1/pi)*omega1
+        end
+
+        # now do the partial derivatives:
+        ∂omega1∂a = -((omega1^2)/pi)*accum4
+        ∂omega1∂e = -((omega1^2)/pi)*accum5
+
+        # get E,L derivatives
+        beta = omega2/omega1
+        dbetada   = (∂L∂a*beta/Lval) - (2/a)*beta + (Lval/pi)*accum6
+        #(1/pi) * ( (∂L∂a*beta) - (2*Lval/a)*beta + Lval*accum6)
+        ∂omega2∂a = (dbetada + (beta/omega1)*∂omega1∂a)*omega1
+
+        dbetade   = (∂L∂e*beta/Lval) - (2/e)*beta + (2*a*Lval/(e*pi))*accum7 + (Lval/pi)*accum8
+        # (1/pi) * ( (∂L∂e*beta) - (2*Lval/e)*beta + (2*Lval*a/e)*accum7 + Lval*accum8)
+
+        ∂omega2∂e = (dbetade + (beta/omega1)*∂omega1∂e)*omega1
+
+        # return values: no option for action right now, but maybe?
+        return omega1,omega2,∂omega1∂a,∂omega1∂e,∂omega2∂a,∂omega2∂e
+
+    end # switches for orbits who are too radial or circular
+
+end
 
 
 
-"""HenonThetaFrequencies(ψ,dψ,d2ψ,rp,ra[,action=false,NINT=32,EDGE=0.03,TOLECC=0.001])
+
+
+
+"""HenonThetaFrequenciesRpRa(ψ,dψ,d2ψ,rp,ra[,action=false,NINT=32,EDGE=0.03,TOLECC=0.001])
 
 use the defined function Theta(u) to compute frequency integrals
 """
