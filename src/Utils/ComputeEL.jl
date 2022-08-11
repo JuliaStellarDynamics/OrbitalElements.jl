@@ -207,6 +207,25 @@ function LcircExpansion(ψ::Function,
     return Lcirc + ((a)^(5)*d3ψ(a)/(12*Lcirc) - Lcirc) * (e)^(2)
 end
 
+
+"""
+the Jacobian to convert between variables that are functions of (E,L) and (a,e)
+"""
+function JacELToAE(ψ::Function,
+                   dψ::Function,
+                   d2ψ::Function,
+                   d3ψ::Function,
+                   d4ψ::Function,
+                   a::Float64,
+                   e::Float64;
+                   TOLECC::Float64=ELTOLECC)
+
+    E, L, ∂E∂a, ∂E∂e, ∂L∂a, ∂L∂e = dELFromAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,TOLECC=TOLECC)
+
+    return abs(∂E∂a*∂L∂e - ∂L∂a*∂E∂e)
+end
+
+
 """
 energy and angular momentum derivatives w.r.t. (a,e)
 """

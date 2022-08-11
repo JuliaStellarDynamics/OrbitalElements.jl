@@ -56,7 +56,10 @@ end
 """
 the plummer potential fourth derivative
 """
-function plummer_ddddpsi_ddddr(r::Float64,bc::Float64=1.0,M::Float64=1.0,astronomicalG::Float64=1.0)::Float64
+function plummer_ddddpsi_ddddr(r::Float64,
+                               bc::Float64=1.0,
+                               M::Float64=1.0,
+                               astronomicalG::Float64=1.0)::Float64
     rbc = r^2 + bc^2
     term1 = 105*(r^4)/(rbc^(9/2))
     term2 = 90*(r^2)/(rbc^(7/2))

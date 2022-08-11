@@ -30,20 +30,23 @@ using Printf
 # define easy potentials to pass to frequency calculators
 const bc, M, G = 1.,1. ,1.
 ψ(r::Float64)::Float64       = OrbitalElements.isochrone_psi(r,bc,M,G)
-dψdr(r::Float64)::Float64    = OrbitalElements.isochrone_dpsi_dr(r,bc,M,G)
-d²ψdr²(r::Float64)::Float64  = OrbitalElements.isochrone_ddpsi_ddr(r,bc,M,G)
+dψ(r::Float64)::Float64    = OrbitalElements.isochrone_dpsi_dr(r,bc,M,G)
+d2ψ(r::Float64)::Float64  = OrbitalElements.isochrone_ddpsi_ddr(r,bc,M,G)
+d3ψ(r::Float64)::Float64  = OrbitalElements.isochrone_dddpsi_dddr(r,bc,M,G)
+d4ψ(r::Float64)::Float64  = OrbitalElements.isochrone_ddddpsi_ddddr(r,bc,M,G)
 Ω₀      =    OrbitalElements.isochrone_Omega0(bc,M,G)
 
 # this generates a function that computes beta (=Omega_2/Omega_1) as a function of Omega1
-beta_c = OrbitalElements.make_betac(dψdr,d²ψdr²,2000,Ω₀)
+beta_c = OrbitalElements.make_betac(dψ,d2ψ,2000,Ω₀)
+βc(alpha::Float64)::Float64 = OrbitalElements.beta_circ(alpha,dψ,d2ψ,Ω₀)
 
 # put in some dummy values for testing: picking a resonance
-n1 = -2
+n1 = -1
 n2 = 2
-@time w_min,w_max = OrbitalElements.find_wmin_wmax(n1,n2,dψdr,d²ψdr²,1000.,Ω₀,Ziter=36)
+@time w_min,w_max = OrbitalElements.find_wmin_wmax(n1,n2,dψ,d2ψ,1000.,Ω₀,Ziter=36)
 @printf("wmin=%f wmax=%f\n", w_min,w_max)
 
-@time vbound = OrbitalElements.find_vbound(n1,n2,dψdr,d²ψdr²,1000.,Ω₀)
+@time vbound = OrbitalElements.find_vbound(n1,n2,dψ,d2ψ,1000.,Ω₀)
 @printf("vbound=%f\n", vbound)
 
 # for a given u value, find the integration boundaries
@@ -63,24 +66,24 @@ println(typeof(beta_c))
 midv = (vmax+vmin)/2
 vval = midv
 
-#alpha,beta = OrbitalElements.alphabeta_from_uv(uval,midv,n1,n2,dψdr,d²ψdr²)
+#alpha,beta = OrbitalElements.alphabeta_from_uv(uval,midv,n1,n2,dψ,d2ψ)
 alpha,beta = OrbitalElements.alphabeta_from_uv(uval,midv,n1,n2,w_min,w_max)
 
 println("alpha=$alpha, beta=$beta")
 
 omega1,omega2 = alpha*Ω₀,alpha*beta*Ω₀
-a1,e1 = OrbitalElements.compute_ae_from_frequencies(ψ,dψdr,d²ψdr²,omega1,omega2,1*10^(-12),1)
+a1,e1 = OrbitalElements.compute_ae_from_frequencies(ψ,dψ,d2ψ,omega1,omega2,1*10^(-12),1)
 maxestep = 0.005
-sma,ecc = OrbitalElements.compute_ae_from_frequencies(ψ,dψdr,d²ψdr²,omega1,omega2,1*10^(-12),1000,0.001,0.0001,max(0.0001,0.001a1),min(max(0.0001,0.1a1*e1),maxestep),0)
+sma,ecc = OrbitalElements.compute_ae_from_frequencies(ψ,dψ,d2ψ,omega1,omega2,1*10^(-12),1000,0.001,0.0001,max(0.0001,0.001a1),min(max(0.0001,0.1a1*e1),maxestep),0)
 
 rp,ra = OrbitalElements.rpra_from_ae(sma,ecc)
 println("rp=$rp, ra=$ra")
 
-gval = OrbitalElements.Theta(ψ,dψdr,d²ψdr²,uval,rp,ra,0.02)
+gval = OrbitalElements.ThetaRpRa(ψ,dψ,d2ψ,uval,rp,ra,EDGE=0.02)
 println("gval=$gval")
 
 
-Lval = OrbitalElements.L_from_rpra_pot(ψ,dψdr,d²ψdr²,rp,ra)
+Lval = OrbitalElements.LFromRpRa(ψ,dψ,d2ψ,rp,ra)
 Sigma, Delta = (ra+rp)*0.5, (ra-rp)*0.5
 
 # Current location of the radius, r=r(u): isn't this exactly rp?
@@ -98,12 +101,12 @@ AstroBasis.fill_prefactors!(basis)
 AstroBasis.tabUl!(basis,lharmonic,rval)
 println(basis.tabUl)
 
-alpha,beta = OrbitalElements.alphabeta_from_uv(uval,vval,n1,n2,dψdr,d²ψdr²)
+alpha,beta = OrbitalElements.alphabeta_from_uv(uval,vval,n1,n2,dψ,d2ψ)
 println("alpha=$alpha, beta=$beta")
 
-w_min,w_max = OrbitalElements.find_wmin_wmax(n1,n2,dψdr,d²ψdr²,1000.,Ω₀)
-Jacalphabeta = OrbitalElements.Jacalphabeta_to_uv(n1,n2,w_min,w_max,vval) #(alpha,beta) -> (u,v)
-JacEL        = OrbitalElements.JacEL_to_alphabeta(alpha,beta)          #(E,L) -> (alpha,beta)
+w_min,w_max = OrbitalElements.find_wmin_wmax(n1,n2,dψ,d2ψ,1000.,Ω₀)
+Jacalphabeta = OrbitalElements.JacalphabetaToUV(n1,n2,w_min,w_max,vval) #(alpha,beta) -> (u,v)
+JacEL        = OrbitalElements.IsochroneJacELtoAlphaBeta(alpha,beta)          #(E,L) -> (alpha,beta)
 JacJ         = (1/omega1)                                #(J) -> (E,L)
 dimensionl   = (1/Ω₀)                                # remove dimensionality
 println("Jab=$Jacalphabeta JacEL=$JacEL, JacJ=$JacJ, dimensionl=$dimensionl")
@@ -114,7 +117,7 @@ end
 
 println(typeof(empirical_beta_c))
 
-
+"""for the isochrone"""
 function analytic_beta_c(x::Float64)::Float64
     return 1/(1 + x^(2/3))
 end

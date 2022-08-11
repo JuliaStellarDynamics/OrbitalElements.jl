@@ -24,7 +24,7 @@ function find_wmin_wmax(n1::Int64,n2::Int64,
     # define the function to extremise
     extreme(x) = n1*Omega1_circular(dpotential,ddpotential,x) + n2*Omega2_circular(dpotential,x)
 
-    m = ExtremiseFunction(extreme,Ziter,0.,rmax,verbose=false)
+    m = ExtremiseFunctionA(extreme,Ziter,0.,rmax,verbose=false)
 
     # for the problem of a cored cluster with an infinite extent, the w minima and maxima are either
     # in the very centre
@@ -45,10 +45,10 @@ function find_vbound(n1::Int64,n2::Int64,
                      Ω₀::Float64=1.;
                      Ziter=24)
 
-    # define the function to extremise
+    # define the function to extremise: n.Omega
     extreme(x) = n1*Omega1_circular(dpotential,ddpotential,x) + n2*Omega2_circular(dpotential,x)
 
-    m = ExtremiseFunction(extreme,Ziter,0.,rmax,verbose=false)
+    m = ExtremiseFunctionA(extreme,Ziter,0.,rmax,verbose=false)
 
     vbound = Omega1_circular(dpotential,ddpotential,m)/Ω₀
 
@@ -109,10 +109,10 @@ Fouvry & Prunet B10 (term 3)
 @IMPROVE: decide if 1.e-6 tolerance at the ends of root-finding bound are safe
 """
 function RootOfHOmega(u::Float64,
-                         wmin::Float64,wmax::Float64,
-                         n1::Int64,n2::Int64,
-                         vbound::Float64,
-                         βc::Function)
+                      wmin::Float64,wmax::Float64,
+                      n1::Int64,n2::Int64,
+                      vbound::Float64,
+                      βc::Function)
 
     hval = hu(u,wmin,wmax)
 
@@ -156,7 +156,9 @@ Fouvry & Prunet (2022) B10, third constraint
 
 @ATTENTION: can return -Inf in n1=1,n2=-2 (or n1=-1,n2=2) scenario
 """
-function ConstraintThree(u::Float64,wmin::Float64,wmax::Float64,n1::Int64,n2::Int64)
+function ConstraintThree(u::Float64,
+                         wmin::Float64,wmax::Float64,
+                         n1::Int64,n2::Int64)
     # greater than this
     hval = hu(u,wmin,wmax)
     denom = (n2/2 + n1)
@@ -180,7 +182,11 @@ for a given resonance, at a specific value of u, find the v coordinate boundarie
 @IMPROVE, put in guards for the edges in BetaC
 @IMPROVE, decide if we want to have FindVminVmax wrap the vbound calculation?
 """
-function find_vmin_vmax(u::Float64,wmin::Float64,wmax::Float64,n1::Int64,n2::Int64,vbound::Float64,βc::Function)
+function find_vmin_vmax(u::Float64,
+                        wmin::Float64,wmax::Float64,
+                        n1::Int64,n2::Int64,
+                        vbound::Float64,
+                        βc::Function)
     # this function works for n2 != 0
 
     if (n2==0)

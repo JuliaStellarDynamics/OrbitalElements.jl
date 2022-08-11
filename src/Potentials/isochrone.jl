@@ -323,7 +323,7 @@ function IsochroneJacELtoAlphaBeta(alpha::Float64,
     scaleEnergy = isochrone_E0(bc,M,astronomicalG)
     scaleAction = isochrone_L0(bc,M,astronomicalG)
     Omega0      = isochrone_Omega0(bc,M,astronomicalG)
-    
+
     return abs((1.0/6.0)*scaleEnergy*scaleAction/(alpha^(1/3)*(beta*(1.0-beta))^(3/2)))#*(1.0/Omega0)) # Output of the ABSOLUTE VALUE of the Jacobian. ATTENTION, contains the rescaling factor 1/Omega0
 end
 

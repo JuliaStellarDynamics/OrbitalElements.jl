@@ -3,7 +3,7 @@
 
 """
 
-"""ExtremiseFunction
+"""ExtremiseFunctionA
 
 Find the single extremum of a function between minval and maxval
 
@@ -11,8 +11,14 @@ Accuracy will be set by deps, 1/2^neps:
   can never do better than evaluating the function on a grid this fine.
 
 Requires exactly 2*neps evaluations of the function
+
+Has a different signature than below for the simple bisection technique
 """
-function ExtremiseFunction_legacy(func::Function,neps::Int64=32,minval::Float64=0.,maxval::Float64=1.;verbose::Bool=false,fullreturn::Bool=false)
+function ExtremiseFunctionA(func::Function,
+                           neps::Int64=32,
+                           minval::Float64=0.,maxval::Float64=1.;
+                           verbose::Bool=false,
+                           fullreturn::Bool=false)
 
     if neps > 50
         # this should be able to do 53 for double precision, but I've found some bugs before that.

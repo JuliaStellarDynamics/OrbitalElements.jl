@@ -15,12 +15,51 @@ include("Henon/Ufunc.jl")
 # bring in the frequency inversion
 include("Utils/NumericalInversion.jl")
 
+
+"""
+
+"""
+function JacELToAlphaBetaAE(ψ::Function,
+                            dψ::Function,
+                            d2ψ::Function,
+                            d3ψ::Function,
+                            d4ψ::Function,
+                            a::Float64,
+                            e::Float64;
+                            NINT::Int64=64,
+                            EDGE::Float64=0.02,
+                            Omega0::Float64=1.0,
+                            TOLECC::Float64=0.001)
+
+
+    Jac_EL_AE = JacELToAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,TOLECC=TOLECC)
+    Jac_AB_AE = JacAlphaBetaToAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,NINT=NINT,EDGE=EDGE,Omega0=Omega0)
+
+    return Jac_EL_AE/Jac_AB_AE
+
+end
+
 """
 
 @ATTENTION can use the isochrone-specific if you are using an isochrone. Otherwise this is a bit costly.
+
+
 """
-function JacEL_to_alphabeta(alpha::Float64,beta::Float64)
-    isochrone_JacEL_to_alphabeta(alpha,beta)
+function JacAlphaBetaToAE(ψ::Function,
+                          dψ::Function,
+                          d2ψ::Function,
+                          d3ψ::Function,
+                          d4ψ::Function,
+                          a::Float64,
+                          e::Float64;
+                          NINT::Int64=64,
+                          EDGE::Float64=0.02,
+                          Omega0::Float64=1.0)
+
+    α,β,∂α∂a,∂α∂e,∂β∂a,∂β∂e = OrbitalElements.DHenonThetaFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,NINT=NINT,EDGE=EDGE,Omega0=Omega0)
+
+    Jacαβae = abs(∂α∂a*∂β∂e - ∂β∂a*∂α∂e)
+
 end
 
 """
@@ -35,8 +74,8 @@ end
 function JacELToAlphaBetaAE(a::Float64,
                             ecc::Float64,
                             ψ::Function,
-                            dψdr::Function,
-                            d²ψdr²::Function,
+                            dψ::Function,
+                            d2ψ::Function,
                             Ω₀::Float64=1.0;
                             nancheck::Bool=false)
 
@@ -54,11 +93,11 @@ function JacELToAlphaBetaAE(a::Float64,
     # get all numerical derivatives
 
     # these are dangerous, and break down fairly easily.
-    f1c,f2c,df1da,df2da,df1de,df2de = ComputeFrequenciesAEWithDeriv(ψ,dψdr,d²ψdr²,a,tmpecc)
+    f1c,f2c,df1da,df2da,df1de,df2de = ComputeFrequenciesAEWithDeriv(ψ,dψ,d2ψ,a,tmpecc)
 
     # this is nearly always save
-    #Ec,Lc,dEda,dEde,dLda,dLde       = dEdL_from_ae_pot(ψ,dψdr,d²ψdr²,a,ecc)
-    Ec,Lc,dEda,dEde,dLda,dLde       = dELFromAE(ψ,dψdr,d²ψdr²,a,ecc)
+    #Ec,Lc,dEda,dEde,dLda,dLde       = dEdL_from_ae_pot(ψ,dψ,d2ψ,a,ecc)
+    Ec,Lc,dEda,dEde,dLda,dLde       = dELFromAE(ψ,dψ,d2ψ,a,ecc)
 
     # construct Jacobians
     J_EL_ae   = abs(dEda*dLde - dEde*dLda)
