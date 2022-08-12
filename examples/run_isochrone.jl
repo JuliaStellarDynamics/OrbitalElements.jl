@@ -18,37 +18,34 @@ d4ψ(r::Float64)::Float64  = OrbitalElements.isochrone_ddddpsi_ddddr(r,bc,M,G)
 
 
 # select an (a,e) value for the orbit
-a,e = 0.1, 0.3
+a,e = 0.001, 0.3
 
 # compute rperi and rapo
-rp,ra = OrbitalElements.rpra_from_ae(a,e); @printf("rp=%f ra=%f\n", rp,ra)
+rp,ra = OrbitalElements.rpra_from_ae(a,e)
+println("rp=$rp ra=$ra",)
 
 # test frequency computation
-Ω₁r,Ω₂r = OrbitalElements.IsochroneOmega12FromRpRa(rp,ra,bc,M,G)
 Ω₁e,Ω₂e = OrbitalElements.IsochroneOmega12FromAE(a,e,bc,M,G)
 Jrr = OrbitalElements.isochrone_jr_rpra(rp,ra,bc,M,G)
-println("Ω₁r=$Ω₁r,Ω₂r=$Ω₂r")
-println("Ω₁e=$Ω₁e,Ω₂e=$Ω₂e")
+#println("Ω₁r=$Ω₁r,Ω₂r=$Ω₂r")
 
-rcirc1 = OrbitalElements.Omega1circ_to_radius_bisect(Ω₁r,dψ,d2ψ)#,Ziter=32,verbose=false)
-rcirc0 = OrbitalElements.Omega1circ_to_radius(Ω₁r,dψ,d2ψ)
-println("Ω₁ Bisect r=$rcirc1, Brent r=$rcirc0")
+#rcirc1 = OrbitalElements.Omega1circ_to_radius(Ω₁e,dψ,d2ψ)#,Ziter=32,verbose=false)
+#println("Ω₁ Bisect r=$rcirc1")
 
-rcirc1 = OrbitalElements.Omega2circ_to_radius_bisect(Ω₂r,dψ)#,Ziter=32,verbose=false)
-rcirc0 = OrbitalElements.Omega2circ_to_radius(Ω₂r,dψ)
-println("Ω₂ Bisect r=$rcirc1, Brent r=$rcirc0")
+#rcirc0 = OrbitalElements.Omega2circ_to_radius(Ω₂e,dψ)
+#println("Ω₂ Bisect r=$rcirc1")
 
+println("truth Ω₁=$Ω₁e,Ω₂=$Ω₂e")
 
 # make a HIGH RES version of the frequencies
-#Ω₁r,Ω₂r = OrbitalElements.compute_frequencies_ae(ψ,dψ,d2ψ,a,e,NINT=1024)
-#Ω₁c,Ω₂c,Jrc = OrbitalElements.compute_frequencies_ae(ψ,dψ,d2ψ,a,e,NINT=32,action=true)
-@time Ω₁c,Ω₂c,Jrc = OrbitalElements.HenonThetaFrequenciesRpRa(ψ,dψ,d2ψ,rp,ra,NINT=32,action=true)
+Ω₁r,Ω₂r = OrbitalElements.ComputeFrequenciesAE(ψ,dψ,d2ψ,a,e,NINT=128)
+#Ω₁c,Ω₂c,Jrc = OrbitalElements.ComputeFrequenciesAE(ψ,dψ,d2ψ,a,e,NINT=32,action=true)
+@time Ω₁c,Ω₂c,Jrc = OrbitalElements.HenonThetaFrequenciesRpRa(ψ,dψ,d2ψ,rp,ra,NINT=64,action=true)
 println("real  O1=$Ω₁r O2=$Ω₂r Jr=$Jrr")
 println("guess O1=$Ω₁c O2=$Ω₂c Jr=$Jrc")
 
-@time Ω₁c2,Ω₂c2,Jrc2 = OrbitalElements.HenonThetaFrequenciesAE(ψ,dψ,d2ψ,d3ψ,a,e,NINT=32,action=true)
+@time Ω₁c2,Ω₂c2,Jrc2 = OrbitalElements.HenonThetaFrequenciesAE(ψ,dψ,d2ψ,d3ψ,a,e,NINT=64,action=true)
 println("guess O1=$Ω₁c2 O2=$Ω₂c2 Jr=$Jrc2")
-
 
 @time Ec,Lc,dEda,dEde,dLda,dLde = OrbitalElements.dELFromAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e)
 Em,Lm = OrbitalElements.IsochroneELFromAE(a,e,bc,M,G)
@@ -159,7 +156,7 @@ println("AJacobian(EL,ab):$tJ_EL_abA")
 open("NINTconvergence.txt","w") do io
     println(io,"truth",",",Ω₁r,",",Ω₂r,",",Jrr)
     for NINT=1:256
-        Ω₁c,Ω₂c,Jrc = OrbitalElements.compute_frequencies_ae(ψ,dψ,d2ψ,a,e,NINT=NINT,action=true)
+        Ω₁c,Ω₂c,Jrc = OrbitalElements.ComputeFrequenciesAE(ψ,dψ,d2ψ,a,e,NINT=NINT,action=true)
         println(io,NINT,",",Ω₁c,",",Ω₂c,",",Jrc)
     end
 end
@@ -185,13 +182,13 @@ open("NINTarray.txt","w") do io
             rp,ra = OrbitalElements.rpra_from_ae(aval,eval)
             Ω₁r,Ω₂r = OrbitalElements.IsochroneOmega12FromRpRa(rp,ra,bc,M,G)
             Jrr = OrbitalElements.isochrone_jr_rpra(rp,ra,bc,M,G)
-            #Ω₁r,Ω₂r = OrbitalElements.compute_frequencies_ae(ψ,dψ,d2ψ,aval,eval,NINT=1024)
+            #Ω₁r,Ω₂r = OrbitalElements.ComputeFrequenciesAE(ψ,dψ,d2ψ,aval,eval,NINT=1024)
             NINT=8
             o1diff = 1.0
             while (o1diff > TOL)
-                #Ω₁c,Ω₂c,Jrc = OrbitalElements.compute_frequencies_ae(ψ,dψ,d2ψ,aval,eval,NINT=NINT,action=true)
-                Ω₁c,Ω₂c = OrbitalElements.compute_frequencies_ae(ψ,dψ,d2ψ,aval,eval,NINT=NINT,TOLECC=TOLECC)#,action=true)
-                #Ω₁c,Ω₂c,Jrc = OrbitalElements.compute_frequencies_ae(ψ,dψ,d2ψ,a,e,NINT=NINT,action=true)
+                #Ω₁c,Ω₂c,Jrc = OrbitalElements.ComputeFrequenciesAE(ψ,dψ,d2ψ,aval,eval,NINT=NINT,action=true)
+                Ω₁c,Ω₂c = OrbitalElements.ComputeFrequenciesAE(ψ,dψ,d2ψ,aval,eval,NINT=NINT,TOLECC=TOLECC)#,action=true)
+                #Ω₁c,Ω₂c,Jrc = OrbitalElements.ComputeFrequenciesAE(ψ,dψ,d2ψ,a,e,NINT=NINT,action=true)
                 NINT += 1
                 o1diff = abs(Ω₁c-Ω₁r)
                 o2diff = abs(Ω₂c-Ω₂r)

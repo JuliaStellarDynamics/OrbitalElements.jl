@@ -1,12 +1,16 @@
-#=
+"""
 CircularFrequencies.jl
 
 Special treatment for circular orbits
   for circular orbits, we can use exact relations with ψ derivatives
 
+Strategies:
+-for e=0, use exact mappings for Ω1,Ω2.
+-for e~0, use Taylor expansions of Ω1,Ω2.
+
 @IMPROVE, add circular energy mapping
 
-=#
+"""
 
 """Omega1_circular(dψ/dr,d²ψ/dr²,a)
 radial frequency for circular orbits, from the epicyclic approximation
@@ -54,7 +58,7 @@ function Ω1circular(dψ::Function,
                     (48 * (a)^(2) * (Ω1c)^(3))
 
     return zeroorder + secondorder * e^2
-    
+
 end
 
 """Ω1circular(dψ/dr,d²ψ/dr²,d³ψ/dr³,a,e)
@@ -86,11 +90,12 @@ end
 Coefficients of the second-order expansion of β = Ω2/Ω1 near a circular orbit
 
 """
-function βcircular2ndorderExpansionCoefs(dψ::Function,
-                                        d2ψ::Function,
-                                        d3ψ::Function,
-                                        d4ψ::Function,
-                                        a::Float64)
+function βcircular2ndorderExpansionCoefs(ψ::Function,
+                                         dψ::Function,
+                                         d2ψ::Function,
+                                         d3ψ::Function,
+                                         d4ψ::Function,
+                                         a::Float64)
 
     # 2nd order Taylor expansion of L
     L0, L1, L2 = Lcirc2ndorderExpansionCoefs(ψ,dψ,d2ψ,d3ψ,a)
@@ -113,25 +118,29 @@ function βcircular2ndorderExpansionCoefs(dψ::Function,
     # WARNING: Assumption Lfirstorder = 0 and βoverLfirstorder = 0
     return L0 * βoverL0, 0., L0 * βoverL0 + L2 * βoverL2
 end
+
 """
 Second-order expansion of β = Ω2/Ω1 near a circular orbit
 """
-function βcircular(dψ::Function,
-                    d2ψ::Function,
-                    d3ψ::Function,
-                    d4ψ::Function,
-                    a::Float64,
-                    e::Float64)
+function βcircular(ψ::Function,
+                   dψ::Function,
+                   d2ψ::Function,
+                   d3ψ::Function,
+                   d4ψ::Function,
+                   a::Float64,
+                   e::Float64)
 
     # compute the Taylor expansion of L
-    zeroorder, firstorder, secondorder = βcircular2ndorderExpansionCoefs(dψ,d2ψ,d3ψ,d4ψ,a)
+    zeroorder, firstorder, secondorder = βcircular2ndorderExpansionCoefs(ψ,dψ,d2ψ,d3ψ,d4ψ,a)
     return zeroorder + firstorder * e + secondorder * (e)^(2)
 end
+
 """βcircular(dψ/dr,d²ψ/dr²,d³ψ/dr³,a,e)
-β = = Ω2/Ω1 for nearly circular orbits, from Taylor expansion
+β = Ω2/Ω1 for nearly circular orbits, from Taylor expansion
 EXCLUDING fourth derivative
 """
-function βcircular(dψ::Function,
+function βcircular(ψ::Function,
+                    dψ::Function,
                     d2ψ::Function,
                     d3ψ::Function,
                     a::Float64,
@@ -141,7 +150,7 @@ function βcircular(dψ::Function,
     # define a numerical fourth derivative
     d4ψ(x::Float64) = (d3ψ(x+FDIFF)-d3ψ(x))/FDIFF
 
-    return βcircular(dψ,d2ψ,d3ψ,d4ψ,a,e)
+    return βcircular(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e)
 end
 
 

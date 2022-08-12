@@ -15,6 +15,9 @@ function HenonThetaFrequenciesAE(ψ::Function,
                                  EDGE::Float64=0.03,
                                  TOLECC::Float64=0.001)
 
+
+
+
     if e<TOLECC
         # drop into circular frequency calculation
         if action
@@ -51,24 +54,24 @@ function HenonThetaFrequenciesAE(ψ::Function,
 
         end
 
-        accum1,accum2,accum3 = UnitarySimpsonIntegration(u3func,K_O=NINT)
+        accum = UnitarySimpsonIntegration(u3func,K_O=NINT)
 
         #return the values
-        omega1inv = (1/pi)*accum1
-        omega1    = 1/omega1inv
-        actionj   = (1/pi)*accum3
+        Ω1inv = (1/pi)*accum[1]
+        Ω1    = 1/Ω1inv
+        actionj   = (1/pi)*accum[3]
 
-        # be careful with omega2 if near radial: use analytic relation
+        # be careful with Ω2 if near radial: use analytic relation
         if e>(1-TOLECC)
-            omega2 = 0.5*omega1
+            Ω2 = 0.5*Ω1
         else
-            omega2 = LFromAE(ψ,dψ,d2ψ,d3ψ,a,e)*accum2*(1/pi)*omega1
+            Ω2 = LFromAE(ψ,dψ,d2ψ,d3ψ,a,e)*accum[2]*(1/pi)*Ω1
         end
 
         if action
-            return omega1,omega2,actionj
+            return Ω1,Ω2,actionj
         else
-            return omega1,omega2
+            return Ω1,Ω2
         end
 
     end # switches for orbits who are too radial or circular
@@ -97,24 +100,31 @@ function DHenonThetaFrequenciesAE(ψ::Function,
                                   Omega0::Float64=1.0)
 
     if e<TOLECC
-        # drop into circular frequency calculation:
-        #   these need expansions.
-        return Omega1_circular(dψ,d2ψ,a),Omega2_circular(dψ,a),0.,0.,0.,0.
+        # select a smaller de for these, since we know we are expanding?
+
+
+        # drop into circular frequency expansion calculations:
+        Ω1 = Ω1circular(dψ,d2ψ,d3ψ,d4ψ,a,e)
+        β  = βcircular(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e) # = Ω2/Ω1
+        Ω2 = β*Ω1
+
+        Ω1plusa = Ω1circular(dψ,d2ψ,d3ψ,d4ψ,a+da,e)
+        Ω1pluse = Ω1circular(dψ,d2ψ,d3ψ,d4ψ,a,e+de)
+
+        ∂Ω1∂a = (Ω1plusa - Ω1)/da
+        ∂Ω1∂e = (Ω1pluse - Ω1)/de
+
+        ∂Ω2∂a = (Ω1plusa*βcircular(ψ,dψ,d2ψ,d3ψ,d4ψ,a+da,e) - Ω2)/da
+        ∂Ω2∂e = (Ω1pluse*βcircular(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e+de) - Ω2)/de
+
+        return Ω1,Ω2,∂Ω1∂a,∂Ω1∂e,∂Ω2∂a,∂Ω2∂e
 
     else
-        # make a hard barrier for orbit calculation to avoid too radial orbits
-        if e>(1-TOLECC)
-            rperi,rapo = rpra_from_ae(a,1-TOLECC)
-        end
-
-        # standard case, compute the hard integrals
-
-
         # using theta calculations to compute frequencies: leans heavily on Theta from Ufunc.jl
         # @IMPROVE: EDGE could be adaptive based on circularity and small-ness of rperi
 
         # currently using Simpson's 1/3 rule for integration: requires that NINT be even.
-        # @IMPROVE: we could use a better integration scheme
+        # @IMPROVE: we could use a better(?) integration scheme
 
         rperi,rapo = rpra_from_ae(a,e)
 
@@ -146,36 +156,36 @@ function DHenonThetaFrequenciesAE(ψ::Function,
         accum1,accum2,accum3,accum4,accum5,accum6,accum7,accum8 = UnitarySimpsonIntegration(u8func,K_O=NINT)
 
         #return the values
-        omega1inv = (1/pi)*accum1
-        omega1    = 1/omega1inv
+        Ω1inv = (1/pi)*accum1
+        Ω1    = 1/Ω1inv
         actionj   = (1/pi)*accum3
 
         Eval, Lval, ∂E∂a, ∂E∂e, ∂L∂a, ∂L∂e = dELFromAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e)
 
-        # be careful with omega2 if near radial: use analytic relation
+        # be careful with Ω2 if near radial: use analytic relation
         if e>(1-TOLECC)
-            omega2 = 0.5*omega1
+            Ω2 = 0.5*Ω1
         else
-            omega2 = Lval*accum2*(1/pi)*omega1
+            Ω2 = Lval*accum2*(1/pi)*Ω1
         end
 
         # now do the partial derivatives:
-        ∂omega1∂a = -((omega1^2)/pi)*accum4
-        ∂omega1∂e = -((omega1^2)/pi)*accum5
+        ∂Ω1∂a = -((Ω1^2)/pi)*accum4
+        ∂Ω1∂e = -((Ω1^2)/pi)*accum5
 
         # get E,L derivatives
-        beta = omega2/omega1
+        beta = Ω2/Ω1
         dbetada   = (∂L∂a*beta/Lval) - (2/a)*beta + (Lval/pi)*accum6
         #(1/pi) * ( (∂L∂a*beta) - (2*Lval/a)*beta + Lval*accum6)
-        ∂omega2∂a = (dbetada + (beta/omega1)*∂omega1∂a)*omega1
+        ∂Ω2∂a = (dbetada + (beta/Ω1)*∂Ω1∂a)*Ω1
 
         dbetade   = (∂L∂e*beta/Lval) - (2/e)*beta + (2*a*Lval/(e*pi))*accum7 + (Lval/pi)*accum8
         # (1/pi) * ( (∂L∂e*beta) - (2*Lval/e)*beta + (2*Lval*a/e)*accum7 + Lval*accum8)
 
-        ∂omega2∂e = (dbetade + (beta/omega1)*∂omega1∂e)*omega1
+        ∂Ω2∂e = (dbetade + (beta/Ω1)*∂Ω1∂e)*Ω1
 
         # return values: no option for action right now, but maybe?
-        return omega1,omega2,∂omega1∂a,∂omega1∂e,∂omega2∂a,∂omega2∂e
+        return Ω1,Ω2,∂Ω1∂a,∂Ω1∂e,∂Ω2∂a,∂Ω2∂e
 
     end # switches for orbits who are too radial or circular
 
@@ -205,24 +215,24 @@ function DHenonThetaFreqRatiosAE(ψ::Function,
                                  Omega0::Float64=1.0)
 
     if e<TOLECC
-        # drop into circular frequency calculation:
-        #   these need expansions.
-        return Omega1_circular(dψ,d2ψ,a)/Omega0,Omega2_circular(dψ,a)/Omega1_circular(dψ,d2ψ,a),0.,0.,0.,0.
+        # drop into circular frequency expansion calculations:
+        α  = Ω1circular(dψ,d2ψ,d3ψ,d4ψ,a,e)/Omega0
+        β  = βcircular(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e)
+
+        ∂α∂a = (Ω1circular(dψ,d2ψ,d3ψ,d4ψ,a+da,e)/Omega0 - α)/da
+        ∂α∂e = (Ω1circular(dψ,d2ψ,d3ψ,d4ψ,a,e+de)/Omega0 - α)/de
+
+        ∂β∂a = (βcircular(ψ,dψ,d2ψ,d3ψ,d4ψ,a+da,e) - β)/da
+        ∂β∂e = (βcircular(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e+de) - β)/de
+
+        return α,β,∂α∂a,∂α∂e,∂β∂a,∂β∂e
 
     else
-        # make a hard barrier for orbit calculation to avoid too radial orbits
-        if e>(1-TOLECC)
-            rperi,rapo = rpra_from_ae(a,1-TOLECC)
-        end
-
-        # standard case, compute the hard integrals
-
-
         # using theta calculations to compute frequencies: leans heavily on Theta from Ufunc.jl
         # @IMPROVE: EDGE could be adaptive based on circularity and small-ness of rperi
 
         # currently using Simpson's 1/3 rule for integration: requires that NINT be even.
-        # @IMPROVE: we could use a better integration scheme
+        # @IMPROVE: we could use a better(?) integration scheme
 
         rperi,rapo = rpra_from_ae(a,e)
 
@@ -254,30 +264,30 @@ function DHenonThetaFreqRatiosAE(ψ::Function,
         accum1,accum2,accum3,accum4,accum5,accum6,accum7,accum8 = UnitarySimpsonIntegration(u8func,K_O=NINT)
 
         #return the values
-        omega1inv = (1/pi)*accum1
-        omega1    = 1/omega1inv
+        Ω1inv = (1/pi)*accum1
+        Ω1    = 1/Ω1inv
         actionj   = (1/pi)*accum3
 
         Eval, Lval, ∂E∂a, ∂E∂e, ∂L∂a, ∂L∂e = dELFromAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e)
 
-        # be careful with omega2 if near radial: use analytic relation
+        # be careful with Ω2 if near radial: use analytic relation
         if e>(1-TOLECC)
-            omega2 = 0.5*omega1
+            Ω2 = 0.5*Ω1
         else
-            omega2 = Lval*accum2*(1/pi)*omega1
+            Ω2 = Lval*accum2*(1/pi)*Ω1
         end
 
         # now do the partial derivatives:
-        ∂α∂a = -((omega1^2)/pi)*accum4/Omega0
-        ∂α∂e = -((omega1^2)/pi)*accum5/Omega0
+        ∂α∂a = -((Ω1^2)/pi)*accum4/Omega0
+        ∂α∂e = -((Ω1^2)/pi)*accum5/Omega0
 
         # get E,L derivatives
-        β = omega2/omega1
+        β = Ω2/Ω1
         ∂β∂a   = (∂L∂a*β/Lval) - (2/a)*β + (Lval/pi)*accum6
         ∂β∂e   = (∂L∂e*β/Lval) - (2/e)*β + (2*a*Lval/(e*pi))*accum7 + (Lval/pi)*accum8
 
         # return values: no option for action right now, but maybe?
-        return omega1/Omega0,omega2/omega1,∂α∂a,∂α∂e,∂β∂a,∂β∂e
+        return Ω1/Omega0,Ω2/Ω1,∂α∂a,∂α∂e,∂β∂a,∂β∂e
 
     end # switches for orbits who are too radial or circular
 
@@ -343,21 +353,21 @@ function HenonThetaFrequenciesRpRa(ψ::Function,
         accum1,accum2,accum3 = UnitarySimpsonIntegration(u3func,K_O=NINT)
 
         #return the values
-        omega1inv = (1/pi)*accum1
-        omega1    = 1/omega1inv
+        Ω1inv = (1/pi)*accum1
+        Ω1    = 1/Ω1inv
         actionj   = (1/pi)*accum3
 
-        # be careful with omega2 if near radial: use analytic relation
+        # be careful with Ω2 if near radial: use analytic relation
         if e>(1-TOLECC)
-            omega2 = 0.5*omega1
+            Ω2 = 0.5*Ω1
         else
-            omega2 = LFromRpRa(ψ,dψ,d2ψ,rperi,rapo)*accum2*(1/pi)*omega1
+            Ω2 = LFromRpRa(ψ,dψ,d2ψ,rperi,rapo)*accum2*(1/pi)*Ω1
         end
 
         if action
-            return omega1,omega2,actionj
+            return Ω1,Ω2,actionj
         else
-            return omega1,omega2
+            return Ω1,Ω2
         end
 
     end # switches for orbits who are too radial or circular
@@ -408,7 +418,7 @@ use the henon anomaly mapping to compute orbit frequencies
 @IMPROVE, disallow any frequency overshoots with known boundaries
 
 """
-function henon_anomaly_frequencies(ψ::Function,
+function HenonAnomalyFrequencies(ψ::Function,
                                    rapo::Float64,
                                    rperi::Float64,
                                    E::Float64,
@@ -472,71 +482,46 @@ function henon_anomaly_frequencies(ψ::Function,
     end
 
 
-    #freq1 = integration_distance/(accum1*dt);
-    freq1 = (pi/2)*uNINT/(accum1)
-    freq2 = freq1/(pi/2) * L * (sm/am) * accum2 / uNINT;
+    #Ω1 = integration_distance/(accum1*dt);
+    Ω1 = (pi/2)*uNINT/(accum1)
+    Ω2 = Ω1/(pi/2) * L * (sm/am) * accum2 / uNINT;
 
     # @IMPROVE
     # note that we could also return the actions if we wanted:
-    action1 = accum0/((pi/2)*uNINT)
+    Jr = accum0/((pi/2)*uNINT)
     #action2 = jj;
 
-    # @IMPROVE: we may want to force never allowing an overshoot (i.e. freq1 is capped at 1 no matter what)
+    # @IMPROVE: we may want to force never allowing an overshoot (i.e. Ω1 is capped at 1 no matter what)
     if action
-        return freq1,freq2,action1
+        return Ω1,Ω2,Jr
     else
-        return freq1,freq2
+        return Ω1,Ω2
     end
 
 end
 
 
-"""compute_frequences_henon(ψ,dψ/dr,d²ψ/dr²,rp,ra[,TOLECC,verbose])
+"""ComputeFrequenciesHenonRpRa(ψ,dψ/dr,d²ψ/dr²,rp,ra[,TOLECC,verbose])
 """
-function compute_frequencies_henon(ψ::Function,dψ::Function,d2ψ::Function,
+function ComputeFrequenciesHenonRpRa(ψ::Function,dψ::Function,d2ψ::Function,
         rperi::Float64,rapo::Float64;action::Bool=false,TOLECC::Float64=0.01,verbose::Int64=0,NINT::Int64=32)
-
-    E = EFromRpRa(ψ,dψ,d2ψ,rperi,rapo)
-    J = LFromRpRa(ψ,dψ,d2ψ,rperi,rapo)
-
 
     # check the tolerance
     a,ecc = ae_from_rpra(rperi,rapo)
 
-    # don't go into the loop if circular
-    if ecc<TOLECC
-        return Omega1_circular(dψ,d2ψ,a),Omega2_circular(dψ,a)
-    end
+    out = ComputeFrequenciesHenonAE(ψ,dψ,d2ψ,a,ecc,action=action,TOLECC=TOLECC,verbose=verbose,NINT=NINT)
 
-    # don't go into the loop if radial
-    if (1-ecc)<TOLECC
-        rperi = 1.e-10
-        if action
-            E = EFromRpRa(ψ,dψ,d2ψ,rperi,rapo)
-            J = LFromRpRa(ψ,dψ,d2ψ,rperi,rapo)
-            freq1,freq2,action1 = henon_anomaly_frequencies(ψ,rapo,rperi,E,J,action=true,NINT=NINT)
-            return freq1,freq2
-        else
-            E = EFromRpRa(ψ,dψ,d2ψ,rperi,rapo)
-            J = LFromRpRa(ψ,dψ,d2ψ,rperi,rapo)
-            freq1,freq2 = henon_anomaly_frequencies(ψ,rapo,rperi,E,J,action=false,NINT=NINT)
-            return freq1,freq2
-        end
-    end
-
-    # go to the frequency calculation
     if action
-        freq1,freq2,action1 = henon_anomaly_frequencies(ψ,rapo,rperi,E,J,action=true,NINT=NINT)
-        return freq1,freq2,action1
+        return out[1],out[2],out[3]
     else
-        freq1,freq2 = henon_anomaly_frequencies(ψ,rapo,rperi,E,J,action=false,NINT=NINT)
-        return freq1,freq2
+        return out[1],out[2]
     end
+
 end
 
 """compute_frequences_henon_ae(ψ,dψ/dr,d²ψ/dr²,rp,ra[,TOLECC,verbose])
 """
-function compute_frequencies_henon_ae(ψ::Function,dψ::Function,d2ψ::Function,
+function ComputeFrequenciesHenonAE(ψ::Function,dψ::Function,d2ψ::Function,
                                       a::Float64,ecc::Float64;action::Bool=false,TOLECC::Float64=0.01,verbose::Int64=0,NINT=32)
     #=compute_frequencies_henon_ae
 
@@ -569,15 +554,17 @@ function compute_frequencies_henon_ae(ψ::Function,dψ::Function,d2ψ::Function,
         end
     end
 
-    # if radial, we should exploit freq1 = 2*freq2 somehow.
+    # if radial, we should exploit Ω1 = 2*Ω2 somehow.
 
     # go to the frequency calculation
+    freqs = HenonAnomalyFrequencies(ψ,rapo,rperi,E,J,action=true,NINT=NINT)
+
     if action
-        freq1,freq2,action1 = henon_anomaly_frequencies(ψ,rapo,rperi,E,J,action=true,NINT=NINT)
-        return freq1,freq2,action1
+        Ω1,Ω2,Jr = freqs
+        return Ω1,Ω2,Jr
     else
-        freq1,freq2 = henon_anomaly_frequencies(ψ,rapo,rperi,E,J,action=false,NINT=NINT)
-        return freq1,freq2
+        Ω1,Ω2 = freqs
+        return Ω1,Ω2
     end
 
 end
