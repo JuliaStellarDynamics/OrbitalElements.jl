@@ -42,15 +42,15 @@ println("Ω₂ Bisect r=$rcirc1, Brent r=$rcirc0")
 # make a HIGH RES version of the frequencies
 #Ω₁r,Ω₂r = OrbitalElements.compute_frequencies_ae(ψ,dψ,d2ψ,a,e,NINT=1024)
 #Ω₁c,Ω₂c,Jrc = OrbitalElements.compute_frequencies_ae(ψ,dψ,d2ψ,a,e,NINT=32,action=true)
-Ω₁c,Ω₂c,Jrc = OrbitalElements.HenonThetaFrequenciesRpRa(ψ,dψ,d2ψ,rp,ra,NINT=32,action=true)
+@time Ω₁c,Ω₂c,Jrc = OrbitalElements.HenonThetaFrequenciesRpRa(ψ,dψ,d2ψ,rp,ra,NINT=32,action=true)
 println("real  O1=$Ω₁r O2=$Ω₂r Jr=$Jrr")
 println("guess O1=$Ω₁c O2=$Ω₂c Jr=$Jrc")
 
-Ω₁c2,Ω₂c2,Jrc2 = OrbitalElements.HenonThetaFrequenciesAE(ψ,dψ,d2ψ,d3ψ,a,e,NINT=32,action=true)
+@time Ω₁c2,Ω₂c2,Jrc2 = OrbitalElements.HenonThetaFrequenciesAE(ψ,dψ,d2ψ,d3ψ,a,e,NINT=32,action=true)
 println("guess O1=$Ω₁c2 O2=$Ω₂c2 Jr=$Jrc2")
 
 
-Ec,Lc,dEda,dEde,dLda,dLde = OrbitalElements.dELFromAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e)
+@time Ec,Lc,dEda,dEde,dLda,dLde = OrbitalElements.dELFromAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e)
 Em,Lm = OrbitalElements.IsochroneELFromAE(a,e,bc,M,G)
 println("estimated E=$Ec,L=$Lc")
 println("true      E=$Em,L=$Lm")

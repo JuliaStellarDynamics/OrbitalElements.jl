@@ -220,6 +220,7 @@ function LcircExpansion(ψ::Function,
 end
 
 
+
 """
 the Jacobian to convert between variables that are functions of (E,L) and (a,e)
 """
@@ -236,6 +237,50 @@ function JacELToAE(ψ::Function,
 
     return abs(∂E∂a*∂L∂e - ∂L∂a*∂E∂e)
 end
+
+
+"""
+the Jacobian to convert between variables that are functions of (E,L) and (a,e)
+EXCLUDING fourth derivative
+"""
+function JacELToAE(ψ::Function,
+                   dψ::Function,
+                   d2ψ::Function,
+                   d3ψ::Function,
+                   a::Float64,
+                   e::Float64;
+                   TOLECC::Float64=ELTOLECC,
+                   dr::Float64=1.e-6)
+
+    d4ψ(r::Float64)::Float64 = (d3ψ(r+dr)-d3ψ(r))/dr
+
+    E, L, ∂E∂a, ∂E∂e, ∂L∂a, ∂L∂e = dELFromAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,TOLECC=TOLECC)
+
+    return abs(∂E∂a*∂L∂e - ∂L∂a*∂E∂e)
+end
+
+
+"""
+the Jacobian to convert between variables that are functions of (E,L) and (a,e)
+EXCLUDING third derivative (fourth derivative is zer0)
+"""
+function JacELToAE(ψ::Function,
+                   dψ::Function,
+                   d2ψ::Function,
+                   a::Float64,
+                   e::Float64;
+                   TOLECC::Float64=ELTOLECC,
+                   dr::Float64=1.e-6)
+
+    d3ψ(r::Float64)::Float64 = (d2ψ(r+dr)-d2ψ(r))/dr
+    d4ψ(r::Float64)::Float64 = 0.
+
+    E, L, ∂E∂a, ∂E∂e, ∂L∂a, ∂L∂e = dELFromAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,TOLECC=TOLECC)
+
+    return abs(∂E∂a*∂L∂e - ∂L∂a*∂E∂e)
+end
+
+
 
 
 """

@@ -33,7 +33,8 @@ function JacELToAlphaBetaAE(ψ::Function,
 
 
     # the (E,L) -> (a,e) Jacobian (in Utils/ComputeEL.jl)
-    Jac_EL_AE = JacELToAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,TOLECC=TOLECC)
+    #Jac_EL_AE = JacELToAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,TOLECC=TOLECC)
+    Jac_EL_AE = JacELToAE(ψ,dψ,d2ψ,a,e,TOLECC=TOLECC)
 
     # the (alpha,beta) -> (a,e) Jacobian (below)
     Jac_AB_AE = JacAlphaBetaToAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,NINT=NINT,EDGE=EDGE,Omega0=Omega0)
@@ -71,8 +72,10 @@ function JacAlphaBetaToAE(ψ::Function,
                           EDGE::Float64=0.02,
                           Omega0::Float64=1.0)
 
-    α,β,∂α∂a,∂α∂e,∂β∂a,∂β∂e = OrbitalElements.DHenonThetaFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,NINT=NINT,EDGE=EDGE,Omega0=Omega0)
+    # calculate the frequency derivatives
+    α,β,∂α∂a,∂α∂e,∂β∂a,∂β∂e = OrbitalElements.DHenonThetaFreqRatiosAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,NINT=NINT,EDGE=EDGE,Omega0=Omega0)
 
+    # return the Jacobian
     Jacαβae = abs(∂α∂a*∂β∂e - ∂β∂a*∂α∂e)
 
 end
@@ -97,12 +100,12 @@ function JacELToAlphaBetaAE(a::Float64,
     tmpecc = ecc
     # to be fixed for limited development...
     if ecc>0.99
-        tmpecc=0.5
+        tmpecc=0.99
     end
 
     if ecc<0.01
-        println("faking the eccentricity...")
-        tmpecc=0.5
+        #println("faking the eccentricity...")
+        tmpecc=0.01
     end
 
     # get all numerical derivatives
@@ -110,22 +113,22 @@ function JacELToAlphaBetaAE(a::Float64,
     # these are dangerous, and break down fairly easily.
     f1c,f2c,df1da,df2da,df1de,df2de = ComputeFrequenciesAEWithDeriv(ψ,dψ,d2ψ,a,tmpecc)
 
-    # this is nearly always save
-    #Ec,Lc,dEda,dEde,dLda,dLde       = dEdL_from_ae_pot(ψ,dψ,d2ψ,a,ecc)
-    Ec,Lc,dEda,dEde,dLda,dLde       = dELFromAE(ψ,dψ,d2ψ,a,ecc)
+    # this is nearly always safe
+    # the (E,L) -> (a,e) Jacobian (in Utils/ComputeEL.jl)
+    #Jac_EL_AE = JacELToAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e)
+    Jac_EL_AE = JacELToAE(ψ,dψ,d2ψ,a,tmpecc)
 
-    # construct Jacobians
-    J_EL_ae   = abs(dEda*dLde - dEde*dLda)
+
     J_o1o2_ae = abs(df1da*df2de - df1de*df2da)
 
     # check for NaN or zero values
     if nancheck
-        if isnan(J_EL_ae)
+        if isnan(Jac_EL_AE)
             println("OrbitalElements.Frequencies.JacELToAlphaBetaAE: J_EL_ae is NaN for a=$a,e=$ecc")
             return 1.0
         end
 
-        if J_EL_ae == 0.0
+        if Jac_EL_AE == 0.0
             println("OrbitalElements.Frequencies.JacELToAlphaBetaAE: J_EL_ae is 0 for a=$a,e=$ecc")
             return 1.0
         end
@@ -142,7 +145,7 @@ function JacELToAlphaBetaAE(a::Float64,
     end
 
     # combine and return
-    return f1c*Ω₀*J_EL_ae/J_o1o2_ae
+    return f1c*Ω₀*Jac_EL_AE/J_o1o2_ae
 
 end
 

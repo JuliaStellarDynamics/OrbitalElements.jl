@@ -273,8 +273,8 @@ function DHenonThetaFreqRatiosAE(ψ::Function,
 
         # get E,L derivatives
         β = omega2/omega1
-        ∂β∂a   = (∂L∂a*β/Lval) - (2/a)*beta + (Lval/pi)*accum6
-        ∂β∂e   = (∂L∂e*β/Lval) - (2/e)*beta + (2*a*Lval/(e*pi))*accum7 + (Lval/pi)*accum8
+        ∂β∂a   = (∂L∂a*β/Lval) - (2/a)*β + (Lval/pi)*accum6
+        ∂β∂e   = (∂L∂e*β/Lval) - (2/e)*β + (2*a*Lval/(e*pi))*accum7 + (Lval/pi)*accum8
 
         # return values: no option for action right now, but maybe?
         return omega1/Omega0,omega2/omega1,∂α∂a,∂α∂e,∂β∂a,∂β∂e
