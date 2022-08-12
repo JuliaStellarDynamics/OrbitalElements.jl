@@ -93,7 +93,8 @@ function DHenonThetaFrequenciesAE(ψ::Function,
                                   de::Float64=1.0e-6,
                                   NINT::Int64=32,
                                   EDGE::Float64=0.01,
-                                  TOLECC::Float64=0.001)
+                                  TOLECC::Float64=0.001,
+                                  Omega0::Float64=1.0)
 
     if e<TOLECC
         # drop into circular frequency calculation:

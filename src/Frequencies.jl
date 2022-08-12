@@ -17,7 +17,7 @@ include("Utils/NumericalInversion.jl")
 
 
 """
-
+compute the jacobian J = |d(E,L)/d(alpha,beta)| = |d(E,L)/d(a,e)|/|d(alpha,beta)/d(a,e)|
 """
 function JacELToAlphaBetaAE(ψ::Function,
                             dψ::Function,
@@ -32,10 +32,25 @@ function JacELToAlphaBetaAE(ψ::Function,
                             TOLECC::Float64=0.001)
 
 
+    # the (E,L) -> (a,e) Jacobian (in Utils/ComputeEL.jl)
     Jac_EL_AE = JacELToAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,TOLECC=TOLECC)
+
+    # the (alpha,beta) -> (a,e) Jacobian (below)
     Jac_AB_AE = JacAlphaBetaToAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,NINT=NINT,EDGE=EDGE,Omega0=Omega0)
 
-    return Jac_EL_AE/Jac_AB_AE
+    # compute the Jacobian
+    Jac = Jac_EL_AE/Jac_AB_AE
+
+    # do some cursory checks for quality
+    if Jac < 0.0
+        return 0.0
+    end
+
+    if isnan(Jac)
+        return 0.0
+    end
+
+    return Jac
 
 end
 

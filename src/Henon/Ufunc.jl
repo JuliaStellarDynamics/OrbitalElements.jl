@@ -424,7 +424,16 @@ function ThetaAE(ψ::Function,
         #r = ru(f,u,a,e)
         r = ru(u,a,e)
 
-        return a * e * df(u) / sqrt(2*(E - ψeff(ψ,r,L)))
+        # this can somehow be negative: do we need an extra check?
+        denomsq = 2*(E - ψeff(ψ,r,L))
+
+        if denomsq < 0.0
+            # go back to the expansion -- or should we return 0.0?
+            return ThetaExpansionAE(ψ,dψ,d2ψ,d3ψ,u,a,e;TOLECC=TOLECC,f=f,d2f=d2f,d3f=d3f,d4f=d4f)
+        end
+
+        # do the standard return
+        return a * e * df(u) / sqrt(denomsq)
     end
 
 end
