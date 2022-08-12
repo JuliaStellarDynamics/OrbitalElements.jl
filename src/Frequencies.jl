@@ -125,22 +125,22 @@ function JacELToAlphaBetaAE(a::Float64,
     if nancheck
         if isnan(Jac_EL_AE)
             println("OrbitalElements.Frequencies.JacELToAlphaBetaAE: J_EL_ae is NaN for a=$a,e=$ecc")
-            return 1.0
+            return 0.0
         end
 
-        if Jac_EL_AE == 0.0
+        if Jac_EL_AE <= 0.0
             println("OrbitalElements.Frequencies.JacELToAlphaBetaAE: J_EL_ae is 0 for a=$a,e=$ecc")
-            return 1.0
+            return 0.0
         end
 
         if isnan(J_o1o2_ae)
             println("OrbitalElements.Frequencies.JacELToAlphaBetaAE: J_o12_ae is NaN for a=$a,e=$ecc")
-            return 1.0
+            return 0.0
         end
 
-        if J_o1o2_ae == 0.0
+        if J_o1o2_ae <= 0.0
             println("OrbitalElements.Frequencies.JacELToAlphaBetaAE: J_o12_ae is 0 for a=$a,e=$ecc")
-            return 1.0
+            return 0.0
         end
     end
 
