@@ -12,8 +12,56 @@ Special treatment for circular orbits
 radial frequency for circular orbits, from the epicyclic approximation
 
 """
-function Omega1_circular(dpotential::Function,ddpotential::Function,r::Float64)
-    return sqrt(ddpotential(r) + 3*dpotential(r)/r)
+function Omega1_circular(dψ::Function,
+                        d2ψ::Function,
+                        r::Float64)
+
+    return sqrt(d2ψ(r) + 3*dψ(r)/r)
+end
+
+"""Ω1circular(dψ/dr,d²ψ/dr²,d³ψ/dr³,d⁴ψ/dr⁴,a,e)
+radial frequency for nearly circular orbits, from Taylor expansion
+
+"""
+function Ω1circular(dψ::Function,
+                    d2ψ::Function,
+                    d3ψ::Function,
+                    d4ψ::Function,
+                    a::Float64,
+                    e::Float64)
+
+    Ω1c = Omega1_circular(dψ,d2ψ,a)
+    dψa, d2ψa, d3ψa, d4ψa = dψ(a), d2ψ(a), d3ψ(a), d4ψ(a)
+    # 2nd order Taylor expansion of Omega_1
+    zeroorder   = Ω1c
+    secondorder =  (
+                    -36 * (dψa)^(2) 
+                    + (a)^3 * (-a * (d3ψa)^(2) 
+                                + 3*d2ψa*(4*d3ψa + a*d4ψa))
+                    + 3 * a * dψa * (12 * d2ψa
+                                + a*(20*d3ψa + 3*a*d4ψa))
+                    )
+                    / 
+                    (48 * (a)^(2) * (Ω1c)^(3))
+
+    return zeroorder + secondorder * e^2
+end
+
+"""Ω1circular(dψ/dr,d²ψ/dr²,d³ψ/dr³,a,e)
+radial frequency for nearly circular orbits, from Taylor expansion
+EXCLUDING fourth derivative
+"""
+function Ω1circular(dψ::Function,
+                    d2ψ::Function,
+                    d3ψ::Function,
+                    a::Float64,
+                    e::Float64;
+                    FDIFF::Float64=1.e-8)
+
+    # define a numerical fourth derivative
+    d4ψ(x::Float64) = (d3ψ(x+FDIFF)-d3ψ(x))/FDIFF
+
+    return Ω1circular(dψ,d2ψ,d3ψ,d4ψ,a,e)
 end
 
 """Omega2_circular(dψ/dr,r)
@@ -24,51 +72,69 @@ function Omega2_circular(dpotential::Function,r::Float64)
     return sqrt(dpotential(r)/r)
 end
 
-"""Omega1_expansion(dψ/dr,d²ψ/dr²,r,rcirc)
-first-order Taylor expansion for the radial frequency: at da
 """
-function Omega1_expansion(dpotential::Function,ddpotential::Function,
-                          r::Float64,rcirc::Float64,
-                          dddpotential::Function=f(x)=x+1)
+Coefficients of the second-order expansion of β = Ω2/Ω1 near a circular orbit
 
-    omega1_circular = Omega1_circular(dpotential,ddpotential,r)
-    dudr            = dpotential(rcirc)
-    dduddr          = ddpotential(rcirc)
-    h               = r-rcirc
+"""
+function βcircular2ndorderExpansionCoefs(dψ::Function,
+                                        d2ψ::Function,
+                                        d3ψ::Function,
+                                        d4ψ::Function,
+                                        a::Float64)
 
-    # did the user provide a third derivative?
-    if dddpotential(1)==2
+    # 2nd order Taylor expansion of L
+    L0, L1, L2 = Lcirc2ndorderExpansionCoefs(ψ,dψ,d2ψ,d3ψ,a)
 
-        # do a finite derivative
-        drapprox = 1.e-5
-        dddudddr = (ddpotential(rcirc+drapprox) - ddpotential(rcirc))/drapprox
+    Ω1c = Omega1_circular(dψ,d2ψ,a)
+    dψa, d2ψa, d3ψa, d4ψa = dψ(a), d2ψ(a), d3ψ(a), d4ψ(a)
+    # 2nd order Taylor expansion of Omega_2/(L * Omega_1)
+    βoverL0 = 1 / ((a)^(2) * Ω1c)
+    βoverL2 =   (
+                396 * (dψa)^(2) 
+                - 3 * a * dψa * (- 100 * d2ψa
+                            + 3*a*(4*d3ψa + a*d4ψa))
+                + (a)^(2) * (72 * (d2ψa)^(2)
+                            + (a)^(2) * (d3ψa)^(2)
+                            - a*d2ψa*(4*d3ψa + 3*a*d4ψa))
+                )
+                / 
+                (48 * (a)^(4) * (Ω1c)^(5))
 
-    else
+    # WARNING: Assumption Lfirstorder = 0 and βoverLfirstorder = 0
+    return L0 * βoverL0, 0., L0 * βoverL0 + L2 * βoverL2
+end
+"""
+Second-order expansion of β = Ω2/Ω1 near a circular orbit
+"""
+function βcircular(dψ::Function,
+                    d2ψ::Function,
+                    d3ψ::Function,
+                    d4ψ::Function,
+                    a::Float64,
+                    e::Float64)
 
-        # use the given analytic potential
-        dddudddr = dddpotential(rcirc)
+    # compute the Taylor expansion of L
+    zeroorder, firstorder, secondorder = βcircular2ndorderExpansionCoefs(dψ,d2ψ,d3ψ,d4ψ,a)
+    return zeroorder + firstorder * e + secondorder * (e)^(2)
+end
+"""βcircular(dψ/dr,d²ψ/dr²,d³ψ/dr³,a,e)
+β = = Ω2/Ω1 for nearly circular orbits, from Taylor expansion
+EXCLUDING fourth derivative
+"""
+function βcircular(dψ::Function,
+                    d2ψ::Function,
+                    d3ψ::Function,
+                    a::Float64,
+                    e::Float64;
+                    FDIFF::Float64=1.e-8)
 
-    end
+    # define a numerical fourth derivative
+    d4ψ(x::Float64) = (d3ψ(x+FDIFF)-d3ψ(x))/FDIFF
 
-    return omega1_circular + (r-rcirc)*((dddudddr + (3/rcirc)*dduddr - (3/rcirc^2)*dudr)/(2*omega1_circular))
-
+    return βcircular(dψ,d2ψ,d3ψ,d4ψ,a,e)
 end
 
 
-"""Omega2_expansion(dψ/dr,d²ψ/dr²,r,rcirc)
-first-order Taylor expansion for the azimuthal frequency
-"""
-function Omega2_expansion(dpotential::Function,ddpotential::Function,
-                          r::Float64,rcirc::Float64)
-    omega2_circular = Omega2_circular(dpotential,rcirc)
-    dudr   = dpotential(rcirc)
-    dduddr = ddpotential(rcirc)
-    h      = r-rcirc
-    dO2    = ((1/rcirc)*dduddr - (1/rcirc^2)*(dudr))/(2*omega2_circular)
-
-    return omega2_circular + h*dO2
-
-end
 
 
 """Omega1circ_to_radius(Ω₁,dψ/dr,d²ψ/dr²,rmax)
@@ -76,13 +142,7 @@ perform backwards mapping from Omega_1 for a circular orbit to radius
 
 can tune [rmin,rmax] for extra optimisation (but not needed)
 """
-function Omega1circ_to_radius(omega::Float64,dpotential::Function,ddpotential::Function;rmin::Float64=0.0,rmax::Float64=10000.0)
-    r_omega1 = optimize(x -> abs(omega - Omega1_circular(dpotential,ddpotential,x)), rmin    ,rmax  , Brent()).minimizer
-    return r_omega1
-end
-
-
-function Omega1circ_to_radius_bisect(omega::Float64,dpotential::Function,ddpotential::Function;rmin::Float64=1.0e-8,rmax::Float64=10000.0)
+function Omega1circ_to_radius(omega::Float64,dpotential::Function,ddpotential::Function;rmin::Float64=1.0e-8,rmax::Float64=10000.0)
 
     rcirc = try bisection(r -> omega - Omega1_circular(dpotential,ddpotential,r), rmin, rmax) catch;  rmax end
     if rcirc == rmax
@@ -96,13 +156,7 @@ end
 """Omega2circ_to_radius(Ω₂,dψ/dr,d²ψ/dr²[,rmax])
 perform backwards mapping from Omega_2 for a circular orbit to radius
 """
-function Omega2circ_to_radius(omega::Float64,dpotential::Function,rmax::Float64=1000.)
-    r_omega2 = optimize(x -> abs(omega - Omega2_circular(dpotential,x)), 0.    ,rmax  , Brent()).minimizer
-    return r_omega2
-end
-
-
-function Omega2circ_to_radius_bisect(omega::Float64,dpotential::Function;rmin::Float64=1.0e-8,rmax::Float64=10000.0)
+function Omega2circ_to_radius(omega::Float64,dpotential::Function;rmin::Float64=1.0e-8,rmax::Float64=10000.0)
 
     rcirc = try bisection(r -> omega - Omega2_circular(dpotential,r), rmin, rmax) catch;  rmax end
     if rcirc == rmax
@@ -110,47 +164,6 @@ function Omega2circ_to_radius_bisect(omega::Float64,dpotential::Function;rmin::F
     end
 
     return rcirc
-end
-
-
-
-"""make_betac(dψ/dr,d²ψ/dr²[,numr,Omega0])
-do a high-resolution interpolation to get \beta_c(\alpha), the frequency O2/O1 frequency ratio as a function of O1.
-
-@IMPROVE: find Omega0 adaptively
-@IMPROVE: make the interpolation range adaptive in radius
-@IMPROVE: decide on best mapping for interplation range (currently log)
-@IMPROVE: remove anonymous functions for alpha_c,beta_c
-
-"""
-function make_betac(dpotential::Function,ddpotential::Function,numr::Int64=2000,Omega0::Float64=1.)
-
-    # define the circular frequencies
-    alpha_c(x) = Omega1_circular(dpotential,ddpotential,x)    # alpha_c(r)
-    beta_c(x)  = Omega2_circular(dpotential,x)/alpha_c(x)     # beta_c(r)
-
-    # @IMPROVE: make this range adaptive
-    testu = 10 .^ LinRange(5.,-5.,numr)
-
-    # initialise blank arrays
-    garr = Array{Float64}(undef, (numr))
-    farr = Array{Float64}(undef, (numr))
-
-    # fill the arrays
-    for u = 1:numr
-        garr[u] = alpha_c(testu[u])/Omega0
-        farr[u] = beta_c(testu[u])
-    end
-
-    # compute a linear interpolation of the arrays
-    beta_c = LinearInterpolation(garr,farr)
-
-    #return beta_c
-
-    # convert this to a function for easier Julia compile
-    calculate_betac(x::Float64) = beta_c(x)
-    return calculate_betac
-
 end
 
 """beta_circ(alpha_circ, dψ/dr,d²ψ/dr²[Omega0, rmax])
@@ -164,7 +177,7 @@ function beta_circ(alpha_circ::Float64,dpotential::Function,ddpotential::Functio
     # define the circular frequencies
     omega1 = Omega0 * alpha_circ
     #rcirc = Omega1circ_to_radius(omega1,dpotential,ddpotential,rmax)
-    rcirc = Omega1circ_to_radius_bisect(omega1,dpotential,ddpotential;rmin=rmin,rmax=rmax)
+    rcirc = Omega1circ_to_radius(omega1,dpotential,ddpotential;rmin=rmin,rmax=rmax)
 
     omega2 = Omega2_circular(dpotential,rcirc)
 

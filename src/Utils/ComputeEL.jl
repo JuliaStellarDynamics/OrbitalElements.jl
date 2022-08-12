@@ -193,6 +193,18 @@ function EcircExpansion(ψ::Function,
 end
 
 """
+Coefficients of the second-order expansion of angular momentum equation near a circular orbit
+"""
+function Lcirc2ndorderExpansionCoefs(ψ::Function,
+                            dψ::Function,
+                            d2ψ::Function,
+                            d3ψ::Function,
+                            a::Float64)
+
+    Lcirc = (sqrt(a))^(3)*sqrt(dψ(a))
+    return Lcirc, 0., ((a)^(5)*d3ψ(a)/(12*Lcirc) - Lcirc)
+end
+"""
 Second-order expansion of angular momentum equation near a circular orbit
 """
 function LcircExpansion(ψ::Function,
@@ -203,8 +215,8 @@ function LcircExpansion(ψ::Function,
                         e::Float64)
 
     # compute the Taylor expansion of L
-    Lcirc = (sqrt(a))^(3)*sqrt(dψ(a))
-    return Lcirc + ((a)^(5)*d3ψ(a)/(12*Lcirc) - Lcirc) * (e)^(2)
+    zeroorder, firstorder, secondorder = Lcirc2ndorderExpansionCoefs(ψ,dψ,d2ψ,d3ψ,a)
+    return zeroorder + firstorder * e + secondorder * (e)^(2)
 end
 
 

@@ -4,7 +4,7 @@ examples/run_mestel.jl
 examples/run_jacobians.jl
 examples/*.txt
 examples/*.hf5
-examples/figures/*
+examples/figures
 
 src/Utils/GridInversion.jl
 src/Utils/ComputeEL_mp.jl
