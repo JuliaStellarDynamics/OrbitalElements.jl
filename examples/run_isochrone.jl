@@ -18,7 +18,7 @@ d4ψ(r::Float64)::Float64  = OrbitalElements.isochrone_ddddpsi_ddddr(r,bc,M,G)
 
 
 # select an (a,e) value for the orbit
-a,e = 0.001, 0.3
+a,e = 0.0005, 0.5
 
 # compute rperi and rapo
 rp,ra = OrbitalElements.rpra_from_ae(a,e)
@@ -38,14 +38,14 @@ Jrr = OrbitalElements.isochrone_jr_rpra(rp,ra,bc,M,G)
 println("truth Ω₁=$Ω₁e,Ω₂=$Ω₂e")
 
 # make a HIGH RES version of the frequencies
-Ω₁r,Ω₂r = OrbitalElements.ComputeFrequenciesAE(ψ,dψ,d2ψ,a,e,NINT=128)
-#Ω₁c,Ω₂c,Jrc = OrbitalElements.ComputeFrequenciesAE(ψ,dψ,d2ψ,a,e,NINT=32,action=true)
-@time Ω₁c,Ω₂c,Jrc = OrbitalElements.HenonThetaFrequenciesRpRa(ψ,dψ,d2ψ,rp,ra,NINT=64,action=true)
-println("real  O1=$Ω₁r O2=$Ω₂r Jr=$Jrr")
-println("guess O1=$Ω₁c O2=$Ω₂c Jr=$Jrc")
+Ω₁r,Ω₂r,Jrr = OrbitalElements.ComputeFrequenciesAE(ψ,dψ,d2ψ,a,e,NINT=256,action=true)
+println("oldae O1=$Ω₁r O2=$Ω₂r Jr=$Jrr")
 
-@time Ω₁c2,Ω₂c2,Jrc2 = OrbitalElements.HenonThetaFrequenciesAE(ψ,dψ,d2ψ,d3ψ,a,e,NINT=64,action=true)
-println("guess O1=$Ω₁c2 O2=$Ω₂c2 Jr=$Jrc2")
+#@time Ω₁c,Ω₂c,Jrc = OrbitalElements.HenonThetaFrequenciesRpRa(ψ,dψ,d2ψ,rp,ra,NINT=64,action=true)
+#println("theta O1=$Ω₁c O2=$Ω₂c Jr=$Jrc")
+
+@time Ω₁c2,Ω₂c2,Jrc2 = OrbitalElements.HenonThetaFrequenciesAE(ψ,dψ,d2ψ,d3ψ,a,e,NINT=128,action=true)
+println("theta O1=$Ω₁c2 O2=$Ω₂c2 Jr=$Jrc2")
 
 @time Ec,Lc,dEda,dEde,dLda,dLde = OrbitalElements.dELFromAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e)
 Em,Lm = OrbitalElements.IsochroneELFromAE(a,e,bc,M,G)
@@ -66,15 +66,12 @@ println("TJacobian(EL,ab):$J_EL_abT")
 
 
 # get the numerical frequency derivatives at this point
-f1c,f2c,df1da,df2da,df1de,df2de = OrbitalElements.ComputeFrequenciesAEWithDeriv(ψ,dψ,d2ψ,a,e)
-#f1c,f2c,df1da,df2da,df1de,df2de = OrbitalElements.ComputeFrequenciesAEWithDerivCircular(ψ,dψ,d2ψ,a,e)
-f1c2,f2c2,df1drp,df2drp,df1dra,df2dra = OrbitalElements.ComputeFrequenciesRpRaWithDeriv(ψ,dψ,d2ψ,rp,ra,TOLECC=-1.0)
+#f1c,f2c,df1da,df2da,df1de,df2de = OrbitalElements.ComputeFrequenciesAEWithDeriv(ψ,dψ,d2ψ,a,e)
+f1c,f2c,df1da,df2da,df1de,df2de = OrbitalElements.ComputeFrequenciesAEWithDeriv(ψ,dψ,d2ψ,d3ψ,a,e)
+
 
 f1h,f2h,df1dah,df1deh,df2dah,df2deh = OrbitalElements.DHenonThetaFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,NINT=64,EDGE=0.3)
 
-println("Compare derivatives:")
-println("Numerical: df1da=$df1da,df2da=$df2da,df1de=$df1de,df2de=$df2de")
-println("Sanalytic: df1da=$df1dah,df2da=$df2dah,df1de=$df1deh,df2de=$df2deh")
 
 # check isochrone numerical diff for frequencies
 da = 1.e-6
@@ -87,7 +84,11 @@ f1m,f2m = OrbitalElements.IsochroneOmega12FromAE(a,e,bc,M,G)
 f1a,f2a = OrbitalElements.IsochroneOmega12FromAE(a+da,e,bc,M,G)
 f1e,f2e = OrbitalElements.IsochroneOmega12FromAE(a,e+de,bc,M,G)
 df1da2,df1de2,df2da2,df2de2 = (f1a-f1m)/da,(f1e-f1m)/de,(f2a-f2m)/da,(f2e-f2m)/de
-println("Nanalytic: df1da=$df1da2,df2da=$df2da2,df1de=$df1de2,df2de=$df2de2")
+
+println("Compare derivatives:")
+println("NDiff : df1da=$df1da,df2da=$df2da,df1de=$df1de,df2de=$df2de")
+println("DTheta: df1da=$df1dah,df2da=$df2dah,df1de=$df1deh,df2de=$df2deh")
+println("Truth : df1da=$df1da2,df2da=$df2da2,df1de=$df1de2,df2de=$df2de2")
 
 
 #=

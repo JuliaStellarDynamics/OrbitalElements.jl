@@ -17,47 +17,56 @@ include("Utils/NumericalInversion.jl")
 
 
 
-"""ComputeFrequenciesAE(ψ,dψ/dr,d²ψ/dr²,a,ecc[,TOLECC,verbose])
+"""ComputeFrequenciesAE(ψ,dψ,d2ψ,d3ψ,a,ecc[,TOLECC,verbose])
 wrapper to select which type of frequency computation to perform, from (a,e)
 """
 function ComputeFrequenciesAE(ψ::Function,dψ::Function,d2ψ::Function,d3ψ::Function,
-                                a::Float64,ecc::Float64;
-                                action::Bool=false,
-                                TOLECC::Float64=0.001,
-                                verbose::Int64=0,
-                                NINT::Int64=32)
+                              a::Float64,ecc::Float64;
+                              action::Bool=false,
+                              TOLECC::Float64=0.001,
+                              verbose::Int64=0,
+                              NINT::Int64=32)
 
     out = HenonThetaFrequenciesAE(ψ,dψ,d2ψ,d3ψ,a,ecc,action=true,TOLECC=TOLECC,verbose=verbose,NINT=NINT)
 
     if action
         # out is a tuple with three values: O1,O2,Jr
-        return out[1],out[2],out[3]
+        Ω1,Ω2,Jr = out
+        return Ω1,Ω2,Jr
     else
         # out is a tuple with two values: O1,O2
-        return out[1],out[2]
+        Ω1,Ω2 = out
+        return Ω1,Ω2
     end
 
 end
 
 
 
-"""ComputeFrequenciesAE(ψ,dψ/dr,d²ψ/dr²,a,ecc[,TOLECC,verbose])
+"""ComputeFrequenciesAE(ψ,dψ,d2ψ,a,ecc[,TOLECC,verbose])
 wrapper to select which type of frequency computation to perform, from (a,e)
 """
 function ComputeFrequenciesAE(ψ::Function,dψ::Function,d2ψ::Function,
-                                a::Float64,ecc::Float64;action::Bool=false,TOLECC::Float64=0.001,verbose::Int64=0,NINT::Int64=32)
+                              a::Float64,ecc::Float64;
+                              action::Bool=false,
+                              TOLECC::Float64=0.001,
+                              verbose::Int64=0,
+                              NINT::Int64=32)
+
+    out = ComputeFrequenciesHenonAE(ψ,dψ,d2ψ,a,ecc,action=true,TOLECC=TOLECC,verbose=verbose,NINT=NINT)
 
     if action
-        Ω1,Ω2,a1 = ComputeFrequenciesHenonAE(ψ,dψ,d2ψ,a,ecc,action=true,TOLECC=TOLECC,verbose=verbose,NINT=NINT)
+        Ω1,Ω2,a1 = out
         return Ω1,Ω2,a1
     else
-        Ω1,Ω2 = ComputeFrequenciesHenonAE(ψ,dψ,d2ψ,a,ecc,action=false,TOLECC=TOLECC,verbose=verbose,NINT=NINT)
+        Ω1,Ω2 = out
         return Ω1,Ω2
     end
+
 end
 
 
-"""compute_ae_from_frequencies(ψ,dψ/dr,d²ψ/dr²,a,ecc[,eps,maxiter,TOLECC,TOLA])
+"""compute_ae_from_frequencies(ψ,dψ,d2ψ,a,ecc[,eps,maxiter,TOLECC,TOLA])
 wrapper to select which type of inversion to compute for (Omega1,Omega2)->(a,e)
 """
 function compute_ae_from_frequencies(ψ::Function,dψ::Function,d2ψ::Function,
@@ -91,7 +100,7 @@ function compute_ae_from_frequencies(ψ::Function,dψ::Function,d2ψ::Function,
 end
 
 
-"""ComputeFrequenciesAEWithDeriv(ψ,dψ/dr,d²ψ/dr²a,ecc[,TOLECC,verbose])
+"""ComputeFrequenciesAEWithDeriv(ψ,dψ,d2ψa,ecc[,TOLECC,verbose])
 wrapper to select which type of frequency computation to perform, from (a,e), but DERIVATIVES
 
 @IMPROVE: could add action derivatives here? more copacetic with analytic derivatives anyway
@@ -101,31 +110,31 @@ function ComputeFrequenciesRpRaWithDeriv(ψ::Function,
                                          d2ψ::Function,
                                          rp::Float64,
                                          ra::Float64;
-                                         dr::Float64=0.0001,
+                                         dr::Float64=1.e-6,
                                          TOLECC::Float64=0.001,
                                          verbose::Int64=0,
                                          NINT::Int64=32)
 
 
-
+        d3ψ(r::Float64)::Float64 = (d2ψ(r+dr) - d2ψ(r))/dr
         # grid is structured like
         # (Ω1h,Ω2h) [+da]
         #    ^
         # (Ω1c,Ω2c)-> (Ω1r,Ω2r) [+de]
 
         # @IMPROVE watch out for close to TOLECC, will fail across boundary
-        a,e = 0.5*(rp+ra),(ra-rp)/(rp+ra)
-        #Ω1c,Ω2c = ComputeFrequenciesHenonRpRa(ψ,dψ,d2ψ,rp,ra,action=false,TOLECC=TOLECC,verbose=verbose,NINT=NINT)
-        Ω1c,Ω2c = ComputeFrequenciesHenonAE(ψ,dψ,d2ψ,a,e,action=false,TOLECC=TOLECC,verbose=verbose,NINT=NINT)
-        #println("HARD CHECK $Ω1c,$Ω2c,$a,$e")
+        a,e = ae_from_rpra(rp,ra)
+        Ω1c,Ω2c = HenonThetaFrequenciesAE(ψ,dψ,d2ψ,d3ψ,a,e,action=false,TOLECC=TOLECC,NINT=NINT)
+
 
         # need to check 'polarity': that is, if a circular orbit, don't do rp+dr; do rp-dr
         if (rp+dr > ra)
             dr *= -1.0
         end
 
-        Ω1h,Ω2h = ComputeFrequenciesHenonRpRa(ψ,dψ,d2ψ,rp+dr,ra,action=false,TOLECC=TOLECC,verbose=verbose,NINT=NINT)
-
+        #ah,eh = 0.5*(rp+dr+ra),(ra-(rp+dr))/(rp+ra+dr)
+        ah,eh = ae_from_rpra(rp+dr,ra)
+        Ω1h,Ω2h = HenonThetaFrequenciesAE(ψ,dψ,d2ψ,d3ψ,ah,eh,action=false,TOLECC=TOLECC,NINT=NINT)
         dΩ1drp = (Ω1h-Ω1c)/dr
         dΩ2drp = (Ω2h-Ω2c)/dr
 
@@ -134,8 +143,8 @@ function ComputeFrequenciesRpRaWithDeriv(ψ::Function,
             dr *= -1.0
         end
 
-        Ω1r,Ω2r = ComputeFrequenciesHenonRpRa(ψ,dψ,d2ψ,rp,ra+dr,action=false,TOLECC=TOLECC,verbose=verbose,NINT=NINT)
-
+        ar,er = ae_from_rpra(rp,ra+dr)
+        Ω1r,Ω2r = HenonThetaFrequenciesAE(ψ,dψ,d2ψ,d3ψ,ar,er,action=false,TOLECC=TOLECC,NINT=NINT)
         dΩ1dra = (Ω1r-Ω1c)/dr
         dΩ2dra = (Ω2r-Ω2c)/dr
 
@@ -143,7 +152,53 @@ function ComputeFrequenciesRpRaWithDeriv(ψ::Function,
 end
 
 
-"""ComputeFrequenciesAEWithDeriv(ψ,dψ/dr,d²ψ/dr²a,ecc[,TOLECC,verbose])
+"""ComputeFrequenciesAEWithDeriv(ψ,dψ,d2ψa,ecc[,TOLECC,verbose])
+wrapper to select which type of frequency computation to perform, from (a,e), but DERIVATIVES
+INCLUDING third potential derivative
+"""
+function ComputeFrequenciesAEWithDeriv(ψ::Function,
+                                       dψ::Function,
+                                       d2ψ::Function,
+                                       d3ψ::Function,
+                                       a::Float64,
+                                       ecc::Float64;
+                                       da::Float64=0.0001,
+                                       de::Float64=0.0001,
+                                       TOLECC::Float64=0.001,
+                                       verbose::Int64=0,
+                                       NINT::Int64=32)
+
+        # first, check for values that need to be expanded
+
+        # grid is structured like
+        # (Ω1h,Ω2h) [+da]
+        #    ^
+        # (Ω1c,Ω2c)-> (Ω1r,Ω2r) [+de]
+
+        # @IMPROVE watch out for close to TOLECC, will fail across boundary
+        Ω1c,Ω2c = ComputeFrequenciesAE(ψ,dψ,d2ψ,d3ψ,a,ecc,action=false,TOLECC=TOLECC,verbose=verbose,NINT=NINT)
+
+        Ω1h,Ω2h = ComputeFrequenciesAE(ψ,dψ,d2ψ,d3ψ,a+da,ecc,action=false,TOLECC=TOLECC,verbose=verbose,NINT=NINT)
+
+        # if this is already a radial orbit, don't go to super radial
+        if ecc+de > 1.0
+            de *= -1.0
+        end
+
+        Ω1r,Ω2r = ComputeFrequenciesAE(ψ,dψ,d2ψ,d3ψ,a,ecc+de,action=false,TOLECC=TOLECC,verbose=verbose,NINT=NINT)
+
+        dΩ1da = (Ω1h-Ω1c)/da
+        dΩ2da = (Ω2h-Ω2c)/da
+
+        dΩ1de = (Ω1r-Ω1c)/de
+        dΩ2de = (Ω2r-Ω2c)/de
+
+        return Ω1c,Ω2c,dΩ1da,dΩ2da,dΩ1de,dΩ2de
+end
+
+
+
+"""ComputeFrequenciesAEWithDeriv(ψ,dψ,d2ψa,ecc[,TOLECC,verbose])
 wrapper to select which type of frequency computation to perform, from (a,e), but DERIVATIVES
 
 @IMPROVE: could add action derivatives here? more copacetic with analytic derivatives anyway
@@ -365,7 +420,7 @@ end
 
 
 
-"""ComputeFrequenciesRpRa(ψ,dψ/dr,d²ψ/dr²,r_peri,r_apo[,TOLECC,verbose])
+"""ComputeFrequenciesRpRa(ψ,dψ,d2ψ,r_peri,r_apo[,TOLECC,verbose])
 wrapper to select which type of frequency computation to perform, from (a,e)
 """
 function ComputeFrequenciesRpRa(ψ::Function,dψ::Function,d2ψ::Function,

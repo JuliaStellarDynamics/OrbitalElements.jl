@@ -13,12 +13,18 @@ function HenonThetaFrequenciesAE(ψ::Function,
                                  action::Bool=false,
                                  NINT::Int64=32,
                                  EDGE::Float64=0.03,
-                                 TOLECC::Float64=0.001)
+                                 TOLECC::Float64=0.001,
+                                 verbose::Int64=0)
 
 
 
 
     if e<TOLECC
+
+        if verbose > 1
+            println("Henon/Frequencies.jl:HenonThetaFrequenciesAE: using circular approximation.")
+        end
+
         # drop into circular frequency calculation
         if action
             return Omega1_circular(dψ,d2ψ,a),Omega2_circular(dψ,a),0.0
@@ -27,13 +33,6 @@ function HenonThetaFrequenciesAE(ψ::Function,
         end
 
     else
-        # make a hard barrier for orbit calculation to avoid too radial orbits
-        if e>(1-TOLECC)
-            rperi,rapo = rpra_from_ae(a,1-TOLECC)
-        end
-
-        # standard case, compute the hard integrals
-
 
         # using theta calculations to compute frequencies: leans heavily on Theta from Ufunc.jl
         # @IMPROVE: EDGE could be adaptive based on circularity and small-ness of rperi
