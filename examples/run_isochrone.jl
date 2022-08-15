@@ -38,13 +38,13 @@ Jrr = OrbitalElements.isochrone_jr_rpra(rp,ra,bc,M,G)
 println("truth Ω₁=$Ω₁e,Ω₂=$Ω₂e")
 
 # make a HIGH RES version of the frequencies
-Ω₁r,Ω₂r,Jrr = OrbitalElements.ComputeFrequenciesAE(ψ,dψ,d2ψ,a,e,NINT=256,action=true)
+Ω₁r,Ω₂r,Jrr = OrbitalElements.ComputeFrequenciesAE(ψ,dψ,d2ψ,a,e,NINT=512,action=true)
 println("oldae O1=$Ω₁r O2=$Ω₂r Jr=$Jrr")
 
 #@time Ω₁c,Ω₂c,Jrc = OrbitalElements.HenonThetaFrequenciesRpRa(ψ,dψ,d2ψ,rp,ra,NINT=64,action=true)
 #println("theta O1=$Ω₁c O2=$Ω₂c Jr=$Jrc")
 
-@time Ω₁c2,Ω₂c2,Jrc2 = OrbitalElements.HenonThetaFrequenciesAE(ψ,dψ,d2ψ,d3ψ,a,e,NINT=128,action=true)
+@time Ω₁c2,Ω₂c2,Jrc2 = OrbitalElements.HenonThetaFrequenciesAE(ψ,dψ,d2ψ,d3ψ,a,e,NINT=256,action=true)
 println("theta O1=$Ω₁c2 O2=$Ω₂c2 Jr=$Jrc2")
 
 @time Ec,Lc,dEda,dEde,dLda,dLde = OrbitalElements.dELFromAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e)
@@ -67,10 +67,10 @@ println("TJacobian(EL,ab):$J_EL_abT")
 
 # get the numerical frequency derivatives at this point
 #f1c,f2c,df1da,df2da,df1de,df2de = OrbitalElements.ComputeFrequenciesAEWithDeriv(ψ,dψ,d2ψ,a,e)
-f1c,f2c,df1da,df2da,df1de,df2de = OrbitalElements.ComputeFrequenciesAEWithDeriv(ψ,dψ,d2ψ,d3ψ,a,e)
+f1c,f2c,df1da,df2da,df1de,df2de = OrbitalElements.ComputeFrequenciesAEWithDeriv(ψ,dψ,d2ψ,d3ψ,a,e,NINT=512)
 
 
-f1h,f2h,df1dah,df1deh,df2dah,df2deh = OrbitalElements.DHenonThetaFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,NINT=64,EDGE=0.3)
+f1h,f2h,df1dah,df1deh,df2dah,df2deh = OrbitalElements.DHenonThetaFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,NINT=128,EDGE=0.2)
 
 
 # check isochrone numerical diff for frequencies
