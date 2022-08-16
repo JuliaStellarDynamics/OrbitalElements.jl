@@ -367,7 +367,7 @@ function ThetaExpansionAE(ψ::Function,
                           df::Function=henon_df,
                           d2f::Function=henon_d2f,
                           d3f::Function=henon_d3f,
-                          d4f::Function=henon_d4f)
+                          d4f::Function=henon_d4f)::Float64
 
     ul = (u > 0) ? 1.0 : -1.0
     #rl = ru(f,ul,a,e)
@@ -380,13 +380,21 @@ function ThetaExpansionAE(ψ::Function,
     d2fl, d3fl, d4fl = d2f(ul), d3f(ul), d4f(ul)
 
     pref = - ul * a * e
-    denom = sqrt(- a * e * dψeffl * d2fl)
+
+    # this denominator can be negative?
+    combination = - a * e * dψeffl * d2fl
+
+    # switch to safety: don't contribute anything at this point
+    if combination <= 0.
+        return 0.0
+    end
+
+    denom = sqrt(combination)
 
     zeroorder   = d2fl
     firstorder  = d3fl / 3.0
     secondorder = (3.0 * (dψeffl * d2fl * d4fl - a * e * d2ψeffl * (d2fl)^(3)) -  dψeffl * (d3fl)^(2)) / (24 * dψeffl * d2fl)
 
-    # in this line, denom used to be 'den'? maybe that was something different?
     return pref / denom * ( zeroorder + firstorder * (u - ul) + secondorder * (u - ul)^(2) )
 end
 

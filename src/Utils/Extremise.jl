@@ -159,14 +159,17 @@ function bisection(fun::Function,
                    xl::Float64,
                    xu::Float64;
                    tolx::Float64=1000.0*eps(Float64),
-                   tolf::Float64=1000.0*eps(Float64))
+                   tolf::Float64=1000.0*eps(Float64),
+                   verbose=false)
 
+    # order the input arguments
     if (xl > xu)
-        xl, xu = xu, xl # Ordering the input arguments
+        xl, xu = xu, xl
     end
-    #####
-    fl, fu = fun(xl), fun(xu) # Evaluating the function on the bracket
-    #####
+
+    # evaluate the function on the bracket
+    fl, fu = fun(xl), fun(xu)
+
     if (abs(fl) <= tolf) # We have already found a solution on the left bracket
         return xl # Returning the left bracket
     end
@@ -200,7 +203,9 @@ function bisection(fun::Function,
             xl, fl = xm, fm # The lower point becomes the midpoint
         end
         if k == nitermax
-            println("Warning : Maximal number of iteration reached in bisection.")
+            if verbose
+                println("OrbitalElements.Extremise.bisection: Maximal number of iteration reached.")
+            end
             return xm
         end
     end

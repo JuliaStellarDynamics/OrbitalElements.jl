@@ -1,18 +1,95 @@
 """
-numerical inversion of (omega1,omega2) -> (a,e)
-by brute-forcing the derivative increments domega1/da, domega1/de, deomega2/da, domega2/de
+numerical inversion of (Ω₁,Ω₂) -> (a,e)
+by brute-forcing the derivative increments dΩ₁/da, dΩ₁/de, deΩ₂/da, dΩ₂/de
 
 """
 
 
 
-"""ae_from_omega1omega2_brute(Ω₁,Ω₂,ψ,dψ/dr,d²ψ/dr²[,eps,maxiter])
 
-basic Newton-Raphson algorithm to find (a,e) from (omega1,omega2) brute force derivatives.
+"""AEFromOmega1Omega2Brute(Ω₁,Ω₂,ψ,dψ,d2ψ,d3ψ[,eps,maxiter,TOLECC,TOLA,da,de,verbose])
+
+basic Newton-Raphson algorithm to find (a,e) from (Ω₁,Ω₂) brute force derivatives.
 
 @IMPROVE add escape for circular orbits
 """
-function ae_from_omega1omega2_brute(omega1::Float64,omega2::Float64,
+function AEFromOmega1Omega2Brute(Ω₁::Float64,Ω₂::Float64,
+                                 ψ::Function,
+                                 dψ::Function,
+                                 d2ψ::Function,
+                                 d3ψ::Function;
+                                 eps::Float64=1*10^(-10),
+                                 maxiter::Int64=1000,
+                                 TOLECC::Float64=0.001,TOLA::Float64=0.0001,
+                                 da::Float64=1.0e-5,de::Float64=1.0e-5,
+                                 verbose::Int64=0,
+                                 EDGE::Float64=0.03,
+                                 NINT::Int64=64)
+    #
+
+    # get the circular orbit (maximum radius) for a given Ω₁,Ω₂. use the stronger constraint.
+    acirc = Omega1circ_to_radius(Ω₁,dψ,d2ψ)
+
+    # then start from ecc=0.5 and take numerical derivatives
+    aguess = acirc
+    eguess = 0.5
+    f1,f2 = ComputeFrequenciesAE(ψ,dψ,d2ψ,d3ψ,aguess,eguess,NINT=NINT,EDGE=EDGE)
+
+    # 2d Newton Raphson inversion and find new increments
+    iter = 0
+    while (((Ω₁ - f1)^2 + (Ω₂ - f2)^2) > eps^2)
+
+        f1,f2,df1da,df2da,df1de,df2de = ComputeFrequenciesAEWithDeriv(ψ,dψ,d2ψ,d3ψ,aguess,eguess,da=da,de=de,TOLECC=TOLECC,verbose=verbose,NINT=NINT,EDGE=EDGE)
+
+        jacobian = [df1da df1de ; df2da df2de]
+
+        # this increment reports occasional failures; why?
+        try
+            increment = jacobian \ (-([f1 ; f2] - [Ω₁ ; Ω₂]))
+            aguess,eguess = aguess + increment[1],eguess + increment[2]
+        catch e # this catch appears to not work because LAPACK is doing something under the hood
+            if verbose>0
+                println("OrbitalElements.NumericalInversion.jl: bad division for Jacobian=$jacobian and (f1,f2)=($f1,$f2), (Ω₁,Ω₂)=($Ω₁,$Ω₂).")
+            end
+            # are we just in some tiny bad patch? # reset to 'safe' values
+            aguess,eguess = aguess + da,0.5
+            increment = [0;0]
+        end
+
+        # the try...catch above is failing for some reason
+        if (@isdefined increment) == false
+            increment = [0;0]
+        end
+    end
+
+
+    if verbose > 0
+        println("OrbitalElements.NumericalInversion.jl: niter=",iter)
+    end
+
+    finaltol = ((Ω₁ - f1)^2 + (Ω₂ - f2)^2)
+
+    # check here to not allow bad values?
+    if isnan(aguess) | isnan(eguess)
+        if verbose>0
+            println("OrbitalElements.NumericalInversion.jl: failed for inputs (Ω₁,Ω₂)=($Ω₁,$Ω₂).")
+        end
+        return acirc,0.5,-1,finaltol
+    else
+        return aguess,eguess,iter,finaltol
+    end
+end
+
+
+
+
+"""ae_from_omega1omega2_brute(Ω₁,Ω₂,ψ,dψ,d2ψ[,eps,maxiter])
+
+basic Newton-Raphson algorithm to find (a,e) from (Ω₁,Ω₂) brute force derivatives.
+
+@IMPROVE add escape for circular orbits
+"""
+function ae_from_omega1omega2_brute(Ω₁::Float64,Ω₂::Float64,
                                     ψ::Function,
                                     dψ::Function,
                                     d2ψ::Function,
@@ -23,13 +100,13 @@ function ae_from_omega1omega2_brute(omega1::Float64,omega2::Float64,
                                     verbose::Int64=0)
     #
 
-    # get the circular orbit (maximum radius) for a given omega1,omega2. use the stronger constraint.
-    acirc = Omega1circ_to_radius(omega1,dψ,d2ψ)
+    # get the circular orbit (maximum radius) for a given Ω₁,Ω₂. use the stronger constraint.
+    acirc = Omega1circ_to_radius(Ω₁,dψ,d2ψ)
 
 
     # check to make sure we aren't very close to circular (radial isn't a problem)
-    f1circ,f2circ = ComputeFrequenciesAE(ψ,dψ,d2ψ,acirc,0.0)
-    #if (((omega1 - f1circ)^2 + (omega2 - f2circ)^2) < eps^2)
+    #f1circ,f2circ = ComputeFrequenciesAE(ψ,dψ,d2ψ,acirc,0.0)
+    #if (((Ω₁ - f1circ)^2 + (Ω₂ - f2circ)^2) < eps^2)
     #    return acirc,0.0
     #end
 
@@ -41,7 +118,7 @@ function ae_from_omega1omega2_brute(omega1::Float64,omega2::Float64,
 
     # 2d Newton Raphson inversion and find new increments
     iter = 0
-    while (((omega1 - f1)^2 + (omega2 - f2)^2) > eps^2)
+    while (((Ω₁ - f1)^2 + (Ω₂ - f2)^2) > eps^2)
 
         f1,f2,df1da,df2da,df1de,df2de = ComputeFrequenciesAEWithDeriv(ψ,dψ,d2ψ,aguess,eguess,da=da,de=de,TOLECC=TOLECC,verbose=verbose)
 
@@ -49,14 +126,14 @@ function ae_from_omega1omega2_brute(omega1::Float64,omega2::Float64,
 
         # this increment reports occasional failures; why?
         try
-            increment = jacobian \ (-([f1 ; f2] - [omega1 ; omega2]))
+            increment = jacobian \ (-([f1 ; f2] - [Ω₁ ; Ω₂]))
             aguess,eguess = aguess + increment[1],eguess + increment[2]
         catch e # this catch appears to not work because LAPACK is doing something under the hood
             if verbose>0
-                println("OrbitalElements/NumericalInversion.jl: bad division for Jacobian=",jacobian," and (f1,f2)=",f1,f2," and (Ω₁,Ω₂)=",omega1,omega2)
+                println("OrbitalElements.NumericalInversion.jl: bad division for Jacobian=$jacobian and (f1,f2)=($f1,$f2), (Ω₁,Ω₂)=($Ω₁,$Ω₂).")
             end
             # are we just in some tiny bad patch? # reset to 'safe' values
-            aguess,eguess = aguess + 1.e-3,0.5
+            aguess,eguess = aguess + 1.e-6, 0.5
             increment = [0;0]
         end
 
@@ -79,7 +156,7 @@ function ae_from_omega1omega2_brute(omega1::Float64,omega2::Float64,
                 eguess = max(TOLECC,0.5eguess)
             catch e
                 if verbose>0
-                    println("OrbitalElements/NumericalInversion.jl: guessing close to ecc=0: ",eguess," (a=",aguess,")")
+                    println("OrbitalElements.NumericalInversion.jl: guessing close to ecc=0: ",eguess," (a=",aguess,")")
                 end
                 eguess = max(TOLECC,0.5eguess)
             end
@@ -91,7 +168,7 @@ function ae_from_omega1omega2_brute(omega1::Float64,omega2::Float64,
                 eguess = eguess - increment[2]
                 eguess = min(1-TOLECC,eguess + 0.5*(1-eguess))
             catch e
-                println("OrbitalElements/NumericalInversion.jl: guessing close to ecc=1: ",eguess," (a=",aguess,") for increment ",increment)
+                println("OrbitalElements.NumericalInversion.jl: guessing close to ecc=1: ",eguess," (a=",aguess,") for increment ",increment)
                 eguess = min(1-TOLECC,eguess + 0.5*(1-eguess))
             end
         end
@@ -99,7 +176,7 @@ function ae_from_omega1omega2_brute(omega1::Float64,omega2::Float64,
         if aguess < TOLA
             aguess = TOLA
             if verbose>1
-                println("OrbitalElements/NumericalInversion.jl: guessing close to a=0: ",aguess," (e=",eguess,")")
+                println("OrbitalElements.NumericalInversion.jl: guessing close to a=0: ",aguess," (e=",eguess,")")
             end
         end
 
@@ -117,12 +194,12 @@ function ae_from_omega1omega2_brute(omega1::Float64,omega2::Float64,
         println("OrbitalElements/NumericalInversion.jl: niter=",iter)
     end
 
-    finaltol = ((omega1 - f1)^2 + (omega2 - f2)^2)
+    finaltol = ((Ω₁ - f1)^2 + (Ω₂ - f2)^2)
 
     # check here to not allow bad values?
     if isnan(aguess) | isnan(eguess)
         if verbose>0
-            println("OrbitalElements/NumericalInversion.jl: failed for inputs (Ω₁,Ω₂)=",omega1,omega2)
+            println("OrbitalElements/NumericalInversion.jl: failed for inputs (Ω₁,Ω₂)=",Ω₁,Ω₂)
         end
         return acirc,0.5,-1,finaltol
     else
@@ -131,23 +208,8 @@ function ae_from_omega1omega2_brute(omega1::Float64,omega2::Float64,
 end
 
 
-"""jacobian_EL_alphabeta(α,β,ψ,dψ/dr,d²ψ/dr²[,eps,maxiter])
 
-use the ψ derivatives to compute the Jacobian. Needs to be finished!
-"""
-function jacobian_EL_alphabeta(alpha::Float64,beta::Float64,
-                               ψ::Function,
-                               dψ::Function,
-                               d2ψ::Function,
-                               eps::Float64=1*10^(-6),
-                               maxiter::Int64=10000)
-
-    return 1.
-
-end
-
-
-"""ae_from_EL_brute(E,L,ψ,dψ/dr,d²ψ/dr²[,eps,maxiter,TOLECC,verbose])
+"""ae_from_EL_brute(E,L,ψ,dψ,d2ψ[,eps,maxiter,TOLECC,verbose])
 basic Newton-Raphson algorithm to find (a,e) from (E,L) brute force derivatives.
 @IMPROVE add escape for circular orbits
 """
@@ -162,7 +224,7 @@ function ae_from_EL_brute(E::Float64,L::Float64,
     #
 
     # get the circular orbit (maximum radius) for a given E. use the stronger constraint.
-    #acirc = Omega1circ_to_radius(omega1,dψ,d2ψ)
+    #acirc = Omega1circ_to_radius(Ω₁,dψ,d2ψ)
     # is this the best launching eccentricity?
     aguess,eccguess = 1.,TOLECC
 

@@ -8,13 +8,13 @@ using Printf
 
 # define easy potentials to pass to frequency calculators
 const bc, M, G = 1.,1. ,1.
-ψ(r::Float64)::Float64       = OrbitalElements.isochrone_psi(r,bc,M,G)
-dψ(r::Float64)::Float64    = OrbitalElements.isochrone_dpsi_dr(r,bc,M,G)
-d2ψ(r::Float64)::Float64  = OrbitalElements.isochrone_ddpsi_ddr(r,bc,M,G)
-d3ψ(r::Float64)::Float64  = OrbitalElements.isochrone_dddpsi_dddr(r,bc,M,G)
-d4ψ(r::Float64)::Float64  = OrbitalElements.isochrone_ddddpsi_ddddr(r,bc,M,G)
+ψ(r::Float64)::Float64    = OrbitalElements.ψIsochrone(r,bc,M,G)
+dψ(r::Float64)::Float64   = OrbitalElements.dψIsochrone(r,bc,M,G)
+d2ψ(r::Float64)::Float64  = OrbitalElements.d2ψIsochrone(r,bc,M,G)
+d3ψ(r::Float64)::Float64  = OrbitalElements.d3ψIsochrone(r,bc,M,G)
+d4ψ(r::Float64)::Float64  = OrbitalElements.d4ψIsochrone(r,bc,M,G)
 
-Ω₀      = OrbitalElements.isochrone_Omega0(bc,M,G)
+Ω₀      = OrbitalElements.Omega0Isochrone(bc,M,G)
 
 
 # select an (a,e) value for the orbit

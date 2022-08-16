@@ -584,3 +584,13 @@ function FindVminVmaxIsochrone(n1::Int64,n2::Int64,u::Float64)
         end
     end
 end
+
+
+function GetVarpiIsochrone(omg::Complex{Float64},
+                           n1::Int64,n2::Int64)
+
+    w_min,w_max = FindWminWmaxIsochrone(n1,n2)
+
+    return GetVarpi(omg,w_min,w_max)
+
+end

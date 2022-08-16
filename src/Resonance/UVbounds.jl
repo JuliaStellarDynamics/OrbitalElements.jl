@@ -57,7 +57,7 @@ function FindVbound(n1::Int64,n2::Int64,
 end
 
 
-"""get_varpi(omega₀,n₁,n₂,dψ/dr,d²ψ/dr²[,rmax,Ω₀])
+"""GetVarpi(omega₀,n₁,n₂,dψ/dr,d²ψ/dr²[,rmax,Ω₀])
 translate a complex frequency into a rescale frequency.
 maps ``\\omega \\to [-1,1]``
 
@@ -65,16 +65,16 @@ Fouvry & Prunet B3
 
 omg needs to come in dimensionless, that is, rescaled by Ω₀ already.
 
-This is exact.
+This is exact (assuming wmin,wmax)
 """
-function get_varpi(omg::Complex{Float64},
+function GetVarpi(omg::Complex{Float64},
                    n1::Int64,n2::Int64,
                    dpotential::Function,ddpotential::Function;
                    rmax::Float64=1000.,Ω₀::Float64=1.)
 
     w_min,w_max = FindWminWmax(n1,n2,dpotential,ddpotential,rmax,Ω₀)
 
-    return get_varpi(omg,w_min,w_max)
+    return GetVarpi(omg,w_min,w_max)
 
 end
 
@@ -82,7 +82,7 @@ end
 varpi version with w_min, w_max
 
 """
-function get_varpi(omg::Complex{Float64},
+function GetVarpi(omg::Complex{Float64},
                    w_min::Float64,w_max::Float64)
 
     return (2.0*omg - w_max - w_min)/(w_max - w_min)
