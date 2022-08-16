@@ -5,16 +5,16 @@
 """
 
 
-"""find_wmin_wmax(n₁,n₂,dψ/dr,d²ψ/dr²[,rmax,Ω0])
+"""FindWminWmax(n₁,n₂,dψ/dr,d²ψ/dr²[,rmax,Ω0])
 for a given resonance, find the maximum frequencies
 must have Omega1_circular, Omega2_circular defined (CircularRadial/CircularFrequencies.jl)
 
 @IMPROVE: specific to the cored cluster with infinite extent
 @IMPROVE: fix rmax limits to be expected
 
-OrbitalElements.find_wmin_wmax(-3,4,OrbitalElements.isochrone_dpsi_dr,OrbitalElements.isochrone_ddpsi_ddr)
+OrbitalElements.FindWminWmax(-3,4,OrbitalElements.isochrone_dpsi_dr,OrbitalElements.isochrone_ddpsi_ddr)
 """
-function find_wmin_wmax(n1::Int64,n2::Int64,
+function FindWminWmax(n1::Int64,n2::Int64,
                         dpotential::Function,
                         ddpotential::Function,
                         rmax::Float64=1000.,
@@ -35,10 +35,10 @@ function find_wmin_wmax(n1::Int64,n2::Int64,
     return w_min,w_max
 end
 
-"""find_vbound(n₁,n₂,dψ/dr,d²ψ/dr²[,rmax,Ω₀])
+"""FindVbound(n₁,n₂,dψ/dr,d²ψ/dr²[,rmax,Ω₀])
 find any valie non- 0 or 1 v value at u=-1 or u=1
 """
-function find_vbound(n1::Int64,n2::Int64,
+function FindVbound(n1::Int64,n2::Int64,
                      dpotential::Function,
                      ddpotential::Function,
                      rmax::Float64=1000.,
@@ -72,7 +72,7 @@ function get_varpi(omg::Complex{Float64},
                    dpotential::Function,ddpotential::Function;
                    rmax::Float64=1000.,Ω₀::Float64=1.)
 
-    w_min,w_max = find_wmin_wmax(n1,n2,dpotential,ddpotential,rmax,Ω₀)
+    w_min,w_max = FindWminWmax(n1,n2,dpotential,ddpotential,rmax,Ω₀)
 
     return get_varpi(omg,w_min,w_max)
 
@@ -90,11 +90,11 @@ function get_varpi(omg::Complex{Float64},
 end
 
 
-"""hu(u,wmin,wmax)
+"""HUFunc(u,wmin,wmax)
 return h, a helper quantity
 Fouvry & Prunet B8
 """
-function hu(u::Float64,wmin::Float64,wmax::Float64)
+function HUFunc(u::Float64,wmin::Float64,wmax::Float64)
     return 0.5*(wmax+wmin + u*(wmax-wmin))
 end
 
@@ -114,7 +114,7 @@ function RootOfHOmega(u::Float64,
                       vbound::Float64,
                       βc::Function)
 
-    hval = hu(u,wmin,wmax)
+    hval = HUFunc(u,wmin,wmax)
 
     rootequation(x::Float64)::Float64 = hval - n1*x - n2*x*βc(x)
 
@@ -134,13 +134,13 @@ function RootOfHOmega(u::Float64,
 
     # edge curing for vbounds
     # from upper left to lower right cure
-    if (vbound > 0.999999) & (u==-1.) & (hu(-1.,wmin,wmax)<0)
+    if (vbound > 0.999999) & (u==-1.) & (HUFunc(-1.,wmin,wmax)<0)
         r1 = 0.999999
         r2 = 1.0
     end
 
     # from lower left to upper right cure
-    if (vbound > 0.999999) & (u==1.) & (hu(1.,wmin,wmax)>0)
+    if (vbound > 0.999999) & (u==1.) & (HUFunc(1.,wmin,wmax)>0)
         r1 = 0.999999
         r2 = 1.
     end
@@ -160,7 +160,7 @@ function ConstraintThree(u::Float64,
                          wmin::Float64,wmax::Float64,
                          n1::Int64,n2::Int64)
     # greater than this
-    hval = hu(u,wmin,wmax)
+    hval = HUFunc(u,wmin,wmax)
     denom = (n2/2 + n1)
 
     # special cases:
@@ -182,7 +182,7 @@ for a given resonance, at a specific value of u, find the v coordinate boundarie
 @IMPROVE, put in guards for the edges in BetaC
 @IMPROVE, decide if we want to have FindVminVmax wrap the vbound calculation?
 """
-function find_vmin_vmax(u::Float64,
+function FindVminVmax(u::Float64,
                         wmin::Float64,wmax::Float64,
                         n1::Int64,n2::Int64,
                         vbound::Float64,
@@ -191,7 +191,7 @@ function find_vmin_vmax(u::Float64,
 
     if (n2==0)
 
-        hval = hu(u,wmin,wmax)
+        hval = HUFunc(u,wmin,wmax)
 
         vmin = 0.5
 
