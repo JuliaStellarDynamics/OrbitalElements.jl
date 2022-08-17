@@ -19,7 +19,7 @@ function AEFromOmega1Omega2Brute(Ω₁::Float64,Ω₂::Float64,
                                  d2ψ::Function,
                                  d3ψ::Function;
                                  eps::Float64=1*10^(-10),
-                                 maxiter::Int64=1000,
+                                 ITERMAX::Int64=1000,
                                  TOLECC::Float64=0.001,TOLA::Float64=0.0001,
                                  da::Float64=1.0e-5,de::Float64=1.0e-5,
                                  verbose::Int64=0,
@@ -49,17 +49,57 @@ function AEFromOmega1Omega2Brute(Ω₁::Float64,Ω₂::Float64,
             aguess,eguess = aguess + increment[1],eguess + increment[2]
         catch e # this catch appears to not work because LAPACK is doing something under the hood
             if verbose>0
-                println("OrbitalElements.NumericalInversion.jl: bad division for Jacobian=$jacobian and (f1,f2)=($f1,$f2), (Ω₁,Ω₂)=($Ω₁,$Ω₂).")
+                println("OrbitalElements.NumericalInversion.jl: bad division for Jacobian=$jacobian and (f1,f2)=($f1,$f2), (Ω₁,Ω₂)=($Ω₁,$Ω₂) at (a,e)=($aguess,$eguess).")
             end
             # are we just in some tiny bad patch? # reset to 'safe' values
-            aguess,eguess = aguess + da,0.5
+            aguess,eguess = aguess + 10da,0.5
             increment = [0;0]
+
+            if iter > ITERMAX
+                finaltol = ((Ω₁ - f1)^2 + (Ω₂ - f2)^2)
+                return aguess,eguess,-2,finaltol
+            end
         end
 
         # the try...catch above is failing for some reason
         if (@isdefined increment) == false
             increment = [0;0]
         end
+
+        # @WARNING: these appear to have broken something.
+        # if bad guesses, needs to reset to a different part of space
+        # can't go too small
+        if eguess < TOLECC
+            # go halfway between the previous guess and 0.
+            try
+                # reset eguess value
+                eguess = eguess - increment[2]
+                eguess = max(TOLECC,0.5eguess)
+            catch e
+                if verbose>0
+                    println("OrbitalElements.NumericalInversion.jl: guessing close to ecc=0: ",eguess," (a=",aguess,")")
+                end
+                eguess = max(TOLECC,0.5eguess)
+            end
+        end
+
+        if eguess >= (1-TOLECC)
+            # go halfway between the previous guess and 1.
+            try
+                eguess = eguess - increment[2]
+                eguess = min(1-TOLECC,eguess + 0.5*(1-eguess))
+            catch e
+                println("OrbitalElements.NumericalInversion.jl: guessing close to ecc=1: ",eguess," (a=",aguess,") for increment ",increment)
+                eguess = min(1-TOLECC,eguess + 0.5*(1-eguess))
+            end
+        end
+
+        iter += 1
+
+        if iter > ITERMAX
+            break
+        end
+
     end
 
 
@@ -74,7 +114,10 @@ function AEFromOmega1Omega2Brute(Ω₁::Float64,Ω₂::Float64,
         if verbose>0
             println("OrbitalElements.NumericalInversion.jl: failed for inputs (Ω₁,Ω₂)=($Ω₁,$Ω₂).")
         end
-        return acirc,0.5,-1,finaltol
+
+        # return a semi-equivalent circular orbit, as the failure mode is mostly very small orbits
+        return acirc,0.0,-1,finaltol
+
     else
         return aguess,eguess,iter,finaltol
     end
