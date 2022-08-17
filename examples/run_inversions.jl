@@ -38,6 +38,7 @@ println("Exact       Ω₁=$Ω₁e, Ω₂=$Ω₂e")
 @time Ω₁a,Ω₂a,Jrr = OrbitalElements.ComputeFrequenciesAE(ψ,dψ,d2ψ,d3ψ,a,e,NINT=512,action=true)
 println("Approximate Ω₁=$Ω₁a, Ω₂=$Ω₂a")
 
+# if you want to try inverting a specific frequency set, put them here:
 #Ω₁a,Ω₂a = 0.1757002803595819,0.08954145469595597
 
 # try an inversion back to (a,e) using third derivative

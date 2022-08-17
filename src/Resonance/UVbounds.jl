@@ -15,11 +15,11 @@ must have Omega1_circular, Omega2_circular defined (CircularRadial/CircularFrequ
 OrbitalElements.FindWminWmax(-3,4,OrbitalElements.isochrone_dpsi_dr,OrbitalElements.isochrone_ddpsi_ddr)
 """
 function FindWminWmax(n1::Int64,n2::Int64,
-                        dpotential::Function,
-                        ddpotential::Function,
-                        rmax::Float64=1000.,
-                        Ω₀::Float64=1.;
-                        Ziter=24)
+                      dpotential::Function,
+                      ddpotential::Function,
+                      rmax::Float64=1000.,
+                      Ω₀::Float64=1.;
+                      Ziter=24)
 
     # define the function to extremise
     extreme(x) = n1*Omega1_circular(dpotential,ddpotential,x) + n2*Omega2_circular(dpotential,x)
@@ -39,11 +39,11 @@ end
 find any valie non- 0 or 1 v value at u=-1 or u=1
 """
 function FindVbound(n1::Int64,n2::Int64,
-                     dpotential::Function,
-                     ddpotential::Function,
-                     rmax::Float64=1000.,
-                     Ω₀::Float64=1.;
-                     Ziter=24)
+                    dpotential::Function,
+                    ddpotential::Function,
+                    rmax::Float64=1000.,
+                    Ω₀::Float64=1.;
+                    Ziter=24)
 
     # define the function to extremise: n.Omega
     extreme(x) = n1*Omega1_circular(dpotential,ddpotential,x) + n2*Omega2_circular(dpotential,x)

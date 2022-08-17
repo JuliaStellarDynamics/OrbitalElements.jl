@@ -9,9 +9,9 @@ Fouvry & Prunet B5
 
 """
 function AlphaBetaFromUV(u::Float64,v::Float64,
-                           n1::Int64,n2::Int64,
-                           dψ::Function,d2ψ::Function,
-                           rmax::Float64=1000.,Omega0::Float64=1.)
+                         n1::Int64,n2::Int64,
+                         dψ::Function,d2ψ::Function,
+                         rmax::Float64=1000.,Omega0::Float64=1.)
 
 
     ωmin,ωmax = FindWminWmax(n1,n2,dψ,d2ψ,rmax,Omega0)
