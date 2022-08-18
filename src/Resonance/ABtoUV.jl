@@ -100,9 +100,9 @@ using the definitions for (alpha, beta) and (u,v), compute the Jacobian.
 """
 function JacalphabetaToUV(n1::Int64,n2::Int64,w_min::Float64,w_max::Float64,v::Float64)
 
-    if n2 ==0
-        return (2.0/(w_max-w_min))*abs((w_max-w_min) * (1/(2*n1)))
+    if (n2==0)
+        return (2.0/(w_max-w_min))*abs((w_max-w_min) * (1/(2n1)))
     else
-        return (2.0/(w_max-w_min))*abs((w_max-w_min) * (1/(2*n2*v)))
+        return (2.0/(w_max-w_min))*abs((w_max-w_min) * (1/(2n2*v)))
     end
 end

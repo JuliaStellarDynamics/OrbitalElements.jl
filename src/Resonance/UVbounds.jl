@@ -89,7 +89,6 @@ function GetVarpi(omg::Complex{Float64},
 
 end
 
-
 """HUFunc(u,wmin,wmax)
 return h, a helper quantity
 Fouvry & Prunet B8

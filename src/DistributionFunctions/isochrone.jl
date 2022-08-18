@@ -72,25 +72,37 @@ end
 
 
 
-
 """isochrone_isotropic_DF(E[,bc,M,G])
 the isotropic DF
 """
 function isochrone_isotropic_DF(E::Float64,bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
+    # get the relevant scale energy
     scaleEnergy = isochrone_E0(bc,M,astronomicalG)
-    mE = E/scaleEnergy # Dimensionless energy that goes between 0 and 1/2
+
+    # rescale dimensionless energy to goes between 0 and 1/2
+    mE = E/scaleEnergy
+
     return (sqrt(mE)*M*(27.0+2.0*mE*(-1.0+4.0*mE)*(33.0+4.0*mE*(-7.0+2.0*mE))+
     (3.0*(-9.0+4.0*mE*(7.0+4.0*mE))*asin(sqrt(mE)))/sqrt(-((-1.0+mE)*mE))))/
     (128.0*sqrt(2.0)*(-1.0+mE)^(4)*(bc*astronomicalG*M)^(3/2)*(pi)^(3))
+
 end
+
 
 """isochrone_isotropic_dDFdE(E[,bc,M,G])
 the isotropic DF derivative w.r.t. E
 """
 function isochrone_isotropic_dDFdE(E::Float64,bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
+
+    # get the relevant scale energy
     scaleEnergy = isochrone_E0(bc,M,astronomicalG)
-    mE = E/scaleEnergy # Dimensionless energy that goes between 0 and 1/2
+
+    # rescale dimensionless energy to goes between 0 and 1/2
+    mE = E/scaleEnergy
+
+    # return the isotropic derivative
     return (M*((-1.0+mE)*sqrt(mE)*(-75.0+2.0*mE*(-659.0+8.0*mE*(45.0+mE*(-21.0+4.0*mE))))+
     15.0*sqrt(1.0-mE)*(-5.0+4.0*mE*(13.0+4.0*mE))*asin(sqrt(mE))))/
     (256.0*sqrt(2.0)*scaleEnergy*(-1.0+mE)^(6)*(bc*astronomicalG*M)^(3/2)*(pi)^(3))
+
 end

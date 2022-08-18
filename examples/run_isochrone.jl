@@ -16,6 +16,11 @@ d4ψ(r::Float64)::Float64  = OrbitalElements.d4ψIsochrone(r,bc,M,G)
 
 Ω₀      = OrbitalElements.Omega0Isochrone(bc,M,G)
 
+x = -1.0
+n1,n2 = 1,2
+vc = n1*OrbitalElements.Omega1_circular(dψ,d2ψ,x) + n2*OrbitalElements.Omega2_circular(dψ,x)
+
+println(vc)
 
 # select an (a,e) value for the orbit
 a,e = 0.0005, 0.5
@@ -26,7 +31,7 @@ println("rp=$rp ra=$ra",)
 
 # test frequency computation
 Ω₁e,Ω₂e = OrbitalElements.IsochroneOmega12FromAE(a,e,bc,M,G)
-Jrr = OrbitalElements.isochrone_jr_rpra(rp,ra,bc,M,G)
+Jrr = OrbitalElements.IsochroneJrRpRa(rp,ra,bc,M,G)
 #println("Ω₁r=$Ω₁r,Ω₂r=$Ω₂r")
 
 #rcirc1 = OrbitalElements.Omega1circ_to_radius(Ω₁e,dψ,d2ψ)#,Ziter=32,verbose=false)
@@ -49,9 +54,14 @@ println("theta O1=$Ω₁c2 O2=$Ω₂c2 Jr=$Jrc2")
 
 @time Ec,Lc,dEda,dEde,dLda,dLde = OrbitalElements.dELFromAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e)
 Em,Lm = OrbitalElements.IsochroneELFromAE(a,e,bc,M,G)
+#Em /= OrbitalElements.isochrone_E0()
 println("estimated E=$Ec,L=$Lc")
 println("true      E=$Em,L=$Lm")
 
+
+# plot Omega1,Omega2 vs e for the analytic and expansion cases
+# is there a problem in the expansion?
+# any discontinuities from switching to beta 
 
 #=
 alpha,beta = Ω₁c/Ω₀,Ω₂c/Ω₁c
