@@ -156,30 +156,49 @@ end
 
 
 
-"""Omega1circ_to_radius(Ω₁,dψ/dr,d²ψ/dr²,rmax)
+"""Omega1circ_to_radius(Ω₁,dψ/dr,d²ψ/dr²[, rmin, rmax])
 perform backwards mapping from Omega_1 for a circular orbit to radius
 
 can tune [rmin,rmax] for extra optimisation (but not needed)
+WARNING: important assumption Ω1_circular is a decreasing function of radius
 """
 function Omega1circ_to_radius(omega::Float64,dψ::Function,d2ψ::Function;rmin::Float64=1.0e-8,rmax::Float64=10000.0)
 
     rcirc = try bisection(r -> omega - Omega1_circular(dψ,d2ψ,r), rmin, rmax) catch;  rmax end
-    if rcirc == rmax
-        error("To high or low frequency omega = ",omega)
+    if (rcirc == rmax) 
+        if (0. < omega < Omega1_circular(dψ,d2ψ,rmax))
+            return Omega1circ_to_radius(omega,dψ,d2ψ;rmin=rmax,rmax=10*rmax)
+        elseif omega <= 0.
+            error("Negative circular frequency Ω = ",omega)
+        elseif Omega1_circular(dψ,d2ψ,rmin) < omega
+            error("Too high frequency Ω = ",omega)
+        else
+            error("Unable to find the associated radius of Ω = ",omega)
+        end
     end
 
     return rcirc
 end
 
 
-"""Omega2circ_to_radius(Ω₂,dψ/dr,d²ψ/dr²[,rmax])
+"""Omega2circ_to_radius(Ω₂,dψ/dr[, rmin, rmax])
 perform backwards mapping from Omega_2 for a circular orbit to radius
+
+WARNING: important assumption Ω2_circular is a decreasing function of radius
 """
 function Omega2circ_to_radius(omega::Float64,dψ::Function;rmin::Float64=1.0e-8,rmax::Float64=10000.0)
 
     rcirc = try bisection(r -> omega - Omega2_circular(dψ,r), rmin, rmax) catch;  rmax end
-    if rcirc == rmax
-        error("To high or low frequency omega = ",omega)
+    if (rcirc == rmax) 
+        if (0. < omega < Omega2_circular(dψ,rmax))
+            return Omega2circ_to_radius(omega,dψ;rmin=rmax,rmax=10*rmax)
+        elseif omega <= 0.
+            error("Negative circular frequency Ω = ",omega)
+        elseif Omega2_circular(dψ,rmin) < omega
+            error("Too high frequency Ω = ",omega)
+        else
+            error("Unable to find the associated radius of Ω = ",omega)
+        end
     end
 
     return rcirc
