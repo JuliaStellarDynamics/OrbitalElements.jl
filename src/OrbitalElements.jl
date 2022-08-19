@@ -17,11 +17,14 @@ include("Utils/Integrators.jl")
 include("Potentials/isochrone.jl")
 include("Potentials/plummer.jl")
 include("Potentials/mestelzang.jl")
+include("Potentials/kuzmintoomre.jl")
 
 # bring in the test distribution functions (not strictly needed)
 include("DistributionFunctions/isochrone.jl")
 include("DistributionFunctions/plummer.jl")
 include("DistributionFunctions/mestelzang.jl")
+include("DistributionFunctions/miyamoto.jl")
+include("DistributionFunctions/isochrone_discs.jl")
 
 # enable energy and angular momentum computation (including expansions)
 # first, set the radius where we switch to expansions
