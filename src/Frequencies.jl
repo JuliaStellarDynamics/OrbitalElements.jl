@@ -35,18 +35,22 @@ function ComputeFrequenciesAE(ψ::Function,
                               TOLECC::Float64=0.001,
                               verbose::Int64=0,
                               NINT::Int64=32,
-                              EDGE::Float64=0.01)
+                              EDGE::Float64=0.01,
+                              TOLA::Float64=0.001)
+
 
     return HenonThetaFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e;action=action,TOLECC=TOLECC,verbose=verbose,NINT=NINT,EDGE=EDGE)
+
 end
 
-"""ComputeFrequenciesAE(ψ,dψ,d2ψ,a,ecc[,TOLECC,verbose])
+"""ComputeFrequenciesAE(ψ,dψ,d2ψ,d3ψ,a,e[,TOLECC,verbose])
 wrapper to select which type of frequency computation to perform, from (a,e)
 EXCEPT fourth derivative
 """
 function ComputeFrequenciesAE(ψ::Function,
                               dψ::Function,
                               d2ψ::Function,
+                              d3ψ::Function,
                               a::Float64,e::Float64;
                               action::Bool=false,
                               TOLECC::Float64=0.001,
@@ -61,7 +65,7 @@ function ComputeFrequenciesAE(ψ::Function,
     return ComputeFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e;action=action,TOLECC=TOLECC,verbose=verbose,NINT=NINT,EDGE=EDGE)
 end
 
-"""ComputeFrequenciesAE(ψ,dψ,d2ψ,a,ecc[,TOLECC,verbose])
+"""ComputeFrequenciesAE(ψ,dψ,d2ψ,a,e[,TOLECC,verbose])
 wrapper to select which type of frequency computation to perform, from (a,e)
 EXCEPT third derivative
 """
@@ -91,7 +95,7 @@ end
 #
 ########################################################################
 
-"""ComputeFrequenciesAEWithDeriv(ψ,dψ,d2ψa,ecc[,TOLECC,verbose])
+"""ComputeFrequenciesAEWithDeriv(ψ,dψ,d2ψa,e[,TOLECC,verbose])
 wrapper to select which type of frequency computation to perform, from (a,e), but DERIVATIVES
 """
 function ComputeFrequenciesAEWithDeriv(ψ::Function,
@@ -123,7 +127,7 @@ function ComputeFrequenciesAEWithDeriv(ψ::Function,
 
         # the offset in e
         # if this is already a radial orbit, don't go to super radial
-        if ecc+de > 1.0
+        if e+de > 1.0
             de *= -1.0
         end
 
@@ -138,7 +142,7 @@ function ComputeFrequenciesAEWithDeriv(ψ::Function,
         return Ω1c,Ω2c,dΩ1da,dΩ2da,dΩ1de,dΩ2de
 end
 
-"""ComputeFrequenciesAEWithDeriv(ψ,dψ,d2ψa,ecc[,TOLECC,verbose])
+"""ComputeFrequenciesAEWithDeriv(ψ,dψ,d2ψa,e[,TOLECC,verbose])
 wrapper to select which type of frequency computation to perform, from (a,e), but DERIVATIVES
 EXCEPT fourth derivative
 """
@@ -153,15 +157,16 @@ function ComputeFrequenciesAEWithDeriv(ψ::Function,
                                        TOLECC::Float64=0.001,
                                        verbose::Int64=0,
                                        NINT::Int64=32,
-                                       FDIFF::Float64=1.e-8)
+                                       FDIFF::Float64=1.e-8,
+                                       EDGE::Float64=0.01)
 
     # define a numerical fourth derivative
     d4ψ(x::Float64) = (d3ψ(x+FDIFF)-d3ψ(x))/FDIFF
 
-    return ComputeFrequenciesAEWithDeriv(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e;da=da,de=de,action=false,TOLECC=TOLECC,verbose=verbose,NINT=NINT,EDGE=EDGE)
+    return ComputeFrequenciesAEWithDeriv(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e;da=da,de=de,TOLECC=TOLECC,verbose=verbose,NINT=NINT,EDGE=EDGE)
 end
 
-"""ComputeFrequenciesAEWithDeriv(ψ,dψ,d2ψa,ecc[,TOLECC,verbose])
+"""ComputeFrequenciesAEWithDeriv(ψ,dψ,d2ψa,e[,TOLECC,verbose])
 wrapper to select which type of frequency computation to perform, from (a,e), but DERIVATIVES
 EXCEPT third derivative
 """
@@ -175,14 +180,15 @@ function ComputeFrequenciesAEWithDeriv(ψ::Function,
                                        TOLECC::Float64=0.001,
                                        verbose::Int64=0,
                                        NINT::Int64=32,
-                                       FDIFF::Float64=1.e-8)
+                                       FDIFF::Float64=1.e-8,
+                                       EDGE::Float64=0.01)
 
     # define a numerical third derivative
     d3ψ(x::Float64) = (d2ψ(x+FDIFF)-d2ψ(x))/FDIFF
     # Nul fourth derivative
     d4ψ(x::Float64) = 0.
 
-    return ComputeFrequenciesAEWithDeriv(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e;da=da,de=de,action=false,TOLECC=TOLECC,verbose=verbose,NINT=NINT,EDGE=EDGE)
+    return ComputeFrequenciesAEWithDeriv(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e;da=da,de=de,TOLECC=TOLECC,verbose=verbose,NINT=NINT,EDGE=EDGE)
 end
 
 
@@ -192,7 +198,7 @@ end
 #
 ########################################################################
 
-"""ComputeAEFromFrequencies(ψ,dψ,d2ψ,d3ψ,a,ecc[,eps,maxiter,TOLECC,TOLA])
+"""ComputeAEFromFrequencies(ψ,dψ,d2ψ,d3ψ,a,e[,eps,maxiter,TOLECC,TOLA])
 wrapper to select which type of inversion to compute for (Omega1,Omega2)->(a,e)
 """
 function ComputeAEFromFrequencies(ψ::Function,
@@ -299,7 +305,7 @@ end
 @IMPROVE noisy at the boundaries
 """
 function JacELToAlphaBetaAE(a::Float64,
-                            ecc::Float64,
+                            e::Float64,
                             ψ::Function,
                             dψ::Function,
                             d2ψ::Function,
@@ -307,26 +313,26 @@ function JacELToAlphaBetaAE(a::Float64,
                             nancheck::Bool=false,
                             NINT::Int64=64)
 
-    tmpecc = ecc
+    tmpe = e
     # to be fixed for limited development...
-    if ecc>0.99
-        tmpecc=0.99
+    if e>0.99
+        tmpe=0.99
     end
 
-    if ecc<0.01
-        #println("faking the eccentricity...")
-        tmpecc=0.01
+    if e<0.01
+        #println("faking the eentricity...")
+        tmpe=0.01
     end
 
     # get all numerical derivatives
 
     # these are dangerous, and break down fairly easily.
-    Ω1c,Ω2c,dΩ1da,dΩ2da,dΩ1de,dΩ2de = ComputeFrequenciesAEWithDeriv(ψ,dψ,d2ψ,a,tmpecc,NINT=NINT)
+    Ω1c,Ω2c,dΩ1da,dΩ2da,dΩ1de,dΩ2de = ComputeFrequenciesAEWithDeriv(ψ,dψ,d2ψ,a,tmpe,NINT=NINT)
 
     # this is nearly always safe
     # the (E,L) -> (a,e) Jacobian (in Utils/ComputeEL.jl)
     #Jac_EL_AE = JacELToAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e)
-    Jac_EL_AE = JacELToAE(ψ,dψ,d2ψ,a,tmpecc)
+    Jac_EL_AE = JacELToAE(ψ,dψ,d2ψ,a,tmpe)
 
 
     J_o1o2_ae = abs(dΩ1da*dΩ2de - dΩ1de*dΩ2da)
@@ -334,22 +340,22 @@ function JacELToAlphaBetaAE(a::Float64,
     # check for NaN or zero values
     if nancheck
         if isnan(Jac_EL_AE)
-            println("OrbitalElements.Frequencies.JacELToAlphaBetaAE: J_EL_ae is NaN for a=$a,e=$ecc")
+            println("OrbitalElements.Frequencies.JacELToAlphaBetaAE: J_EL_ae is NaN for a=$a,e=$e")
             return 0.0
         end
 
         if Jac_EL_AE <= 0.0
-            println("OrbitalElements.Frequencies.JacELToAlphaBetaAE: J_EL_ae is 0 for a=$a,e=$ecc")
+            println("OrbitalElements.Frequencies.JacELToAlphaBetaAE: J_EL_ae is 0 for a=$a,e=$e")
             return 0.0
         end
 
         if isnan(J_o1o2_ae)
-            println("OrbitalElements.Frequencies.JacELToAlphaBetaAE: J_o12_ae is NaN for a=$a,e=$ecc")
+            println("OrbitalElements.Frequencies.JacELToAlphaBetaAE: J_o12_ae is NaN for a=$a,e=$e")
             return 0.0
         end
 
         if J_o1o2_ae <= 0.0
-            println("OrbitalElements.Frequencies.JacELToAlphaBetaAE: J_o12_ae is 0 for a=$a,e=$ecc")
+            println("OrbitalElements.Frequencies.JacELToAlphaBetaAE: J_o12_ae is 0 for a=$a,e=$e")
             return 0.0
         end
     end

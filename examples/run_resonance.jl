@@ -31,13 +31,17 @@ function check_mapping(u::Float64,v::Float64,n1::Int64,n2::Int64)
     sma,ecc = OrbitalElements.AEFromOmega1Omega2Brute(omega1,omega2,ψ,dψ,d2ψ,d3ψ,NINT=32,EDGE=0.01,verbose=0)
     println("Empirical a=$sma,e=$ecc")
 
-    omg = 0.05 + 0.01im
-    varpi = OrbitalElements.GetVarpi(omg,w_min,w_max)
-    println("Varpi=$varpi")
+    omg = 0.10 + 0.01im
+    varpi = OrbitalElements.GetVarpiIsochrone(omg,n1,n2)
+    println("Varpi True=$varpi")
+
+    #omg = 0.10 + 0.01im
+    varpi = OrbitalElements.GetVarpi(omg,n1,n2,dψ,d2ψ,Ω₀=Ω₀)
+    println("Varpi Empi=$varpi")
 end
 
-u = -0.5
-n1,n2 = -1,2
+u = -0.0
+n1,n2 = 10,-3
 vmin,vmax = OrbitalElements.FindVminVmaxIsochrone(n1,n2,u)
 println("Analytic  vmin=$vmin,vmax=$vmax")
 
@@ -50,8 +54,8 @@ println("Empirical vmin=$vmin,vmax=$vmax")
 check_mapping(u,(vmin+vmax)/2,n1,n2)
 
 println("NEXT RESONANCE")
-n1,n2 = 1,-2
-u = 0.5
+n1,n2 = -2,1
+u = 0.0
 vmin,vmax = OrbitalElements.FindVminVmaxIsochrone(n1,n2,u)
 println("Analytic  vmin=$vmin,vmax=$vmax")
 check_mapping(u,(vmin+vmax)/2,n1,n2)

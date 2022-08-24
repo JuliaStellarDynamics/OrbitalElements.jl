@@ -4,6 +4,14 @@ using HypergeometricFunctions
 using SpecialFunctions
 
 
+"""
+the distribution function scale
+"""
+function PlummerDFScale(bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
+
+    return (astronomicalG*M*bc)^(-3/2)
+
+end
 
 """
 Q(E,L), the variable for anisotropy distribution functions.
@@ -73,7 +81,8 @@ function plummer_ISO_DF(E::Float64,bc::Float64=1.,M::Float64=1.,astronomicalG::F
 
     scaleEnergy = - astronomicalG * M / bc
 
-    prefactor = (M/((astronomicalG*M*bc)^(3/2))) * (48*sqrt(3)/(7*(pi^3)))
+    #prefactor = (M/((astronomicalG*M*bc)^(3/2))) * (48*sqrt(3)/(7*(pi^3)))
+    prefactor = (M/((astronomicalG*M*bc)^(3/2))) * (24*sqrt(2)/(7*(pi^3)))
 
     return prefactor * (E/scaleEnergy)^(7/2)
 
@@ -82,12 +91,17 @@ end
 
 """
 the derivative of the isotropic distribution function
+
+F[EN_] = (24 Sqrt[2])/(7 Pi^3) * EN^(7/2)
+D[F[EN], {EN}]
 """
 function plummer_ISO_dFdE(E::Float64,bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
 
     scaleEnergy = - astronomicalG * M / bc
+    scaleDF = PlummerDFScale(bc,M,astronomicalG)
 
-    prefactor = (M/((astronomicalG*M*bc)^(3/2))) * (24*sqrt(3)/(7*(pi^3)))
+    #prefactor = (M/((astronomicalG*M*bc)^(3/2))) * (12*sqrt(3)/(7*(pi^3)))
+    prefactor = M * scaleDF * (12*sqrt(2)/(7*(pi^3)))
 
     return prefactor * (E/scaleEnergy)^(5/2)
 
@@ -113,7 +127,7 @@ calculate n.dF/dE, for the osipkov-merritt plummer case.
 
 @IMPROVE, make a distribution function fix. perhaps only integrate in regions where the DF is positive?
 """
-function plummer_ROI_ndFdJ(n1::Int64,n2::Int64,E::Float64,L::Float64,ndotOmega::Float64,bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.,ra::Float64=1.)
+function plummer_ROI_ndFdJ(n1::Int64,n2::Int64,E::Float64,L::Float64,ndotOmega::Float64,bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.,Ra::Float64=1.)
 
     Q = plummer_ROI_Q(E,L,Ra,bc,M,astronomicalG)
 
@@ -124,10 +138,10 @@ function plummer_ROI_ndFdJ(n1::Int64,n2::Int64,E::Float64,L::Float64,ndotOmega::
     end
 
     # Value of dF/dQ
-    dFdQ = plummer_ROI_dFdQ(Q,ra,bc,M,astronomicalG)
+    dFdQ = plummer_ROI_dFdQ(Q,Ra,bc,M,astronomicalG)
 
     # Values of dQ/dE, dQ/dL
-    dQdE, dQdL = plummer_ROI_dQdE(E,L,ra,bc,M,astronomicalG), plummer_ROI_dQdL(E,L,ra,bc,M,astronomicalG)
+    dQdE, dQdL = plummer_ROI_dQdE(E,L,Ra,bc,M,astronomicalG), plummer_ROI_dQdL(E,L,Ra,bc,M,astronomicalG)
 
     # Value of n.dF/dJ
     res = dFdQ*(dQdE*ndotOmega + n2*dQdL)

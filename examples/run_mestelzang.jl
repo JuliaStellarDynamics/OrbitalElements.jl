@@ -31,7 +31,7 @@ a,e =0.008, 0.4
 
 # compute rperi and rapo
 println("Compute rp,ra...")
-@time rp,ra = OrbitalElements.rpra_from_ae(a,e); @printf("rp=%f ra=%f\n", rp,ra)
+@time rp,ra = OrbitalElements.RpRafromAE(a,e); @printf("rp=%f ra=%f\n", rp,ra)
 
 # compute (E,L)
 println("Compute E,L...")
@@ -117,6 +117,3 @@ aguess,eguess = OrbitalElements.ae_from_omega1omega2_brute(f1rev,f2rev,ψ,dψdr,
 
 # get estimates for local frequency derivatives the local derivs
 f1,f2,df1da,df2da,df1de,df2de = OrbitalElements.compute_frequencies_ae_derivs(ψ,dψdr,d²ψdr²,aguess,eguess)
-
-
-

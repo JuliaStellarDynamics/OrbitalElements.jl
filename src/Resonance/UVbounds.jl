@@ -19,12 +19,17 @@ function FindWminWmax(n1::Int64,n2::Int64,
                       ddpotential::Function,
                       rmax::Float64=1000.,
                       Ω₀::Float64=1.;
-                      Ziter=24)
+                      Ziter::Int64=24,
+                      VERBOSE::Int64=0)
 
     # define the function to extremise
     extreme(x) = n1*Omega1_circular(dpotential,ddpotential,x) + n2*Omega2_circular(dpotential,x)
 
-    m = ExtremiseFunctionA(extreme,Ziter,0.,rmax,verbose=false)
+    if VERBOSE>0
+        m = ExtremiseFunctionA(extreme,Ziter,0.,rmax,verbose=true)
+    else
+        m = ExtremiseFunctionA(extreme,Ziter,0.,rmax,verbose=false)
+    end
 
     # for the problem of a cored cluster with an infinite extent, the w minima and maxima are either
     # in the very centre

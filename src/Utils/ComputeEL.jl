@@ -152,7 +152,7 @@ function dELFromAE(ψ::Function,
     else
 
         # the analytic version of the energy and angular momentum derivatives w.r.t. (a,e)
-        rp, ra = rpra_from_ae(a,e)
+        rp, ra = RpRafromAE(a,e)
         ψrp, ψra, dψrp, dψra = ψ(rp), ψ(ra), dψ(rp), dψ(ra)
 
         # Difference between potential at apocenter and pericenter

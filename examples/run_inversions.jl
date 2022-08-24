@@ -27,7 +27,7 @@ println("Input     a=$a e=$e")
 
 # compute rperi and rapo
 #println("Compute rp,ra...")
-#rp,ra = OrbitalElements.rpra_from_ae(a,e)
+#rp,ra = OrbitalElements.RpRafromAE(a,e)
 #println("rp=$rp ra=$ra")
 
 # compute exact frequencies

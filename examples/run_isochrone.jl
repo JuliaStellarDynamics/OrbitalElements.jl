@@ -14,11 +14,11 @@ d2ψ(r::Float64)::Float64  = OrbitalElements.d2ψIsochrone(r,bc,M,G)
 d3ψ(r::Float64)::Float64  = OrbitalElements.d3ψIsochrone(r,bc,M,G)
 d4ψ(r::Float64)::Float64  = OrbitalElements.d4ψIsochrone(r,bc,M,G)
 
-Ω₀      = OrbitalElements.Omega0Isochrone(bc,M,G)
+Ω₀ = OrbitalElements.Omega0Isochrone(bc,M,G)
 
 x = -1.0
 n1,n2 = 1,2
-vc = n1*OrbitalElements.Omega1_circular(dψ,d2ψ,x) + n2*OrbitalElements.Omega2_circular(dψ,x)
+vc = n1*OrbitalElements.Ω1circular(dψ,d2ψ,x) + n2*OrbitalElements.Ω2circular(dψ,x)
 
 println(vc)
 
@@ -26,7 +26,7 @@ println(vc)
 a,e = 0.0005, 0.5
 
 # compute rperi and rapo
-rp,ra = OrbitalElements.rpra_from_ae(a,e)
+rp,ra = OrbitalElements.RpRafromAE(a,e)
 println("rp=$rp ra=$ra",)
 
 # test frequency computation
@@ -49,7 +49,7 @@ println("oldae O1=$Ω₁r O2=$Ω₂r Jr=$Jrr")
 #@time Ω₁c,Ω₂c,Jrc = OrbitalElements.HenonThetaFrequenciesRpRa(ψ,dψ,d2ψ,rp,ra,NINT=64,action=true)
 #println("theta O1=$Ω₁c O2=$Ω₂c Jr=$Jrc")
 
-@time Ω₁c2,Ω₂c2,Jrc2 = OrbitalElements.HenonThetaFrequenciesAE(ψ,dψ,d2ψ,d3ψ,a,e,NINT=256,action=true)
+@time Ω₁c2,Ω₂c2,Jrc2 = OrbitalElements.HenonThetaFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,NINT=256,action=true)
 println("theta O1=$Ω₁c2 O2=$Ω₂c2 Jr=$Jrc2")
 
 @time Ec,Lc,dEda,dEde,dLda,dLde = OrbitalElements.dELFromAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e)
@@ -61,7 +61,7 @@ println("true      E=$Em,L=$Lm")
 
 # plot Omega1,Omega2 vs e for the analytic and expansion cases
 # is there a problem in the expansion?
-# any discontinuities from switching to beta 
+# any discontinuities from switching to beta
 
 #=
 alpha,beta = Ω₁c/Ω₀,Ω₂c/Ω₁c
@@ -77,7 +77,7 @@ println("TJacobian(EL,ab):$J_EL_abT")
 
 # get the numerical frequency derivatives at this point
 #f1c,f2c,df1da,df2da,df1de,df2de = OrbitalElements.ComputeFrequenciesAEWithDeriv(ψ,dψ,d2ψ,a,e)
-f1c,f2c,df1da,df2da,df1de,df2de = OrbitalElements.ComputeFrequenciesAEWithDeriv(ψ,dψ,d2ψ,d3ψ,a,e,NINT=512)
+f1c,f2c,df1da,df2da,df1de,df2de = OrbitalElements.ComputeFrequenciesAEWithDeriv(ψ,dψ,d2ψ,d3ψ,a,e,NINT=512,da=1.e-6,de=1.0e-6)
 
 
 f1h,f2h,df1dah,df1deh,df2dah,df2deh = OrbitalElements.DHenonThetaFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,NINT=128,EDGE=0.2)
@@ -190,7 +190,7 @@ open("NINTarray.txt","w") do io
         for eindx=1:ne
             aval = 10.0^(logamin+(aindx-1)*logda)
             eval = (eindx-1)*de
-            rp,ra = OrbitalElements.rpra_from_ae(aval,eval)
+            rp,ra = OrbitalElements.RpRafromAE(aval,eval)
             Ω₁r,Ω₂r = OrbitalElements.IsochroneOmega12FromRpRa(rp,ra,bc,M,G)
             Jrr = OrbitalElements.isochrone_jr_rpra(rp,ra,bc,M,G)
             #Ω₁r,Ω₂r = OrbitalElements.ComputeFrequenciesAE(ψ,dψ,d2ψ,aval,eval,NINT=1024)
@@ -244,7 +244,7 @@ aval = 1.
 open("ELconvergence.txt","w") do io
     for eindx=1:1000
         eval = (eindx-1)*0.000001
-        rp,ra = OrbitalElements.rpra_from_ae(aval,eval)
+        rp,ra = OrbitalElements.RpRafromAE(aval,eval)
         Ei,Li = OrbitalElements.isochrone_EL_from_rpra(rp,ra,bc,M,G)
         E,L   = OrbitalElements.EL_from_rpra_pot(ψ,dψ,d2ψ,rp,ra)
         println(io,eval,",",E-Ei,",",L-Li)
@@ -263,7 +263,7 @@ open("NINTarray.txt","w") do io
         for eindx=1:ne
             aval = 10.0^(logamin+(aindx-1)*logda)
             eval = (eindx-1)*de
-            rp,ra = OrbitalElements.rpra_from_ae(aval,eval)
+            rp,ra = OrbitalElements.RpRafromAE(aval,eval)
             Ei,Li = OrbitalElements.isochrone_EL_from_rpra(rp,ra,bc,M,G)
             NINT=8
             o1diff = 1.0
