@@ -10,6 +10,11 @@ Strategies:
 """
 
 
+########################################################################
+#
+# (a,e) -> (E,L) mapping : generic case
+#
+########################################################################
 
 """
 energy as a function of (a,e) for a given potential ψ (and its derivatives)
@@ -70,50 +75,11 @@ function ELFromAE(ψ::Function,
 end
 
 
-
-"""
-energy and angular momentum derivatives w.r.t. (a,e)
-"""
-function dELFromAE(ψ::Function,
-                   dψ::Function,
-                   d2ψ::Function,
-                   d3ψ::Function,
-                   d4ψ::Function,
-                   a::Float64,
-                   e::Float64;
-                   TOLECC::Float64=ELTOLECC)
-
-    E, L = ELFromAE(ψ,dψ,d2ψ,d3ψ,a,e;TOLECC=TOLECC)
-
-    if e<TOLECC
-        # switch to the expanded case
-        ∂E∂a, ∂E∂e, ∂L∂a, ∂L∂e = dELcircExpansion(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e)
-        return E, L, ∂E∂a, ∂E∂e, ∂L∂a, ∂L∂e
-
-    else
-
-        # the analytic version of the energy and angular momentum derivatives w.r.t. (a,e)
-        rp, ra = rpra_from_ae(a,e)
-        ψrp, ψra, dψrp, dψra = ψ(rp), ψ(ra), dψ(rp), dψ(ra)
-
-        # Difference between potential at apocenter and pericenter
-        ψdiff = ψra - ψrp
-
-        ∂E∂a = ((1+e)^(3)*dψra - (1-e)^(3)*dψrp) / (4e)
-        ∂E∂e = (((e)^(2)-1)*ψdiff + a*e*(1+e)^(2)*dψra + a*e*(1-e)^(2)*dψrp) / (4*(e)^(2))
-
-        dLdenom = 2*sqrt(2*e*ψdiff)
-
-        ∂L∂a = (1-(e)^(2)) * (2*ψdiff + ra*dψra - rp*dψrp)  / (dLdenom)
-        ∂L∂e = - a * ((1+3*(e)^(2))*ψdiff - a*e*(1-(e)^(2))*(dψra + dψrp)) / (e*dLdenom)
-
-        return E, L, ∂E∂a, ∂E∂e, ∂L∂a, ∂L∂e
-    end
-end
-
-
-
-"""special case: near circular orbits"""
+########################################################################
+#
+# (a,e) -> (E,L) mapping : circular Taylor expansions
+#
+########################################################################
 
 """
 Second-order expansion of energy equation near a circular orbit
@@ -158,6 +124,137 @@ function LcircExpansion(ψ::Function,
 end
 
 
+########################################################################
+#
+# (a,e) -> (E,L) mapping : derivatives, generic case
+#
+########################################################################
+
+"""
+energy and angular momentum derivatives w.r.t. (a,e)
+"""
+function dELFromAE(ψ::Function,
+                   dψ::Function,
+                   d2ψ::Function,
+                   d3ψ::Function,
+                   d4ψ::Function,
+                   a::Float64,
+                   e::Float64;
+                   TOLECC::Float64=ELTOLECC)
+
+    E, L = ELFromAE(ψ,dψ,d2ψ,d3ψ,a,e;TOLECC=TOLECC)
+
+    if e<TOLECC
+        # switch to the expanded case
+        ∂E∂a, ∂E∂e, ∂L∂a, ∂L∂e = dELcircExpansion(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e)
+        return E, L, ∂E∂a, ∂E∂e, ∂L∂a, ∂L∂e
+
+    else
+
+        # the analytic version of the energy and angular momentum derivatives w.r.t. (a,e)
+        rp, ra = rpra_from_ae(a,e)
+        ψrp, ψra, dψrp, dψra = ψ(rp), ψ(ra), dψ(rp), dψ(ra)
+
+        # Difference between potential at apocenter and pericenter
+        ψdiff = ψra - ψrp
+
+        ∂E∂a = ((1+e)^(3)*dψra - (1-e)^(3)*dψrp) / (4e)
+        ∂E∂e = (((e)^(2)-1)*ψdiff + a*e*(1+e)^(2)*dψra + a*e*(1-e)^(2)*dψrp) / (4*(e)^(2))
+
+        dLdenom = 2*sqrt(2*e*ψdiff)
+
+        ∂L∂a = (1-(e)^(2)) * (2*ψdiff + ra*dψra - rp*dψrp)  / (dLdenom)
+        ∂L∂e = - a * ((1+3*(e)^(2))*ψdiff - a*e*(1-(e)^(2))*(dψra + dψrp)) / (e*dLdenom)
+
+        return E, L, ∂E∂a, ∂E∂e, ∂L∂a, ∂L∂e
+    end
+end
+
+"""
+energy and angular momentum derivatives w.r.t. (a,e)
+EXCLUDING fourth derivative
+"""
+function dELFromAE(ψ::Function,
+                   dψ::Function,
+                   d2ψ::Function,
+                   d3ψ::Function,
+                   a::Float64,
+                   e::Float64;
+                   TOLECC::Float64=ELTOLECC,
+                   FDIFF::Float64=1.e-8)
+
+   # define a numerical fourth derivative
+   d4ψ(x::Float64) = (d3ψ(x+FDIFF)-d3ψ(x))/FDIFF
+
+    E, L, ∂E∂a, ∂E∂e, ∂L∂a, ∂L∂e = dELFromAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,TOLECC=ELTOLECC)
+
+    return E, L, ∂E∂a, ∂E∂e, ∂L∂a, ∂L∂e
+end
+
+"""
+energy and angular momentum derivatives w.r.t. (a,e)
+EXCLUDING third derivative
+"""
+function dELFromAE(ψ::Function,
+                   dψ::Function,
+                   d2ψ::Function,
+                   a::Float64,
+                   e::Float64;
+                   TOLECC::Float64=ELTOLECC,
+                   FDIFF::Float64=1.e-8)
+
+   # define a numerical third derivative
+   d3ψ(x::Float64) = (d2ψ(x+FDIFF)-d2ψ(x))/FDIFF
+
+   # zero out fourth derivative
+   d4ψ(x::Float64) = 0.
+
+    E, L, ∂E∂a, ∂E∂e, ∂L∂a, ∂L∂e = dELFromAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,TOLECC=ELTOLECC)
+
+    return E, L, ∂E∂a, ∂E∂e, ∂L∂a, ∂L∂e
+end
+
+
+########################################################################
+#
+# (a,e) -> (E,L) mapping : derivatives, circular Taylor expansions
+#
+########################################################################
+
+"""
+Second-order of energy and angular momentum derivatives w.r.t. (a,e) near circular orbits.
+"""
+function dELcircExpansion(ψ::Function,
+                          dψ::Function,
+                          d2ψ::Function,
+                          d3ψ::Function,
+                          d4ψ::Function,
+                          a::Float64,
+                          e::Float64)
+
+    # compute all potential and derivative values
+    ψa, dψa, ddψa, dddψa, ddddψa = ψ(a), dψ(a), d2ψ(a), d3ψ(a), d4ψ(a)
+
+    # compute taylor expansion of partial derivatives for E
+    ∂E∂a = 0.5*(3*dψa + a*ddψa) + (0.5*dψa + 1.5*a*ddψa + 0.75*(a)^(2)*dddψa + (a)^(3)*ddddψa/12) * (e)^(2)
+    ∂E∂e = (a*dψa + (a)^(2)*ddψa + (a)^(3)*dddψa/6) * e
+
+    sqa   = sqrt(a)
+    sqdψa = sqrt(dψa)
+
+    # compute taylor expansion of partial derivatives for L
+    ∂L∂a = 0.5*(3*sqrt(a)*sqdψa + (sqa)^(3)*ddψa/sqdψa) - 0.5 * sqa * (3*(dψa)^(2) + a*dψa*ddψa - 7*(a)^(2)*dψa*dddψa/12 + (a)^(3)*(ddψa*dddψa - 2*dψa*ddddψa)/12) / ((sqdψa)^(3)) * (e)^(2)
+    ∂L∂e = (sqa)^(3) * ((a)^(2)*dddψa/(6*sqdψa) - 2*sqdψa) * e
+
+    return ∂E∂a, ∂E∂e, ∂L∂a, ∂L∂e
+end
+
+
+########################################################################
+#
+# (a,e) -> (E,L) mapping : Jacobian, generic case
+#
+########################################################################
 
 """
 the Jacobian to convert between variables that are functions of (E,L) and (a,e)
@@ -218,83 +315,13 @@ function JacELToAE(ψ::Function,
     return abs(∂E∂a*∂L∂e - ∂L∂a*∂E∂e)
 end
 
-"""
-energy and angular momentum derivatives w.r.t. (a,e)
-EXCLUDING fourth derivative
-"""
-function dELFromAE(ψ::Function,
-                   dψ::Function,
-                   d2ψ::Function,
-                   d3ψ::Function,
-                   a::Float64,
-                   e::Float64;
-                   TOLECC::Float64=ELTOLECC,
-                   FDIFF::Float64=1.e-8)
-
-   # define a numerical fourth derivative
-   d4ψ(x::Float64) = (d3ψ(x+FDIFF)-d3ψ(x))/FDIFF
-
-    E, L, ∂E∂a, ∂E∂e, ∂L∂a, ∂L∂e = dELFromAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,TOLECC=ELTOLECC)
-
-    return E, L, ∂E∂a, ∂E∂e, ∂L∂a, ∂L∂e
-
-end
-
-"""
-energy and angular momentum derivatives w.r.t. (a,e)
-EXCLUDING third derivative
-"""
-function dELFromAE(ψ::Function,
-                   dψ::Function,
-                   d2ψ::Function,
-                   a::Float64,
-                   e::Float64;
-                   TOLECC::Float64=ELTOLECC,
-                   FDIFF::Float64=1.e-8)
-
-   # define a numerical third derivative
-   d3ψ(x::Float64) = (d2ψ(x+FDIFF)-d2ψ(x))/FDIFF
-
-   # zero out fourth derivative
-   d4ψ(x::Float64) = 0.
-
-    E, L, ∂E∂a, ∂E∂e, ∂L∂a, ∂L∂e = dELFromAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,TOLECC=ELTOLECC)
-
-    return E, L, ∂E∂a, ∂E∂e, ∂L∂a, ∂L∂e
-
-end
-
-"""
-Second-order of energy and angular momentum derivatives w.r.t. (a,e) near circular orbits.
-"""
-function dELcircExpansion(ψ::Function,
-                          dψ::Function,
-                          d2ψ::Function,
-                          d3ψ::Function,
-                          d4ψ::Function,
-                          a::Float64,
-                          e::Float64)
-
-    # compute all potential and derivative values
-    ψa, dψa, ddψa, dddψa, ddddψa = ψ(a), dψ(a), d2ψ(a), d3ψ(a), d4ψ(a)
-
-    # compute taylor expansion of partial derivatives for E
-    ∂E∂a = 0.5*(3*dψa + a*ddψa) + (0.5*dψa + 1.5*a*ddψa + 0.75*(a)^(2)*dddψa + (a)^(3)*ddddψa/12) * (e)^(2)
-    ∂E∂e = (a*dψa + (a)^(2)*ddψa + (a)^(3)*dddψa/6) * e
-
-    sqa   = sqrt(a)
-    sqdψa = sqrt(dψa)
-
-    # compute taylor expansion of partial derivatives for L
-    ∂L∂a = 0.5*(3*sqrt(a)*sqdψa + (sqa)^(3)*ddψa/sqdψa) - 0.5 * sqa * (3*(dψa)^(2) + a*dψa*ddψa - 7*(a)^(2)*dψa*dddψa/12 + (a)^(3)*(ddψa*dddψa - 2*dψa*ddddψa)/12) / ((sqdψa)^(3)) * (e)^(2)
-    ∂L∂e = (sqa)^(3) * ((a)^(2)*dddψa/(6*sqdψa) - 2*sqdψa) * e
-
-    return ∂E∂a, ∂E∂e, ∂L∂a, ∂L∂e
-end
 
 
-
-"""below here, helper functions for (rp,ra) definitions. these call out to (a,e) definitions, and can otherwise be considered obsolete"""
+########################################################################
+#
+# (rp,ra) -> (E,L) mapping : from (a,e) -> (E,L) mapping
+#
+########################################################################
 
 """
 energy as a function of (rp,ra) for a given potential ψ (and its derivatives)

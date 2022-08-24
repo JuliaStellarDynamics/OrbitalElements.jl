@@ -3,21 +3,23 @@ basic orbit transformations
 
 """
 
-"""ae_from_rpra
+"""AEfromRpRa
 
 function to translate pericentre and apocentre to semi-major axis and eccentricity
 
 """
-function ae_from_rpra(rp::Float64,ra::Float64)
+function AEfromRpRa(rp::Float64,ra::Float64)
+
     return (rp+ra)/2,(ra-rp)/(rp+ra)
 end
 
-"""rpra_from_ae
+"""RpRafromAE
 
 function to translate semi-major axis and eccentricity to pericentre and apocentre
 
 """
-function rpra_from_ae(a::Float64,e::Float64)
+function RpRafromAE(a::Float64,e::Float64)
+
     return a*(1-e),a*(1+e)
 end
 
@@ -28,52 +30,36 @@ compute the energy of a circular orbit at some radius
 must define the potential and potential derivative a priori
 
 """
-function Ecirc(potential::Function,dpotential::Function,r::Float64,E::Float64)
-    ur   = potential(r)
-    dudr = dpotential(potential,r)
-    return  abs(E - 0.5*r*dudr - ur)
-end
+function Ecirc(ψ::Function,dψ::Function,r::Float64)
 
-"""effective_potential
-
-the main function to root-find, this is the effective potential
-
-"""
-function effective_potential(potential::Function,r::Float64,E::Float64,L::Float64)
-
-    ur = potential(r)
-    return abs(2.0*(E-ur)*r*r - L*L)
-
+    return  ψ(r) + 0.5*r*dψ(r)
 end
 
 
-"""make_orbit_ae
+"""MakeOrbitAE
 
-initialise an orbit in (a,e) space, returning rperi,rapo,rcirc,L
+initialise an orbit in (a,e) space, returning rp, ra, rcirc, L
 
 @IMPROVE: will not check that E is valid for the model!
-@IMPROVE: rmax must be defined in order to recover appropriate roots
 @IMPROVE: something better than defaulting to circular below some eccentricity?
 
 """
-function make_orbit_ae(potential::Function, dpotential::Function, ddpotential::Function,
-                       a::Float64,
-                       ecc::Float64,
-                       rmax::Float64=100000.,
+function MakeOrbitAE(ψ::Function,dψ::Function,d2ψ::Function,
+                       a::Float64,e::Float64;
                        TOLECC::Float64=0.00005)
 
-    r_peri,r_apo = rpra_from_ae(a,ecc)
+    rp, ra = RpRafromAE(a,e)
 
     # get (E,L)
-    E = EFromRpRa(potential,dpotential,ddpotential,r_peri,r_apo;TOLECC=TOLECC)
-    L = LFromRpRa(potential,dpotential,ddpotential,r_peri,r_apo;TOLECC=TOLECC)
+    E = EFromRpRa(ψ,dψ,d2ψ,rp,ra;TOLECC=TOLECC)
+    L = LFromRpRa(ψ,dψ,d2ψ,rp,ra;TOLECC=TOLECC)
 
     if ecc<TOLECC
-        r_circ = a
+        rc = a
     else
-        r_circ = optimize(r -> Ecirc(potential,dpotential,r,E), 0.    ,rmax  , Brent()).minimizer
+        rc = bisection(r -> E - Ecirc(ψ,dψ,r),rp,ra)
     end
 
-    return r_peri,r_apo,r_circ,L
+    return rp, ra, rc, L
 
 end

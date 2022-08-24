@@ -12,13 +12,20 @@ Strategies:
 
 """
 
-"""Omega1_circular(dψ/dr,d²ψ/dr²,a)
+
+########################################################################
+#
+# Radial frequency Ω1
+#
+########################################################################
+
+"""Ω1circular(dψ/dr,d²ψ/dr²,a)
 radial frequency for circular orbits, from the epicyclic approximation
 a is the semi-major axis (equivalent to r for a circular orbit)
 """
-function Omega1_circular(dψ::Function,
-                         d2ψ::Function,
-                         a::Float64)
+function Ω1circular(dψ::Function,
+                    d2ψ::Function,
+                    a::Float64)
 
     return sqrt(d2ψ(a) + 3*dψ(a)/a)
 
@@ -26,7 +33,6 @@ end
 
 """Ω1circular(dψ/dr,d²ψ/dr²,d³ψ/dr³,d⁴ψ/dr⁴,a,e)
 radial frequency for nearly circular orbits, from Taylor expansion
-
 """
 function Ω1circular(dψ::Function,
                     d2ψ::Function,
@@ -36,9 +42,9 @@ function Ω1circular(dψ::Function,
                     e::Float64)
 
     # start with the epicylic approximation
-    Ω1c = Omega1_circular(dψ,d2ψ,a)
+    Ω1c = Ω1circular(dψ,d2ψ,a)
 
-    if (e==0)
+    if (e==0.)
         return Ω1c
     end
 
@@ -78,10 +84,17 @@ function Ω1circular(dψ::Function,
     return Ω1circular(dψ,d2ψ,d3ψ,d4ψ,a,e)
 end
 
-"""Omega2_circular(dψ/dr,r)
+
+########################################################################
+#
+# Azimuthal frequency Ω2 or Frequency ratio β = Ω2 / Ω1
+#
+########################################################################
+
+"""Ω2circular(dψ/dr,r)
 azimuthal frequency for circular orbits, from the epicyclic approximation
 """
-function Omega2_circular(dψ::Function,a::Float64)
+function Ω2circular(dψ::Function,a::Float64)
 
     return sqrt(dψ(a)/a)
 end
@@ -100,7 +113,7 @@ function βcircular2ndorderExpansionCoefs(ψ::Function,
     # 2nd order Taylor expansion of L
     L0, L1, L2 = Lcirc2ndorderExpansionCoefs(ψ,dψ,d2ψ,d3ψ,a)
 
-    Ω1c = Omega1_circular(dψ,d2ψ,a)
+    Ω1c = Ω1circular(dψ,d2ψ,a)
     dψa, d2ψa, d3ψa, d4ψa = dψ(a), d2ψ(a), d3ψ(a), d4ψ(a)
     # 2nd order Taylor expansion of Omega_2/(L * Omega_1)
     βoverL0 = 1 / ((a)^(2) * Ω1c)
@@ -115,7 +128,7 @@ function βcircular2ndorderExpansionCoefs(ψ::Function,
                 /
                 (48 * (a)^(4) * (Ω1c)^(5))
 
-    # WARNING: Assumption Lfirstorder = 0 and βoverLfirstorder = 0
+    # WARNING: Assumption L1 = Lfirstorder = 0 and βoverLfirstorder = 0
     return L0 * βoverL0, 0., L0 * βoverL0 + L2 * βoverL2
 end
 
@@ -154,66 +167,18 @@ function βcircular(ψ::Function,
 end
 
 
-
-
-"""Omega1circ_to_radius(Ω₁,dψ/dr,d²ψ/dr²[, rmin, rmax])
-perform backwards mapping from Omega_1 for a circular orbit to radius
-
-can tune [rmin,rmax] for extra optimisation (but not needed)
-WARNING: important assumption Ω1_circular is a decreasing function of radius
-"""
-function Omega1circ_to_radius(omega::Float64,dψ::Function,d2ψ::Function;rmin::Float64=1.0e-8,rmax::Float64=10000.0)
-
-    rcirc = try bisection(r -> omega - Omega1_circular(dψ,d2ψ,r), rmin, rmax) catch;  rmax end
-    if (rcirc == rmax) 
-        if (0. < omega < Omega1_circular(dψ,d2ψ,rmax))
-            return Omega1circ_to_radius(omega,dψ,d2ψ;rmin=rmax,rmax=10*rmax)
-        elseif omega <= 0.
-            error("Negative circular frequency Ω = ",omega)
-        elseif Omega1_circular(dψ,d2ψ,rmin) < omega
-            error("Too high frequency Ω = ",omega)
-        else
-            error("Unable to find the associated radius of Ω = ",omega)
-        end
-    end
-
-    return rcirc
-end
-
-
-"""Omega2circ_to_radius(Ω₂,dψ/dr[, rmin, rmax])
-perform backwards mapping from Omega_2 for a circular orbit to radius
-
-WARNING: important assumption Ω2_circular is a decreasing function of radius
-"""
-function Omega2circ_to_radius(omega::Float64,dψ::Function;rmin::Float64=1.0e-8,rmax::Float64=10000.0)
-
-    rcirc = try bisection(r -> omega - Omega2_circular(dψ,r), rmin, rmax) catch;  rmax end
-    if (rcirc == rmax) 
-        if (0. < omega < Omega2_circular(dψ,rmax))
-            return Omega2circ_to_radius(omega,dψ;rmin=rmax,rmax=10*rmax)
-        elseif omega <= 0.
-            error("Negative circular frequency Ω = ",omega)
-        elseif Omega2_circular(dψ,rmin) < omega
-            error("Too high frequency Ω = ",omega)
-        else
-            error("Unable to find the associated radius of Ω = ",omega)
-        end
-    end
-
-    return rcirc
-end
-
-"""beta_circ(alpha_circ, dψ/dr,d²ψ/dr²[Omega0, rmax])
-return \beta_c(\alpha), the frequency O2/O1 frequency ratio as a function of O1.
+"""βcirc(αcirc, dψ/dr,d²ψ/dr²[, Omega0, rmax])
+return βc(α), the frequency ratio Ω2/Ω1 as a function of α = Ω1/Ω0 .
 
 @IMPROVE: find Omega0 adaptively
-
 """
-function beta_circ(alpha_circ::Float64,dψ::Function,d2ψ::Function,Omega0::Float64=1.;rmin::Float64=1.0e-8,rmax::Float64=10000.)
+function βcirc(αcirc::Float64,
+                dψ::Function,d2ψ::Function,
+                Ω0::Float64=1.;
+                rmin::Float64=1.0e-8,rmax::Float64=10000.)
 
     # define the circular frequencies
-    omega1 = Omega0 * alpha_circ
+    Ω1 = Ω0 * αcirc
     #rcirc = Omega1circ_to_radius(omega1,dψ,d2ψ,rmax)
     rcirc = Omega1circ_to_radius(omega1,dψ,d2ψ;rmin=rmin,rmax=rmax)
 
@@ -221,4 +186,68 @@ function beta_circ(alpha_circ::Float64,dψ::Function,d2ψ::Function,Omega0::Floa
 
     return omega2/omega1
 
+end
+
+
+########################################################################
+#
+# Radius as a function of circular frequencies (mapping inversion)
+#
+########################################################################
+
+"""RcircFromΩ1circ(Ω₁,dψ/dr,d²ψ/dr²[, rmin, rmax])
+perform backwards mapping from Omega_1 for a circular orbit to radius
+
+can tune [rmin,rmax] for extra optimisation (but not needed)
+WARNING: important assumption Ω1_circular is a decreasing function of radius
+"""
+function RcircFromΩ1circ(ω::Float64,
+                        dψ::Function,d2ψ::Function;
+                        rmin::Float64=1.0e-8,rmax::Float64=10000.0)
+
+
+    if ω  <= 0.
+        error("Negative circular frequency Ω1 = ",ω)
+    end
+
+    rcirc = try bisection(r -> ω - Ω1circular(dψ,d2ψ,r), rmin, rmax) catch;   -1. end
+    if (rcirc == -1.) 
+        if (0. < ω  < Ω1circular(dψ,d2ψ,rmax))
+            return RcircFromΩ1circ(ω,dψ,d2ψ;rmin=rmax,rmax=10*rmax)
+        elseif Ω1circular(dψ,d2ψ,rmin) < ω
+            error("Too high frequency Ω1 = ",ω)
+        else
+            error("Unable to find the associated radius of Ω1 = ",ω)
+        end
+    end
+
+    return rcirc
+end
+
+
+"""RcircFromΩ2circ(Ω₂,dψ/dr[, rmin, rmax])
+perform backwards mapping from Omega_2 for a circular orbit to radius
+
+WARNING: important assumption Ω2_circular is a decreasing function of radius
+"""
+function RcircFromΩ2circ(ω::Float64,
+                        dψ::Function;
+                        rmin::Float64=1.0e-8,rmax::Float64=10000.0)
+
+    if ω  <= 0.
+        error("Negative circular frequency Ω2 = ",ω)
+    end
+
+    rcirc = try bisection(r -> ω - Ω2circular(dψ,r), rmin, rmax) catch;  -1. end
+    if (rcirc == -1.) 
+        if (0. < ω < Ω2circular(dψ,rmax))
+            return RcircFromΩ2circ(ω,dψ;rmin=rmax,rmax=10*rmax)
+        elseif Ω2circular(dψ,rmin) < ω
+            error("Too high frequency Ω2 = ",ω)
+        else
+            error("Unable to find the associated radius of Ω2 = ",ω)
+        end
+    end
+
+    return rcirc
 end

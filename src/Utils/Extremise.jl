@@ -214,7 +214,7 @@ end
 
 
 """ExtremiseFunction
-accepts a function to find the zero, or to maximise the derivative
+Find the single extremum of a function (with monotonic derivative) between xl and xu
 """
 function ExtremiseFunction(fun::Function,
                            xl::Float64=0.,
@@ -225,5 +225,6 @@ function ExtremiseFunction(fun::Function,
     dx = tolx
     dfun = x -> (fun(x+dx)-fun(x))/(dx)
 
-    return bisection(dfun,xl,xu;tolx=tolx,tolf=tolf)
+    xm = try bisection(dfun,xl,xu;tolx=tolx,tolf=tolf) catch; (dfun(xl) < 0.) ? xl : xu end
+    return xm
 end
