@@ -180,11 +180,11 @@ function βcirc(αcirc::Float64,
     # define the circular frequencies
     Ω1 = Ω0 * αcirc
     #rcirc = Omega1circ_to_radius(omega1,dψ,d2ψ,rmax)
-    rcirc = Omega1circ_to_radius(omega1,dψ,d2ψ;rmin=rmin,rmax=rmax)
+    rcirc = RcircFromΩ1circ(Ω1,dψ,d2ψ;rmin=rmin,rmax=rmax)
 
-    omega2 = Omega2_circular(dψ,rcirc)
+    Ω2 = Ω2circular(dψ,rcirc)
 
-    return omega2/omega1
+    return Ω2/Ω1
 
 end
 

@@ -15,21 +15,17 @@ must have Omega1_circular, Omega2_circular defined (CircularRadial/CircularFrequ
 OrbitalElements.FindWminWmax(-3,4,OrbitalElements.isochrone_dpsi_dr,OrbitalElements.isochrone_ddpsi_ddr)
 """
 function FindWminWmax(n1::Int64,n2::Int64,
-                      dpotential::Function,
-                      ddpotential::Function,
+                      dψ::Function,
+                      d2ψ::Function,
                       rmax::Float64=1000.,
                       Ω₀::Float64=1.;
                       Ziter::Int64=24,
-                      VERBOSE::Int64=0)
+                      verbose::Int64=0)
 
     # define the function to extremise
-    extreme(x) = n1*Omega1_circular(dpotential,ddpotential,x) + n2*Omega2_circular(dpotential,x)
+    extreme(x) = n1*Ω1circular(dψ,d2ψ,x) + n2*Ω2circular(dψ,x)
 
-    if VERBOSE>0
-        m = ExtremiseFunctionA(extreme,Ziter,0.,rmax,verbose=true)
-    else
-        m = ExtremiseFunctionA(extreme,Ziter,0.,rmax,verbose=false)
-    end
+    m = ExtremiseFunctionA(extreme,Ziter,0.,rmax,verbose=verbose)
 
     # for the problem of a cored cluster with an infinite extent, the w minima and maxima are either
     # in the very centre
@@ -44,18 +40,19 @@ end
 find any valie non- 0 or 1 v value at u=-1 or u=1
 """
 function FindVbound(n1::Int64,n2::Int64,
-                    dpotential::Function,
-                    ddpotential::Function,
+                    dψ::Function,
+                    d2ψ::Function,
                     rmax::Float64=1000.,
                     Ω₀::Float64=1.;
-                    Ziter=24)
+                    Ziter=24,
+                    verbose::Int64=0)
 
     # define the function to extremise: n.Omega
-    extreme(x) = n1*Omega1_circular(dpotential,ddpotential,x) + n2*Omega2_circular(dpotential,x)
+    extreme(x) = n1*Ω1circular(dψ,d2ψ,x) + n2*Ω2circular(dψ,x)
 
-    m = ExtremiseFunctionA(extreme,Ziter,0.,rmax,verbose=false)
+    m = ExtremiseFunctionA(extreme,Ziter,0.,rmax,verbose=verbose)
 
-    vbound = Omega1_circular(dpotential,ddpotential,m)/Ω₀
+    vbound = Ω1circular(dψ,d2ψ,m)/Ω₀
 
     return vbound
 
@@ -74,10 +71,12 @@ This is exact (assuming wmin,wmax)
 """
 function GetVarpi(omg::Complex{Float64},
                    n1::Int64,n2::Int64,
-                   dpotential::Function,ddpotential::Function;
-                   rmax::Float64=1000.,Ω₀::Float64=1.)
+                   dψ::Function,d2ψ::Function;
+                   rmax::Float64=1000.,Ω₀::Float64=1.;
+                   Ziter::Int64=24,
+                   verbose::Int64=0)
 
-    w_min,w_max = FindWminWmax(n1,n2,dpotential,ddpotential,rmax,Ω₀)
+    w_min,w_max = FindWminWmax(n1,n2,dψ,d2ψ,rmax,Ω₀,Ziter=Ziter,verbose=verbose)
 
     return GetVarpi(omg,w_min,w_max)
 

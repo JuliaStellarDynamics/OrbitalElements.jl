@@ -95,10 +95,10 @@ function UVFromAlphaBeta(alpha::Float64,beta::Float64,
 end
 
 """
-using the definitions for (alpha, beta) and (u,v), compute the Jacobian.
+using the definitions for (α, β) and (u,v), compute the Jacobian.
 @ATTENTION, to match eq. B6, this has the 2/(ωmax-ωmin) term already absorbed into it. therefore, not formally the Jacobian, but adds the dimensional removal.
 """
-function JacalphabetaToUV(n1::Int64,n2::Int64,w_min::Float64,w_max::Float64,v::Float64)
+function JacAlphaBetaToUV(n1::Int64,n2::Int64,w_min::Float64,w_max::Float64,v::Float64)
 
     if (n2==0)
         return (2.0/(w_max-w_min))*abs((w_max-w_min) * (1/(2n1)))

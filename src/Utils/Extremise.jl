@@ -17,7 +17,7 @@ Has a different signature than below for the simple bisection technique
 function ExtremiseFunctionA(func::Function,
                            neps::Int64=32,
                            minval::Float64=0.,maxval::Float64=1.;
-                           verbose::Bool=false,
+                           verbose::Int64=0,
                            fullreturn::Bool=false)
 
     if neps > 50
@@ -36,7 +36,7 @@ function ExtremiseFunctionA(func::Function,
     right_end_derivative = func(maxval) - func(maxval-deps)
 
     if left_end_derivative*right_end_derivative > 0
-        if verbose
+        if verbose > 0
             println("OrbitalElements.Extremise.jl: Input function is monotonic")
         end
         return -1
@@ -67,7 +67,7 @@ function ExtremiseFunctionA(func::Function,
         if mid_left_derivative == -mid_right_derivative
             # we are directly on the extremum!
             if iter==1
-                if verbose
+                if verbose > 0
                     println("OrbitalElements.Extremise.jl: Turning up deps")
                     deps = 1/2^(floor(Int, neps/2))
                     mid_left_derivative  = midfunc - func(midpoint-deps)
@@ -75,7 +75,7 @@ function ExtremiseFunctionA(func::Function,
 
                     # what if we are directly at the midpoint?
                     if mid_left_derivative == -mid_right_derivative
-                        if verbose
+                        if verbose > 0
                             println("OrbitalElements.Extremise.jl: Directly centred at $midpoint")
                         end
                         return midpoint
@@ -84,7 +84,7 @@ function ExtremiseFunctionA(func::Function,
                 end
                 continue
             else
-                if verbose
+                if verbose > 0
                     println("OrbitalElements.Extremise.jl: Directly centred at $midpoint")
                 end
                 return midpoint
@@ -114,7 +114,7 @@ function ExtremiseFunctionA(func::Function,
         end
 
         # watch the convergence fly by...
-        if verbose
+        if verbose > 0
             println("OrbitalElements.Extremise.jl: #$iter: best=$midpoint, min=$leftmin, max=$rightmax")
         end
 
@@ -160,7 +160,7 @@ function bisection(fun::Function,
                    xu::Float64;
                    tolx::Float64=1000.0*eps(Float64),
                    tolf::Float64=1000.0*eps(Float64),
-                   verbose=false)
+                   verbose::Int64=0)
 
     # order the input arguments
     if (xl > xu)
@@ -203,7 +203,7 @@ function bisection(fun::Function,
             xl, fl = xm, fm # The lower point becomes the midpoint
         end
         if k == nitermax
-            if verbose
+            if verbose > 0
                 println("OrbitalElements.Extremise.bisection: Maximal number of iteration reached.")
             end
             return xm
@@ -220,11 +220,12 @@ function ExtremiseFunction(fun::Function,
                            xl::Float64=0.,
                            xu::Float64=1.;
                            tolx::Float64=1000.0*eps(Float64),
-                           tolf::Float64=1000.0*eps(Float64))
+                           tolf::Float64=1000.0*eps(Float64),
+                           verbose::Int64=0)
 
     dx = tolx
     dfun = x -> (fun(x+dx)-fun(x))/(dx)
 
-    xm = try bisection(dfun,xl,xu;tolx=tolx,tolf=tolf) catch; (dfun(xl) < 0.) ? xl : xu end
+    xm = try bisection(dfun,xl,xu;tolx=tolx,tolf=tolf,verbose=verbose) catch; (dfun(xl) < 0.) ? xl : xu end
     return xm
 end

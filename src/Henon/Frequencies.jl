@@ -29,7 +29,7 @@ function HenonThetaFrequenciesAE(ψ::Function,
         Ω2 = β*Ω1
 
         if action
-            u1func(u::Float64)::Float64 = Vrad(ψ,dψ,d2ψ,d3ψ,u,a,e)
+            u1func(u::Float64)::Float64 = drdu(u,a,e)*Vrad(ψ,dψ,d2ψ,d3ψ,u,a,e)
             accum = UnitarySimpsonIntegration(u1func,K_O=NINT)
             actionj   = (1/pi)*accum
             return Ω1,Ω2,actionj

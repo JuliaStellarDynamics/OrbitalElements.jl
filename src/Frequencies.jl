@@ -216,7 +216,7 @@ function ComputeAEFromFrequencies(ψ::Function,
         # da max(0.0001,0.01a)
         # de min(max(0.0001,0.1a*e)
 
-        a,e,iter,finaltol = AEFromOmega1Omega2Brute(Ω1,Ω2,ψ,dψ,d2ψ,d3ψ;
+        a,e,iter,finaltol = AEFromΩ1Ω2Brute(Ω1,Ω2,ψ,dψ,d2ψ,d3ψ;
                                                     eps=eps,ITERMAX=maxiter,
                                                     TOLECC=TOLECC,TOLA=TOLA,da=da,de=de,
                                                     verbose=verbose)
