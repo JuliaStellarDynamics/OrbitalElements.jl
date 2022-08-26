@@ -72,7 +72,7 @@ This is exact (assuming wmin,wmax)
 function GetVarpi(omg::Complex{Float64},
                    n1::Int64,n2::Int64,
                    dψ::Function,d2ψ::Function;
-                   rmax::Float64=1000.,Ω₀::Float64=1.;
+                   rmax::Float64=1000.,Ω₀::Float64=1.,
                    Ziter::Int64=24,
                    verbose::Int64=0)
 
