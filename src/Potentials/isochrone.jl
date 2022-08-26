@@ -223,7 +223,7 @@ function IsochroneAEFromOmega1Omega2(omega1::Float64,omega2::Float64,bc::Float64
     Omega0= Omega0Isochrone(bc,M,astronomicalG)
     E,L   = isochrone_EL_from_alphabeta(omega1/Omega0,omega2/omega1,bc,M,astronomicalG)
     rp,ra = isochrone_rpra_fromEL(E,L,bc,M,astronomicalG)
-    a,e   = ae_from_rpra(rp,ra)
+    a,e   = AEfromRpRa(rp,ra)
     return a,e
 end
 

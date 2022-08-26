@@ -22,7 +22,7 @@ include("Utils/NumericalInversion.jl")
 #
 ########################################################################
 
-"""ComputeFrequenciesAE(ψ,dψ,d2ψ,d3ψ,a,e[,TOLECC,verbose])
+"""ComputeFrequenciesAE(ψ,dψ,d2ψ,d3ψ,a,e[,TOLECC,VERBOSE])
 wrapper to select which type of frequency computation to perform, from (a,e)
 """
 function ComputeFrequenciesAE(ψ::Function,
@@ -33,17 +33,17 @@ function ComputeFrequenciesAE(ψ::Function,
                               a::Float64,e::Float64;
                               action::Bool=false,
                               TOLECC::Float64=0.001,
-                              verbose::Int64=0,
+                              VERBOSE::Int64=0,
                               NINT::Int64=32,
                               EDGE::Float64=0.01,
                               TOLA::Float64=0.001)
 
 
-    return HenonThetaFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e;action=action,TOLECC=TOLECC,verbose=verbose,NINT=NINT,EDGE=EDGE)
+    return HenonThetaFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e;action=action,TOLECC=TOLECC,VERBOSE=VERBOSE,NINT=NINT,EDGE=EDGE)
 
 end
 
-"""ComputeFrequenciesAE(ψ,dψ,d2ψ,d3ψ,a,e[,TOLECC,verbose])
+"""ComputeFrequenciesAE(ψ,dψ,d2ψ,d3ψ,a,e[,TOLECC,VERBOSE])
 wrapper to select which type of frequency computation to perform, from (a,e)
 EXCEPT fourth derivative
 """
@@ -54,7 +54,7 @@ function ComputeFrequenciesAE(ψ::Function,
                               a::Float64,e::Float64;
                               action::Bool=false,
                               TOLECC::Float64=0.001,
-                              verbose::Int64=0,
+                              VERBOSE::Int64=0,
                               NINT::Int64=32,
                               EDGE::Float64=0.01,
                               FDIFF::Float64=1.e-8)
@@ -62,10 +62,10 @@ function ComputeFrequenciesAE(ψ::Function,
     # define a numerical fourth derivative
     d4ψ(x::Float64) = (d3ψ(x+FDIFF)-d3ψ(x))/FDIFF
 
-    return ComputeFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e;action=action,TOLECC=TOLECC,verbose=verbose,NINT=NINT,EDGE=EDGE)
+    return ComputeFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e;action=action,TOLECC=TOLECC,VERBOSE=VERBOSE,NINT=NINT,EDGE=EDGE)
 end
 
-"""ComputeFrequenciesAE(ψ,dψ,d2ψ,a,e[,TOLECC,verbose])
+"""ComputeFrequenciesAE(ψ,dψ,d2ψ,a,e[,TOLECC,VERBOSE])
 wrapper to select which type of frequency computation to perform, from (a,e)
 EXCEPT third derivative
 """
@@ -75,7 +75,7 @@ function ComputeFrequenciesAE(ψ::Function,
                               a::Float64,e::Float64;
                               action::Bool=false,
                               TOLECC::Float64=0.001,
-                              verbose::Int64=0,
+                              VERBOSE::Int64=0,
                               NINT::Int64=32,
                               EDGE::Float64=0.01,
                               FDIFF::Float64=1.e-8)
@@ -85,7 +85,7 @@ function ComputeFrequenciesAE(ψ::Function,
     # Nul fourth derivative
     d4ψ(x::Float64) = 0.
 
-    return ComputeFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e;action=action,TOLECC=TOLECC,verbose=verbose,NINT=NINT,EDGE=EDGE)
+    return ComputeFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e;action=action,TOLECC=TOLECC,VERBOSE=VERBOSE,NINT=NINT,EDGE=EDGE)
 end
 
 
@@ -95,7 +95,7 @@ end
 #
 ########################################################################
 
-"""ComputeFrequenciesAEWithDeriv(ψ,dψ,d2ψa,e[,TOLECC,verbose])
+"""ComputeFrequenciesAEWithDeriv(ψ,dψ,d2ψa,e[,TOLECC,VERBOSE])
 wrapper to select which type of frequency computation to perform, from (a,e), but DERIVATIVES
 """
 function ComputeFrequenciesAEWithDeriv(ψ::Function,
@@ -108,7 +108,7 @@ function ComputeFrequenciesAEWithDeriv(ψ::Function,
                                        da::Float64=0.0001,
                                        de::Float64=0.0001,
                                        TOLECC::Float64=0.001,
-                                       verbose::Int64=0,
+                                       VERBOSE::Int64=0,
                                        NINT::Int64=32,
                                        EDGE::Float64=0.01)
 
@@ -120,10 +120,10 @@ function ComputeFrequenciesAEWithDeriv(ψ::Function,
         # (Ω1c,Ω2c)-> (Ω1r,Ω2r) [+de]
 
         # @IMPROVE watch out for close to TOLECC, will fail across boundary
-        Ω1c,Ω2c = ComputeFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e;action=false,TOLECC=TOLECC,verbose=verbose,NINT=NINT,EDGE=EDGE)
+        Ω1c,Ω2c = ComputeFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e;action=false,TOLECC=TOLECC,VERBOSE=VERBOSE,NINT=NINT,EDGE=EDGE)
 
         # the offset in a
-        Ω1h,Ω2h = ComputeFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a+da,e;action=false,TOLECC=TOLECC,verbose=verbose,NINT=NINT,EDGE=EDGE)
+        Ω1h,Ω2h = ComputeFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a+da,e;action=false,TOLECC=TOLECC,VERBOSE=VERBOSE,NINT=NINT,EDGE=EDGE)
 
         # the offset in e
         # if this is already a radial orbit, don't go to super radial
@@ -131,7 +131,7 @@ function ComputeFrequenciesAEWithDeriv(ψ::Function,
             de *= -1.0
         end
 
-        Ω1r,Ω2r = ComputeFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e+de;action=false,TOLECC=TOLECC,verbose=verbose,NINT=NINT,EDGE=EDGE)
+        Ω1r,Ω2r = ComputeFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e+de;action=false,TOLECC=TOLECC,VERBOSE=VERBOSE,NINT=NINT,EDGE=EDGE)
 
         dΩ1da = (Ω1h-Ω1c)/da
         dΩ2da = (Ω2h-Ω2c)/da
@@ -142,7 +142,7 @@ function ComputeFrequenciesAEWithDeriv(ψ::Function,
         return Ω1c,Ω2c,dΩ1da,dΩ2da,dΩ1de,dΩ2de
 end
 
-"""ComputeFrequenciesAEWithDeriv(ψ,dψ,d2ψa,e[,TOLECC,verbose])
+"""ComputeFrequenciesAEWithDeriv(ψ,dψ,d2ψa,e[,TOLECC,VERBOSE])
 wrapper to select which type of frequency computation to perform, from (a,e), but DERIVATIVES
 EXCEPT fourth derivative
 """
@@ -155,7 +155,7 @@ function ComputeFrequenciesAEWithDeriv(ψ::Function,
                                        da::Float64=0.0001,
                                        de::Float64=0.0001,
                                        TOLECC::Float64=0.001,
-                                       verbose::Int64=0,
+                                       VERBOSE::Int64=0,
                                        NINT::Int64=32,
                                        FDIFF::Float64=1.e-8,
                                        EDGE::Float64=0.01)
@@ -163,10 +163,10 @@ function ComputeFrequenciesAEWithDeriv(ψ::Function,
     # define a numerical fourth derivative
     d4ψ(x::Float64) = (d3ψ(x+FDIFF)-d3ψ(x))/FDIFF
 
-    return ComputeFrequenciesAEWithDeriv(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e;da=da,de=de,TOLECC=TOLECC,verbose=verbose,NINT=NINT,EDGE=EDGE)
+    return ComputeFrequenciesAEWithDeriv(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e;da=da,de=de,TOLECC=TOLECC,VERBOSE=VERBOSE,NINT=NINT,EDGE=EDGE)
 end
 
-"""ComputeFrequenciesAEWithDeriv(ψ,dψ,d2ψa,e[,TOLECC,verbose])
+"""ComputeFrequenciesAEWithDeriv(ψ,dψ,d2ψa,e[,TOLECC,VERBOSE])
 wrapper to select which type of frequency computation to perform, from (a,e), but DERIVATIVES
 EXCEPT third derivative
 """
@@ -178,7 +178,7 @@ function ComputeFrequenciesAEWithDeriv(ψ::Function,
                                        da::Float64=0.0001,
                                        de::Float64=0.0001,
                                        TOLECC::Float64=0.001,
-                                       verbose::Int64=0,
+                                       VERBOSE::Int64=0,
                                        NINT::Int64=32,
                                        FDIFF::Float64=1.e-8,
                                        EDGE::Float64=0.01)
@@ -188,7 +188,7 @@ function ComputeFrequenciesAEWithDeriv(ψ::Function,
     # Nul fourth derivative
     d4ψ(x::Float64) = 0.
 
-    return ComputeFrequenciesAEWithDeriv(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e;da=da,de=de,TOLECC=TOLECC,verbose=verbose,NINT=NINT,EDGE=EDGE)
+    return ComputeFrequenciesAEWithDeriv(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e;da=da,de=de,TOLECC=TOLECC,VERBOSE=VERBOSE,NINT=NINT,EDGE=EDGE)
 end
 
 
@@ -210,7 +210,7 @@ function ComputeAEFromFrequencies(ψ::Function,
                                   maxiter::Int64=1000,
                                   TOLECC::Float64=0.001,TOLA::Float64=0.0001,
                                   da::Float64=0.0001,de::Float64=0.0001,
-                                  verbose::Int64=0)
+                                  VERBOSE::Int64=0)
 
         # use adaptive da, de branches
         # da max(0.0001,0.01a)
@@ -219,7 +219,7 @@ function ComputeAEFromFrequencies(ψ::Function,
         a,e,iter,finaltol = AEFromΩ1Ω2Brute(Ω1,Ω2,ψ,dψ,d2ψ,d3ψ;
                                                     eps=eps,ITERMAX=maxiter,
                                                     TOLECC=TOLECC,TOLA=TOLA,da=da,de=de,
-                                                    verbose=verbose)
+                                                    VERBOSE=VERBOSE)
 
         return a,e
 end

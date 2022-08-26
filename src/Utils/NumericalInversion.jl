@@ -2,12 +2,17 @@
 numerical inversion of (Ω₁,Ω₂) -> (a,e)
 by brute-forcing the derivative increments dΩ₁/da, dΩ₁/de, deΩ₂/da, dΩ₂/de
 
+VERBOSE rules:
+0: no printing
+2: failure cases diagnostics
+3: iteration counters
+
 """
 
 
 
 
-"""AEFromΩ1Ω2Brute(Ω₁,Ω₂,ψ,dψ,d2ψ,d3ψ[,eps,maxiter,TOLECC,TOLA,da,de,verbose])
+"""AEFromΩ1Ω2Brute(Ω₁,Ω₂,ψ,dψ,d2ψ,d3ψ[,eps,maxiter,TOLECC,TOLA,da,de,VERBOSE])
 
 basic Newton-Raphson algorithm to find (a,e) from (Ω₁,Ω₂) brute force derivatives.
 
@@ -22,7 +27,7 @@ function AEFromΩ1Ω2Brute(Ω₁::Float64,Ω₂::Float64,
                                  ITERMAX::Int64=1000,
                                  TOLECC::Float64=0.001,TOLA::Float64=0.0001,
                                  da::Float64=1.0e-5,de::Float64=1.0e-5,
-                                 verbose::Int64=0,
+                                 VERBOSE::Int64=0,
                                  EDGE::Float64=0.03,
                                  NINT::Int64=64)
     #
@@ -39,7 +44,7 @@ function AEFromΩ1Ω2Brute(Ω₁::Float64,Ω₂::Float64,
     iter = 0
     while (((Ω₁ - f1)^2 + (Ω₂ - f2)^2) > eps^2)
 
-        f1,f2,df1da,df2da,df1de,df2de = ComputeFrequenciesAEWithDeriv(ψ,dψ,d2ψ,d3ψ,aguess,eguess,da=da,de=de,TOLECC=TOLECC,verbose=verbose,NINT=NINT,EDGE=EDGE)
+        f1,f2,df1da,df2da,df1de,df2de = ComputeFrequenciesAEWithDeriv(ψ,dψ,d2ψ,d3ψ,aguess,eguess,da=da,de=de,TOLECC=TOLECC,VERBOSE=VERBOSE,NINT=NINT,EDGE=EDGE)
 
         jacobian = [df1da df1de ; df2da df2de]
 
@@ -48,8 +53,8 @@ function AEFromΩ1Ω2Brute(Ω₁::Float64,Ω₂::Float64,
             increment = jacobian \ (-([f1 ; f2] - [Ω₁ ; Ω₂]))
             aguess,eguess = aguess + increment[1],eguess + increment[2]
         catch e # this catch appears to not work because LAPACK is doing something under the hood
-            if verbose>0
-                println("OrbitalElements.NumericalInversion.jl: bad division for Jacobian=$jacobian and (f1,f2)=($f1,$f2), (Ω₁,Ω₂)=($Ω₁,$Ω₂) at (a,e)=($aguess,$eguess).")
+            if VERBOSE>1
+                println("OrbitalElements.NumericalInversion.AEFromΩ1Ω2Brute: bad division for Jacobian=$jacobian and (f1,f2)=($f1,$f2), (Ω₁,Ω₂)=($Ω₁,$Ω₂) at (a,e)=($aguess,$eguess).")
             end
             # are we just in some tiny bad patch? # reset to 'safe' values
             aguess,eguess = aguess + 10da,0.5
@@ -76,8 +81,8 @@ function AEFromΩ1Ω2Brute(Ω₁::Float64,Ω₂::Float64,
                 eguess = eguess - increment[2]
                 eguess = max(TOLECC,0.5eguess)
             catch e
-                if verbose>0
-                    println("OrbitalElements.NumericalInversion.jl: guessing close to ecc=0: ",eguess," (a=",aguess,")")
+                if VERBOSE>1
+                    println("OrbitalElements.NumericalInversion.AEFromΩ1Ω2Brute: guessing close to ecc=0: ",eguess," (a=",aguess,")")
                 end
                 eguess = max(TOLECC,0.5eguess)
             end
@@ -89,7 +94,7 @@ function AEFromΩ1Ω2Brute(Ω₁::Float64,Ω₂::Float64,
                 eguess = eguess - increment[2]
                 eguess = min(1-TOLECC,eguess + 0.5*(1-eguess))
             catch e
-                println("OrbitalElements.NumericalInversion.jl: guessing close to ecc=1: ",eguess," (a=",aguess,") for increment ",increment)
+                println("OrbitalElements.NumericalInversion.AEFromΩ1Ω2Brute: guessing close to ecc=1: ",eguess," (a=",aguess,") for increment ",increment)
                 eguess = min(1-TOLECC,eguess + 0.5*(1-eguess))
             end
         end
@@ -103,16 +108,16 @@ function AEFromΩ1Ω2Brute(Ω₁::Float64,Ω₂::Float64,
     end
 
 
-    if verbose > 0
-        println("OrbitalElements.NumericalInversion.jl: niter=",iter)
+    if VERBOSE > 2
+        println("OrbitalElements.NumericalInversion.AEFromΩ1Ω2Brute: niter=",iter)
     end
 
     finaltol = ((Ω₁ - f1)^2 + (Ω₂ - f2)^2)
 
     # check here to not allow bad values?
     if isnan(aguess) | isnan(eguess)
-        if verbose>0
-            println("OrbitalElements.NumericalInversion.jl: failed for inputs (Ω₁,Ω₂)=($Ω₁,$Ω₂).")
+        if VERBOSE>1
+            println("OrbitalElements.NumericalInversion.AEFromΩ1Ω2Brute: failed for inputs (Ω₁,Ω₂)=($Ω₁,$Ω₂).")
         end
 
         # return a semi-equivalent circular orbit, as the failure mode is mostly very small orbits
@@ -125,7 +130,7 @@ end
 
 
 
-"""ae_from_EL_brute(E,L,ψ,dψ,d2ψ[,eps,maxiter,TOLECC,verbose])
+"""ae_from_EL_brute(E,L,ψ,dψ,d2ψ[,eps,maxiter,TOLECC,VERBOSE])
 basic Newton-Raphson algorithm to find (a,e) from (E,L) brute force derivatives.
 @IMPROVE add escape for circular orbits
 """
@@ -136,7 +141,7 @@ function ae_from_EL_brute(E::Float64,L::Float64,
                           eps::Float64=1*10^(-6),
                           maxiter::Int64=1000,
                           TOLECC::Float64=0.001,
-                          verbose::Int64=0)
+                          VERBOSE::Int64=0)
     #
 
     # get the circular orbit (maximum radius) for a given E. use the stronger constraint.
@@ -146,7 +151,7 @@ function ae_from_EL_brute(E::Float64,L::Float64,
 
     rpguess,raguess = rpra_from_ae(aguess,eccguess)
 
-    if (verbose>0)
+    if (VERBOSE>2)
       println("iter=",-1," aguess=",aguess," eguess=",eccguess)
     end
 
@@ -186,7 +191,7 @@ function ae_from_EL_brute(E::Float64,L::Float64,
             aguess = 0.00000001
         end
 
-        if (verbose>0)
+        if (VERBOSE>0)
             println("iter=",iter," aguess=",aguess," eguess=",eccguess)
         end
 

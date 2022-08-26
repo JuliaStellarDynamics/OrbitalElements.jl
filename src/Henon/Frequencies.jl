@@ -15,12 +15,12 @@ function HenonThetaFrequenciesAE(ψ::Function,
                                  NINT::Int64=32,
                                  EDGE::Float64=0.03,
                                  TOLECC::Float64=0.001,
-                                 verbose::Int64=0)
+                                 VERBOSE::Int64=0)
 
     if e<TOLECC
 
-        if verbose > 1
-            println("Henon/Frequencies.jl:HenonThetaFrequenciesAE: using circular approximation.")
+        if VERBOSE > 1
+            println("OrbitalElements.Henon.Frequencies.HenonThetaFrequenciesAE: using circular approximation for a=$a, e=$e.")
         end
 
         # drop into circular frequency expansion calculations:
