@@ -77,21 +77,33 @@ end
 the effective potential: note the relationship to Q
 """
 function ψeff(ψ::Function,r::Float64,L::Float64)::Float64
-    return ψ(r) + (1/2) * (L/r)^(2)
+    if L == 0.
+        return ψ(r)
+    else
+        return ψ(r) + (1/2) * (L/r)^(2)
+    end
 end
 
 """
 the derivative of the effective potential
 """
 function dψeffdr(dψ::Function,r::Float64,L::Float64)::Float64
-    return dψ(r) - (L)^(2) / (r^3)
+    if L == 0.
+        return dψ(r)
+    else
+        return dψ(r) - (L)^(2) / (r^3)
+    end
 end
 
 """
 the second derivative of the effective potential
 """
 function d2ψeffdr2(d2ψ::Function,r::Float64,L::Float64)::Float64
-    return d2ψ(r) + 3 * (L)^(2) / (r^4)
+    if L == 0.
+        return d2ψ(r)
+    else
+        return d2ψ(r) + 3 * (L)^(2) / (r^4)
+    end
 end
 
 ########################################################################

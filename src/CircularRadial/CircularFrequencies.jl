@@ -199,7 +199,7 @@ end
 perform backwards mapping from Omega_1 for a circular orbit to radius
 
 can tune [rmin,rmax] for extra optimisation (but not needed)
-WARNING: important assumption Ω1_circular is a decreasing function of radius
+WARNING: important assumption Ω1circular is a decreasing function of radius
 """
 function RcircFromΩ1circ(ω::Float64,
                         dψ::Function,d2ψ::Function;
@@ -228,7 +228,7 @@ end
 """RcircFromΩ2circ(Ω₂,dψ/dr[, rmin, rmax])
 perform backwards mapping from Omega_2 for a circular orbit to radius
 
-WARNING: important assumption Ω2_circular is a decreasing function of radius
+WARNING: important assumption Ω2circular is a decreasing function of radius
 """
 function RcircFromΩ2circ(ω::Float64,
                         dψ::Function;

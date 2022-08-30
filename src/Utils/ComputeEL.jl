@@ -31,6 +31,8 @@ function EFromAE(ψ::Function,
     if e<TOLECC
         # switch to the expanded case
         return EcircExpansion(ψ,dψ,d2ψ,d3ψ,a,e)
+    elseif (e == 1.) # up to numerical precision
+        return Erad(ψ,a)
     else
         # the analytic version of the energy
         return ((1+e)^(2)*ψ(a*(1+e)) - (1-e)^(2)*ψ(a*(1-e))) / (4e)
@@ -51,6 +53,8 @@ function LFromAE(ψ::Function,
     if e<TOLECC
         # switch to the expanded case
         return LcircExpansion(ψ,dψ,d2ψ,d3ψ,a,e)
+    elseif (e == 1.) # up to numerical precision
+        return 0.0
     else
         # the analytic version of the angular momentum
         return a * (1-(e)^(2)) * sqrt( (ψ(a*(1+e)) - ψ(a*(1-e))) / (2e) )
@@ -74,6 +78,17 @@ function ELFromAE(ψ::Function,
     return E, L
 end
 
+########################################################################
+#
+# (a,e) -> (E,L) mapping : radial values
+#
+########################################################################
+
+function Erad(ψ::Function,
+              a::Float64)
+    
+    return ψ(2*a)
+end
 
 ########################################################################
 #
