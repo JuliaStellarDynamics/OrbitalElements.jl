@@ -221,6 +221,8 @@ function ThetaExpansionAE(ψ::Function,
     combination = - a * e * dψeffl * d2fl
 
     # switch to safety: don't contribute anything at this point
+    # In particular for radial orbits with ψ(r) = - Inf in r = 0
+    # combination = - Inf
     if combination <= 0.
         return 0.0
     end
