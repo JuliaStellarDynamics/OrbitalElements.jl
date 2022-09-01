@@ -2,9 +2,13 @@
 examples/run_plummer.jl
 examples/run_mestel.jl
 examples/run_jacobians.jl
+
+# Example output files
+examples/figures
 examples/*.txt
 examples/*.hf5
-examples/figures
+examples/*.h5
+examples/*.pdf
 
 src/Utils/GridInversion.jl
 src/Utils/ComputeEL_mp.jl
