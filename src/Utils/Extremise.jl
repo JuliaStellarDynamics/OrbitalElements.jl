@@ -219,13 +219,11 @@ Find the single extremum of a function (with monotonic derivative) between xl an
 function ExtremiseFunction(fun::Function,
                            xl::Float64=0.,
                            xu::Float64=1.;
-                           tolx::Float64=1000.0*eps(Float64),
+                           dx::Float64=1.e-9,
                            tolf::Float64=1000.0*eps(Float64),
                            verbose::Int64=0)
 
-    dx = tolx
-    dfun = x -> (fun(x+dx)-fun(x))/(dx)
-
-    xm = try bisection(dfun,xl,xu;tolx=tolx,tolf=tolf,verbose=verbose) catch; (dfun(xl) < 0.) ? xl : xu end
+    dfun = x -> (fun(x+dx)-fun(x))/dx
+    xm = try bisection(dfun,xl,xu;tolx=dx,tolf=tolf,verbose=verbose) catch; (abs(fun(xu)) < abs(fun(xl))) ? xl : xu end
     return xm
 end

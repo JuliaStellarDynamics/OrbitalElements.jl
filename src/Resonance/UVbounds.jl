@@ -1,229 +1,239 @@
 """
 
-@IMPROVE, tabulate wmin,wmax once for all resonances of interest
 @IMPROVE, all w->ω?
 """
 
-
-"""FindWminWmax(n₁,n₂,dψ/dr,d²ψ/dr²[,rmax,Ω0])
-for a given resonance, find the maximum frequencies
-must have Omega1_circular, Omega2_circular defined (CircularRadial/CircularFrequencies.jl)
-
-@IMPROVE: specific to the cored cluster with infinite extent
-@IMPROVE: fix rmax limits to be expected
-
-OrbitalElements.FindWminWmax(-3,4,OrbitalElements.isochrone_dpsi_dr,OrbitalElements.isochrone_ddpsi_ddr)
-"""
-function FindWminWmax(n1::Int64,n2::Int64,
-                      dψ::Function,
-                      d2ψ::Function,
-                      rmax::Float64=1000.,
-                      Ω₀::Float64=1.;
-                      Ziter::Int64=24,
-                      verbose::Int64=0)
-
-    # define the function to extremise
-    extreme(x) = n1*Ω1circular(dψ,d2ψ,x) + n2*Ω2circular(dψ,x)
-
-    m = ExtremiseFunctionA(extreme,Ziter,0.,rmax,verbose=verbose)
-
-    # for the problem of a cored cluster with an infinite extent, the w minima and maxima are either
-    # in the very centre
-    # in the very outskirts
-    # along the circular velocity
-    w_min,w_max = extrema([extreme(1.e-10)/Ω₀,0.0,extreme(m)/Ω₀])
-
-    return w_min,w_max
-end
-
-"""FindVbound(n₁,n₂,dψ/dr,d²ψ/dr²[,rmax,Ω₀])
-find any valie non- 0 or 1 v value at u=-1 or u=1
-"""
-function FindVbound(n1::Int64,n2::Int64,
-                    dψ::Function,
-                    d2ψ::Function,
-                    rmax::Float64=1000.,
-                    Ω₀::Float64=1.;
-                    Ziter=24,
-                    verbose::Int64=0)
-
-    # define the function to extremise: n.Omega
-    extreme(x) = n1*Ω1circular(dψ,d2ψ,x) + n2*Ω2circular(dψ,x)
-
-    m = ExtremiseFunctionA(extreme,Ziter,0.,rmax,verbose=verbose)
-
-    vbound = Ω1circular(dψ,d2ψ,m)/Ω₀
-
-    return vbound
-
-end
-
-
-"""GetVarpi(omega₀,n₁,n₂,dψ/dr,d²ψ/dr²[,rmax,Ω₀])
+"""GetVarpi(ω₀,n₁,n₂,dψ/dr,d²ψ/dr²[,Ω₀,rmin,rmax])
 translate a complex frequency into a rescale frequency.
 maps ``\\omega \\to [-1,1]``
 
 Fouvry & Prunet B3
 
-omg needs to come in dimensionless, that is, rescaled by Ω₀ already.
-
-This is exact (assuming wmin,wmax)
+@ASSUMPTION:
+    - ω is dimensionless, that is, rescaled by Ω₀ already.
 """
-function GetVarpi(omg::Complex{Float64},
+function GetVarpi(ω::Complex{Float64},
                    n1::Int64,n2::Int64,
                    dψ::Function,d2ψ::Function;
-                   rmax::Float64=1000.,Ω₀::Float64=1.,
-                   Ziter::Int64=24,
-                   verbose::Int64=0)
+                   Ω₀::Float64=1.,
+                   rmin::Float64=1.e-10,
+                   rmax::Float64=1000.)
 
-    w_min,w_max = FindWminWmax(n1,n2,dψ,d2ψ,rmax,Ω₀,Ziter=Ziter,verbose=verbose)
+    wmin, wmax = FindWminWmax(n1,n2,dψ,d2ψ;Ω₀=Ω₀,rmin=rmin,rmax=rmax)
 
-    return GetVarpi(omg,w_min,w_max)
-
+    return GetVarpi(ω,wmin,wmax)
 end
 
 """
-varpi version with w_min, w_max
+varpi version with wmin, wmax
 
 """
-function GetVarpi(omg::Complex{Float64},
-                   w_min::Float64,w_max::Float64)
+function GetVarpi(ω::Complex{Float64},
+                   wmin::Float64,wmax::Float64)
 
-    return (2.0*omg - w_max - w_min)/(w_max - w_min)
-
+    return (2.0*ω - wmax - wmin)/(wmax - wmin)
 end
 
-"""HUFunc(u,wmin,wmax)
-return h, a helper quantity
-Fouvry & Prunet B8
+
+
+########################################################################
+#
+# (u,v) mapping : ω boundaries (at given n1, n2)
+#
+########################################################################
+
+"""FindWminWmax(n₁,n₂,dψ/dr,d²ψ/dr²[,rmax,Ω0])
+for a given resonance, find the maximum frequencies
+
+@ASSUMPTION:
+    - Frenquency domain truncated at αmin and αmax
 """
-function HUFunc(u::Float64,wmin::Float64,wmax::Float64)
-    return 0.5*(wmax+wmin + u*(wmax-wmin))
+function FindWminWmax(n1::Int64,n2::Int64,
+                      dψ::Function,
+                      d2ψ::Function;
+                      Ω0::Float64=1.,
+                      rmin::Float64=1.0e-8,
+                      rmax::Float64=1.0e5)
+
+    # define the function to extremise
+    ωncirc(x) = n1*Ω1circular(dψ,d2ψ,x)/Ω0 + n2*Ω2circular(dψ,x)/Ω0
+
+    αmin, αmax = αminmax(dψ,d2ψ,rmin,rmax,Ω0=Ω0)
+    xext = ExtremiseFunction(ωncirc,rmin,rmax)
+
+    # The extreme values of n.Ω is either :
+    #   - on the radial line, at α = αmin or αmax
+    #   - along the circular velocity (extreme α included)
+    wmin,wmax = extrema([ωncirc(xext), ωncirc(rmin), ωncirc(rmax), (n1+0.5*n2)*αmin, (n1+0.5*n2)*αmax]) 
+    return wmin,wmax
 end
 
-"""RootOfHOmega(u,wmin,wmax,n₁,n₂,vbound,βc)
-solve for roots of the h(u) equation
-Fouvry & Prunet B10 (term 3)
+"""αminmax(dψ/dr,d²ψ/dr²,rmin,rmax[, Ω0])
+maximal and minimal considered radial frequencies (rescaled)
 
-βc must be a function
-
-@IMPROVE: rootequation can be optimised for memory footprint, perhaps?
-@IMPROVE: is there a more clever way to do the root-finding?
-@IMPROVE: decide if 1.e-6 tolerance at the ends of root-finding bound are safe
+@ASSUMPTION: 
+    - Ω1circular is a decreasing function of radius
 """
-function RootOfHOmega(u::Float64,
-                      wmin::Float64,wmax::Float64,
-                      n1::Int64,n2::Int64,
-                      vbound::Float64,
-                      βc::Function)
+function αminmax(dψ::Function,
+                 d2ψ::Function,
+                 rmin::Float64,
+                 rmax::Float64; 
+                 Ω0::Float64=1.)
 
-    hval = HUFunc(u,wmin,wmax)
-
-    rootequation(x::Float64)::Float64 = hval - n1*x - n2*x*βc(x)
-
-    # two roots to try: bounded by [0,v(u=1)] and [v(u=1),1]
-    if rootequation(0+1.e-6)*rootequation(vbound) < 0
-        r1 = fzero(rootequation, 0+1.e-6,vbound)
-    else
-        r1 = 0.0
-    end
-
-    if rootequation(1-1.e-6)*rootequation(vbound) < 0
-        r2 = fzero(rootequation, vbound,1-1.e-6)
-    else
-        r2 = 1.0
-    end
-    #print(r1," ",r2)
-
-    # edge curing for vbounds
-    # from upper left to lower right cure
-    if (vbound > 0.999999) & (u==-1.) & (HUFunc(-1.,wmin,wmax)<0)
-        r1 = 0.999999
-        r2 = 1.0
-    end
-
-    # from lower left to upper right cure
-    if (vbound > 0.999999) & (u==1.) & (HUFunc(1.,wmin,wmax)>0)
-        r1 = 0.999999
-        r2 = 1.
-    end
-
-    # greater than r1, less than r2
-    return r1,r2
+    @assert rmin < rmax "rmin >= rmax in αminmax function"
+    # Assumption : 
+    # Ω1circular is a decreasing function of radius
+    return Ω1circular(dψ,d2ψ,rmax)/Ω0, Ω1circular(dψ,d2ψ,rmin)/Ω0
 end
 
-"""ConstraintThree(u,wmin,wmax,n₁,n₂)
-helper function for finding v bounds
+########################################################################
+#
+# (u,v) mapping : v boundary (at given u, n1, n2)
+#
+########################################################################
 
-Fouvry & Prunet (2022) B10, third constraint
-
-@ATTENTION: can return -Inf in n1=1,n2=-2 (or n1=-1,n2=2) scenario
-"""
-function ConstraintThree(u::Float64,
-                         wmin::Float64,wmax::Float64,
-                         n1::Int64,n2::Int64)
-    # greater than this
-    hval = HUFunc(u,wmin,wmax)
-    denom = (n2/2 + n1)
-
-    # special cases:
-    if denom==0
-        if n2 < 0
-            return 1.
-        else
-            return 1.
-        end
-    else
-        return hval/denom
-    end
-end
 
 
 """FindVminVmax(u,wmin,wmax,n₁,n₂,vbound,βc)
 for a given resonance, at a specific value of u, find the v coordinate boundaries.
 
 @IMPROVE, put in guards for the edges in BetaC
-@IMPROVE, decide if we want to have FindVminVmax wrap the vbound calculation?
+@ASSUMPTION:
+    - rmin, rmax are the same used for wmin, wmax, αmin and αmax computation
 """
 function FindVminVmax(u::Float64,
-                        wmin::Float64,wmax::Float64,
-                        n1::Int64,n2::Int64,
-                        vbound::Float64,
-                        βc::Function)
-    # this function works for n2 != 0
+                      n1::Int64,n2::Int64,
+                      dψ::Function,
+                      d2ψ::Function,
+                      wmin::Float64,wmax::Float64,
+                      αmin::Float64,αmax::Float64,
+                      βc::Function;
+                      Ω0::Float64=1.,
+                      rmin::Float64=1.0e-8,
+                      rmax::Float64=1.0e5)
+
+
+    # ωn(u) : value of the resonance line
+    hval = HUFunc(u,wmin,wmax)
 
     if (n2==0)
-
-        hval = HUFunc(u,wmin,wmax)
-
+        #####
+        # (B9) Fouvry & Prunet : 1st inequality 
+        #####
         vmin = 0.5
+        
+        #####
+        # (B9) Fouvry & Prunet : 2nd inequality 
+        #####
+        # put in guards for the edges
+        αvmax = min(αmax,max(hval/n1,αmin))
 
-        # put in guards for the very edges. SLOPPY
-        vmax = βc(minimum([0.99999,maximum([hval/n1,0.00001])]))
-
+        vmax = βc(αvmax)
     else
+        #####
+        # (B10) Fouvry & Prunet : 1st & 2nd inequalities
+        #####
+        vmin = αmin
+        vmax = αmax
+        
+        #####
+        # (B10) Fouvry & Prunet : 3rd inequality
+        #####
+        kappa = n1+0.5*n2
+        if (n2*hval > 0.)
+            if (kappa*hval > 0.)
+                vmax = min(vmax, hval/kappa) # Updating vmax
+            end
+        elseif (n2*hval < 0.)
+            if     (kappa*hval > 0.)
+                vmin = max(vmin, hval/kappa) # Updating vmin
+            end
+        end
 
-        r1,r2 = RootOfHOmega(u,wmin,wmax,n1,n2,vbound,βc)
-
-        r3 = ConstraintThree(u,wmin,wmax,n1,n2)
-
-        if (abs(n2)<=abs(n1)) | (abs(n2)>=abs(2n1))
-            vmin = maximum([0.0,r1])
-            vmax = minimum([r2,1.0,r3])
+        #####
+        # (B10) Fouvry & Prunet : 4th inequality
+        #####
+        # branch == 1: ωncirc(x) is monotonic
+        # branch == 2: ωncirc(x) is not monotonic
+        if n1*n2 > 0 # Do not search for vbound
+            branch = 1
         else
-            vmin = maximum([0.0,r1,r3])
-            vmax = minimum([r2,1.0])
+            # First look for vbound in the asked boundary 
+            vbound = FindVbound(n1,n2,dψ,d2ψ,Ω0=Ω0,rmin=rmin,rmax=rmax)
+
+            # Extreme boundary to look for vbound
+            # @WARNING arbitrary fixed constant
+            locrmin, locrmax = 1.e-6, 1.e5
+
+            if (vbound != αmin) && (vbound != αmax)
+                branch = 2
+            elseif (rmin > locrmin) || (rmax > locrmax)
+                # If vboung not in the asked boundary
+                # verify that it should indeed not exist
+                vbound = FindVbound(n1,n2,dψ,d2ψ,Ω0=Ω0,rmin=locrmin,rmax=locrmax)
+
+                if (vbound != Ω1circular(dψ,d2ψ,locrmin)/Ω0) && (vbound != Ω1circular(dψ,d2ψ,locrmin)/Ω0)
+                    branch = 2
+                else
+                    branch = 1
+                end   
+            else 
+                branch = 2
+            end
         end
 
-        if (isnan(vmax) | isinf(vmax))
-            vmax = 1.
-        end
+        # Constraint equation
+        rootequation(v::Float64)::Float64 = hval - n1*v - n2*v*βc(v)
 
-        if (isnan(vmin) | isinf(vmin))
-            vmin = 0.
+        if branch == 1 # ωncirc(x) is monotonic
+            if rootequation(αmin)*rootequation(αmax) < 0.
+                vlim = bisection(rootequation,αmin,αmax)
+                if hval*n2 > 0.
+                    vmin = max(vmin,vlim) 
+                elseif hval*n2 < 0.
+                    vmax = min(vmax,vlim) 
+                end
+            end
+        elseif branch == 2 # ωncirc(x) is not monotonic
+            # Search crossing in [αmin,vbound]
+            if rootequation(αmin)*rootequation(vbound) < 0.
+                vmin2 = bisection(rootequation,αmin,vbound) 
+                vmin = max(vmin,vmin2) 
+            end
+            # Search crossing in [vbound,αmax]
+            if rootequation(vbound)*rootequation(αmax) < 0.
+                vmax2 = bisection(rootequation,vbound,αmax)
+                vmax = min(vmax,vmax2) 
+            end
         end
     end
 
-    # account for reversed limits in some particular cases -- perhaps figure out why sometime.
-    return min(vmin,vmax),max(vmin,vmax)
+    return vmin, vmax
+end
+
+"""HUFunc(u,wmin,wmax)
+return h_n(u) = ω_n(u), a helper quantity
+Fouvry & Prunet B8
+"""
+function HUFunc(u::Float64,wmin::Float64,wmax::Float64)
+    return 0.5*(wmax+wmin + u*(wmax-wmin))
+end
+
+
+"""FindVbound(n₁,n₂,dψ/dr,d²ψ/dr²[,rmax,Ω₀])
+find any valie non- 0 or 1 v value at u=-1 or u=1
+"""
+function FindVbound(n1::Int64,n2::Int64,
+                    dψ::Function,
+                    d2ψ::Function;
+                    Ω0::Float64=1.,
+                    rmin::Float64=1.0e-8,
+                    rmax::Float64=1.0e5)
+
+    # define the function to extremise 
+    ωncirc(x) = n1*Ω1circular(dψ,d2ψ,x) + n2*Ω2circular(dψ,x)
+
+    xext = ExtremiseFunction(ωncirc,rmin,rmax)
+
+    return Ω1circular(dψ,d2ψ,xext)/Ω0
 end
