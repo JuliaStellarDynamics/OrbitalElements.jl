@@ -27,8 +27,11 @@ function Ω1circular(dψ::Function,
                     d2ψ::Function,
                     a::Float64)
 
-    return sqrt(d2ψ(a) + 3*dψ(a)/a)
-
+    if (a == 0.)
+        return 2.0*sqrt(d2ψ(0.))
+    else
+        return sqrt(d2ψ(a) + 3*dψ(a)/a)
+    end
 end
 
 """Ω1circular(dψ/dr,d²ψ/dr²,d³ψ/dr³,d⁴ψ/dr⁴,a,e)
@@ -93,10 +96,25 @@ end
 
 """Ω2circular(dψ/dr,r)
 azimuthal frequency for circular orbits, from the epicyclic approximation
+
+@IMPROVE: Taylor expansion in a -> 0+ (need 2nd and 4th derivative)
 """
 function Ω2circular(dψ::Function,a::Float64)
-
+    
     return sqrt(dψ(a)/a)
+end
+
+"""Ω2circular(dψ/dr,d²ψ/dr²,r)
+azimuthal frequency for circular orbits, from the epicyclic approximation
+with value at a = 0.
+"""
+function Ω2circular(dψ::Function,d2ψ::Function,a::Float64)
+    
+    if (a == 0.)
+        return sqrt(d2ψ(0.))
+    else
+        return sqrt(dψ(a)/a)
+    end
 end
 
 """
@@ -185,7 +203,6 @@ function βcirc(αcirc::Float64,
     Ω2 = Ω2circular(dψ,rcirc)
 
     return Ω2/Ω1
-
 end
 
 
@@ -199,23 +216,29 @@ end
 perform backwards mapping from Omega_1 for a circular orbit to radius
 
 can tune [rmin,rmax] for extra optimisation (but not needed)
-WARNING: important assumption Ω1circular is a decreasing function of radius
+@WARNING: important assumption Ω1circular is a decreasing function of radius
 """
 function RcircFromΩ1circ(ω::Float64,
                         dψ::Function,d2ψ::Function;
-                        rmin::Float64=1.0e-8,rmax::Float64=10000.0)
+                        rmin::Float64=1.0e-8,rmax::Float64=10000.0,
+                        tolx::Float64=1000.0*eps(Float64),tolf::Float64=1000.0*eps(Float64))
 
 
     if ω  <= 0.
         error("Negative circular frequency Ω1 = ",ω)
+    elseif ω > Ω1circular(dψ,d2ψ,0.)
+        error("Too high circular frequency Ω1 = ",ω," > Ω1max = ",Ω1circular(dψ,d2ψ,0.))
+    elseif ω == Ω1circular(dψ,d2ψ,0.)
+        return 0.
     end
 
-    rcirc = try bisection(r -> ω - Ω1circular(dψ,d2ψ,r), rmin, rmax) catch;   -1. end
+    rcirc = try bisection(r -> ω - Ω1circular(dψ,d2ψ,r),rmin,rmax,tolx=tolx,tolf=tolf) catch;   -1. end
+
     if (rcirc == -1.) 
-        if (0. < ω  < Ω1circular(dψ,d2ψ,rmax))
-            return RcircFromΩ1circ(ω,dψ,d2ψ;rmin=rmax,rmax=10*rmax)
+        if (ω  < Ω1circular(dψ,d2ψ,rmax))
+            return RcircFromΩ1circ(ω,dψ,d2ψ;rmin=rmax,rmax=10*rmax,tolx=tolx,tolf=tolf)
         elseif Ω1circular(dψ,d2ψ,rmin) < ω
-            error("Too high frequency Ω1 = ",ω)
+            return RcircFromΩ1circ(ω,dψ,d2ψ;rmin=rmin/10,rmax=rmin,tolx=tolx,tolf=tolf)
         else
             error("Unable to find the associated radius of Ω1 = ",ω)
         end
@@ -225,25 +248,32 @@ function RcircFromΩ1circ(ω::Float64,
 end
 
 
-"""RcircFromΩ2circ(Ω₂,dψ/dr[, rmin, rmax])
+"""RcircFromΩ2circ(Ω₂,dψ/dr,d²ψ/dr²[, rmin, rmax])
 perform backwards mapping from Omega_2 for a circular orbit to radius
 
-WARNING: important assumption Ω2circular is a decreasing function of radius
+@ASSUMPTIONS:
+    - Ω2circular is a decreasing function of radius
+    - d²ψ/dr² used for value at 0.
 """
 function RcircFromΩ2circ(ω::Float64,
-                        dψ::Function;
+                        dψ::Function,
+                        d2ψ;
                         rmin::Float64=1.0e-8,rmax::Float64=10000.0)
 
     if ω  <= 0.
-        error("Negative circular frequency Ω2 = ",ω)
+        error("Negative circular frequency Ω1 = ",ω)
+    elseif ω > Ω2circular(dψ,d2ψ,0.)
+        error("Too high circular frequency Ω1 = ",ω," > Ω1max = ",Ω2circular(dψ,d2ψ,0.))
+    elseif ω == Ω2circular(dψ,d2ψ,0.)
+        return 0.
     end
 
     rcirc = try bisection(r -> ω - Ω2circular(dψ,r), rmin, rmax) catch;  -1. end
     if (rcirc == -1.) 
         if (0. < ω < Ω2circular(dψ,rmax))
-            return RcircFromΩ2circ(ω,dψ;rmin=rmax,rmax=10*rmax)
+            return RcircFromΩ2circ(ω,dψ,d2ψ;rmin=rmax,rmax=10*rmax)
         elseif Ω2circular(dψ,rmin) < ω
-            error("Too high frequency Ω2 = ",ω)
+            return RcircFromΩ2circ(ω,dψ,d2ψ;rmin=rmin/10,rmax=rmin)
         else
             error("Unable to find the associated radius of Ω2 = ",ω)
         end
