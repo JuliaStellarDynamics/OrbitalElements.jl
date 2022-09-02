@@ -46,6 +46,8 @@ function AEFromΩ1Ω2Brute(Ω₁::Float64,Ω₂::Float64,
 
         f1,f2,df1da,df2da,df1de,df2de = ComputeFrequenciesAEWithDeriv(ψ,dψ,d2ψ,d3ψ,aguess,eguess,da=da,de=de,TOLECC=TOLECC,VERBOSE=VERBOSE,NINT=NINT,EDGE=EDGE)
 
+        # one break: negative frequencies when getting very close to the centre.
+
         jacobian = [df1da df1de ; df2da df2de]
 
         # this increment reports occasional failures; why?
