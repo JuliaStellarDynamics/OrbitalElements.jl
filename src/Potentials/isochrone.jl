@@ -332,7 +332,7 @@ this has the major advantage of always being well-posed for -1<u<1
 """
 function ThetaRpRaIsochrone(rp::Float64,ra::Float64,
                             u::Float64;
-                            bc::Float64=1.0,Omega0::Float64=1.0)::Float64
+                            bc::Float64=1.0,Ω0::Float64=1.0)::Float64
 
     # compute helper quantities: used for the mapping from u
     Sigma, Delta = (ra+rp)*0.5, (ra-rp)*0.5
@@ -347,7 +347,7 @@ function ThetaRpRaIsochrone(rp::Float64,ra::Float64,
     sqxp, sqxa, sqxr = sqrt(1.0+xp^(2)), sqrt(1.0+xa^(2)), sqrt(1.0+xr^(2))
 
     # analytical expression of (dr/du)(1/vr), that is always well-posed
-    drduINVvr = (3.0/(sqrt(2.0)))/(Omega0)*xr*sqrt(((sqxr+sqxp)*(sqxr+sqxa)*(sqxp+sqxa))/((xr+xp)*(xr+xa)*(4.0-u^(2))))
+    drduINVvr = (3.0/(sqrt(2.0)))/(Ω0)*xr*sqrt(((sqxr+sqxp)*(sqxr+sqxa)*(sqxp+sqxa))/((xr+xp)*(xr+xa)*(4.0-u^(2))))
 
     # output
     return drduINVvr

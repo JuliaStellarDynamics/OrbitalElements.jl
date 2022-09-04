@@ -24,7 +24,7 @@ function AEFromΩ1Ω2Brute(Ω₁::Float64,Ω₂::Float64,
                                  d2ψ::Function,
                                  d3ψ::Function;
                                  eps::Float64=1*10^(-10),
-                                 ITERMAX::Int64=1000,
+                                 ITERMAX::Int64=100,
                                  TOLECC::Float64=0.001,TOLA::Float64=0.0001,
                                  da::Float64=1.0e-5,de::Float64=1.0e-5,
                                  VERBOSE::Int64=0,
@@ -47,6 +47,13 @@ function AEFromΩ1Ω2Brute(Ω₁::Float64,Ω₂::Float64,
         f1,f2,df1da,df2da,df1de,df2de = ComputeFrequenciesAEWithDeriv(ψ,dψ,d2ψ,d3ψ,aguess,eguess,da=da,de=de,TOLECC=TOLECC,VERBOSE=VERBOSE,NINT=NINT,EDGE=EDGE)
 
         # one break: negative frequencies when getting very close to the centre.
+        # define the failure mode: return circular orbit at the minimum size
+        if (f1 < 0) | (f2 < 0)
+            return da,0.0,iter+1,1.
+        end
+
+        # another failure mode: very small O1
+
 
         jacobian = [df1da df1de ; df2da df2de]
 
