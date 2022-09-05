@@ -5,10 +5,12 @@ examples/run_jacobians.jl
 
 # Example output files
 examples/figures
+examples/mapping_tests/*.hf5
 examples/*.txt
 examples/*.hf5
 examples/*.h5
 examples/*.pdf
+
 
 src/Utils/GridInversion.jl
 src/Utils/ComputeEL_mp.jl
