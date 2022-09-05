@@ -178,7 +178,7 @@ function FindVminVmax(u::Float64,
                     branch = 1
                 end
             else
-                branch = 2
+                branch = 1
             end
         end
 
