@@ -138,14 +138,14 @@ function FindVminVmax(u::Float64,
         #####
         # (B10) Fouvry & Prunet : 3rd inequality
         #####
-        kappa = n1+0.5*n2
+        radon = n1+0.5*n2 # Radial orbit equivalent n 
         if (n2*hval > 0.)
-            if (kappa*hval > 0.)
-                vmax = min(vmax, hval/kappa) # Updating vmax
+            if (radon*hval > 0.)
+                vmax = min(vmax, hval/radon) # Updating vmax
             end
         elseif (n2*hval < 0.)
-            if     (kappa*hval > 0.)
-                vmin = max(vmin, hval/kappa) # Updating vmin
+            if     (radon*hval > 0.)
+                vmin = max(vmin, hval/radon) # Updating vmin
             end
         end
 
