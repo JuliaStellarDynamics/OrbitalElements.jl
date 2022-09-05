@@ -107,7 +107,7 @@ function ComputeFrequenciesAEWithDeriv(ψ::Function,
                                        e::Float64;
                                        da::Float64=0.0001,
                                        de::Float64=0.0001,
-                                       TOLECC::Float64=0.001,
+                                       TOLECC::Float64=ELTOLECC,
                                        VERBOSE::Int64=0,
                                        NINT::Int64=32,
                                        EDGE::Float64=0.01)
@@ -154,7 +154,7 @@ function ComputeFrequenciesAEWithDeriv(ψ::Function,
                                        e::Float64;
                                        da::Float64=0.0001,
                                        de::Float64=0.0001,
-                                       TOLECC::Float64=0.001,
+                                       TOLECC::Float64=ELTOLECC,
                                        VERBOSE::Int64=0,
                                        NINT::Int64=32,
                                        FDIFF::Float64=1.e-8,
@@ -177,7 +177,7 @@ function ComputeFrequenciesAEWithDeriv(ψ::Function,
                                        e::Float64;
                                        da::Float64=0.0001,
                                        de::Float64=0.0001,
-                                       TOLECC::Float64=0.001,
+                                       TOLECC::Float64=ELTOLECC,
                                        VERBOSE::Int64=0,
                                        NINT::Int64=32,
                                        FDIFF::Float64=1.e-8,
@@ -208,7 +208,8 @@ function ComputeAEFromFrequencies(ψ::Function,
                                   Ω1::Float64,Ω2::Float64,
                                   eps::Float64=1*10^(-12),
                                   maxiter::Int64=1000,
-                                  TOLECC::Float64=0.001,TOLA::Float64=0.0001,
+                                  TOLECC::Float64=ELTOLECC,
+                                  TOLA::Float64=0.0001,
                                   da::Float64=0.0001,de::Float64=0.0001,
                                   VERBOSE::Int64=0)
 
@@ -234,25 +235,25 @@ end
 """
 compute the jacobian J = |d(E,L)/d(α,β)| = |d(E,L)/d(a,e)|/|d(α,β)/d(a,e)|
 """
-function JacELToAlphaBetaAE(ψ::Function,
-                            dψ::Function,
-                            d2ψ::Function,
-                            d3ψ::Function,
-                            d4ψ::Function,
-                            a::Float64,
-                            e::Float64;
-                            NINT::Int64=64,
-                            EDGE::Float64=0.02,
-                            Omega0::Float64=1.0,
-                            TOLECC::Float64=0.001)
+function JacELToαβAE(ψ::Function,
+                     dψ::Function,
+                     d2ψ::Function,
+                     d3ψ::Function,
+                     d4ψ::Function,
+                     a::Float64,
+                     e::Float64;
+                     NINT::Int64=64,
+                     EDGE::Float64=0.02,
+                     Ω₀::Float64=1.0,
+                     TOLECC::Float64=ELTOLECC)
 
 
     # the (E,L) -> (a,e) Jacobian (in Utils/ComputeEL.jl)
     #Jac_EL_AE = JacELToAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,TOLECC=TOLECC)
     Jac_EL_AE = JacELToAE(ψ,dψ,d2ψ,a,e,TOLECC=TOLECC)
 
-    # the (alpha,beta) -> (a,e) Jacobian (below)
-    Jac_AB_AE = JacAlphaBetaToAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,NINT=NINT,EDGE=EDGE,Omega0=Omega0)
+    # the (α,β) -> (a,e) Jacobian (below)
+    Jac_AB_AE = JacαβToAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,NINT=NINT,EDGE=EDGE,Ω₀=Ω₀)
 
     # compute the Jacobian
     Jac = Jac_EL_AE/Jac_AB_AE
@@ -276,7 +277,7 @@ end
 
 
 """
-function JacAlphaBetaToAE(ψ::Function,
+function JacαβToAE(ψ::Function,
                           dψ::Function,
                           d2ψ::Function,
                           d3ψ::Function,
@@ -285,10 +286,10 @@ function JacAlphaBetaToAE(ψ::Function,
                           e::Float64;
                           NINT::Int64=64,
                           EDGE::Float64=0.02,
-                          Omega0::Float64=1.0)
+                          Ω₀::Float64=1.0)
 
     # calculate the frequency derivatives
-    α,β,∂α∂a,∂α∂e,∂β∂a,∂β∂e = OrbitalElements.DHenonThetaFreqRatiosAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,NINT=NINT,EDGE=EDGE,Omega0=Omega0)
+    α,β,∂α∂a,∂α∂e,∂β∂a,∂β∂e = OrbitalElements.DHenonThetaFreqRatiosAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,NINT=NINT,EDGE=EDGE,Ω₀=Ω₀)
 
     # return the Jacobian
     Jacαβae = abs(∂α∂a*∂β∂e - ∂β∂a*∂α∂e)
@@ -304,7 +305,7 @@ end
 @IMPROVE fix boundary values when using limited development
 @IMPROVE noisy at the boundaries
 """
-function JacELToAlphaBetaAE(a::Float64,
+function JacELToαβAE(a::Float64,
                             e::Float64,
                             ψ::Function,
                             dψ::Function,
@@ -340,22 +341,22 @@ function JacELToAlphaBetaAE(a::Float64,
     # check for NaN or zero values
     if nancheck
         if isnan(Jac_EL_AE)
-            println("OrbitalElements.Frequencies.JacELToAlphaBetaAE: J_EL_ae is NaN for a=$a,e=$e")
+            println("OrbitalElements.Frequencies.JacELToαβAE: J_EL_ae is NaN for a=$a,e=$e")
             return 0.0
         end
 
         if Jac_EL_AE <= 0.0
-            println("OrbitalElements.Frequencies.JacELToAlphaBetaAE: J_EL_ae is 0 for a=$a,e=$e")
+            println("OrbitalElements.Frequencies.JacELToαβAE: J_EL_ae is 0 for a=$a,e=$e")
             return 0.0
         end
 
         if isnan(J_o1o2_ae)
-            println("OrbitalElements.Frequencies.JacELToAlphaBetaAE: J_o12_ae is NaN for a=$a,e=$e")
+            println("OrbitalElements.Frequencies.JacELToαβAE: J_o12_ae is NaN for a=$a,e=$e")
             return 0.0
         end
 
         if J_o1o2_ae <= 0.0
-            println("OrbitalElements.Frequencies.JacELToAlphaBetaAE: J_o12_ae is 0 for a=$a,e=$e")
+            println("OrbitalElements.Frequencies.JacELToαβAE: J_o12_ae is 0 for a=$a,e=$e")
             return 0.0
         end
     end

@@ -10,8 +10,8 @@ The plummer potential definitions
 """
 the plummer potential
 """
-function plummer_psi(r::Float64,bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
-    #=plummer_psi
+function ψPlummer(r::Float64,bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
+    #=ψPlummer
 
     the plummer potential
     =#
@@ -22,8 +22,8 @@ end
 """
 the plummer potential derivative
 """
-function plummer_dpsi_dr(r::Float64,bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
-    #=plummer_dpsi_dr
+function dψPlummer(r::Float64,bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
+    #=dψPlummer
 
     the plummer potential derivative
     =#
@@ -34,8 +34,8 @@ end
 """
 the plummer potential second derivative
 """
-function plummer_ddpsi_ddr(r::Float64,bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
-    #=plummer_ddpsi_ddr
+function d2ψPlummer(r::Float64,bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
+    #=d2ψPlummer
 
     the plummer potential second derivative
     =#
@@ -46,7 +46,7 @@ end
 """
 the plummer potential third derivative
 """
-function plummer_dddpsi_dddr(r::Float64,bc::Float64=1.0,M::Float64=1.0,astronomicalG::Float64=1.0)::Float64
+function d3ψPlummer(r::Float64,bc::Float64=1.0,M::Float64=1.0,astronomicalG::Float64=1.0)::Float64
     rbc = r^2 + bc^2
     term1 = 15*(r^3)/(rbc^(7/2))
     term2 = 9r/(rbc^(5/2))
@@ -56,7 +56,7 @@ end
 """
 the plummer potential fourth derivative
 """
-function plummer_ddddpsi_ddddr(r::Float64,
+function d4ψPlummer(r::Float64,
                                bc::Float64=1.0,
                                M::Float64=1.0,
                                astronomicalG::Float64=1.0)::Float64
@@ -71,7 +71,7 @@ end
 """
 the central frequency for the Plummer potential
 """
-function plummer_Omega0(bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
+function Ω₀Plummer(bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
     #=
 
     plummer frequency scale

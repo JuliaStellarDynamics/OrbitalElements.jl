@@ -65,11 +65,11 @@ function d4ψMestel(r::Float64,R0::Float64=1.,V0::Float64=1.,eps::Float64=0.01)
 end
 
 """
-    Ω0Mestel([R0, V0, epsilon])
+    Ω₀Mestel([R0, V0, epsilon])
 
 the truncated Mestel frequency scale.
 """
-function Ω0Mestel(R0::Float64=1.,V0::Float64=1.,eps::Float64=0.01)
+function Ω₀Mestel(R0::Float64=1.,V0::Float64=1.,eps::Float64=0.01)
 
     return (2.0 * V0) / (eps * R0)
 end

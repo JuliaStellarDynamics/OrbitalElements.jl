@@ -87,7 +87,7 @@ end
 """
 isochrone frequency scale, from Fouvry 21 (appendix G)
 """
-function Omega0Isochrone(bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
+function Ω₀Isochrone(bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
     return sqrt(astronomicalG*M/bc^3)
 end
 
@@ -173,7 +173,7 @@ end
 analytic function to return isochrone frequencies from (rp,ra)
 """
 function IsochroneOmega12FromRpRa(rp::Float64,ra::Float64,bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
-    Omega0   = Omega0Isochrone(bc,M,astronomicalG)
+    Omega0   = Ω₀Isochrone(bc,M,astronomicalG)
     omega_ae = IsochroneAlphaRpRa(rp,ra,bc)
     eta_ae   = IsochroneBetaRpRa(rp,ra,bc)
     return omega_ae*Omega0,omega_ae*eta_ae*Omega0
@@ -184,7 +184,7 @@ end
 analytic function to return isochrone frequencies from (a,e)
 """
 function IsochroneOmega12FromAE(a::Float64,ecc::Float64,bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
-    Omega0   = Omega0Isochrone(bc,M,astronomicalG)
+    Omega0   = Ω₀Isochrone(bc,M,astronomicalG)
     omega_ae = IsochroneAlphaAE(a,ecc,bc)
     eta_ae   = IsochroneBetaAE(a,ecc,bc)
     return omega_ae*Omega0,omega_ae*eta_ae*Omega0
@@ -220,7 +220,7 @@ end
 function to wrap (alpha,beta)->(E,L)->(rp,ra)->(a,e) conversions for isochrone
 """
 function IsochroneAEFromOmega1Omega2(omega1::Float64,omega2::Float64,bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
-    Omega0= Omega0Isochrone(bc,M,astronomicalG)
+    Omega0= Ω₀Isochrone(bc,M,astronomicalG)
     E,L   = isochrone_EL_from_alphabeta(omega1/Omega0,omega2/omega1,bc,M,astronomicalG)
     rp,ra = isochrone_rpra_fromEL(E,L,bc,M,astronomicalG)
     a,e   = AEfromRpRa(rp,ra)
@@ -283,7 +283,7 @@ function isochrone_dthetadu_from_rpra(r::Float64,u::Float64,rp::Float64,ra::Floa
     xa = ra/bc
     xr = r/bc
     sr = sqrt(1+xr^(2))
-    Omega0 = Omega0Isochrone(bc,M,astronomicalG)
+    Omega0 = Ω₀Isochrone(bc,M,astronomicalG)
     Omega1,Omega2 = IsochroneOmega12FromRpRa(rp,ra,bc,M,astronomicalG)
     sp,sa = IsochroneSpSaFromRpRa(rp,ra)
     return (3/sqrt(2))*(Omega1/Omega0)*(xr/sqrt(4-u^(2)))*(sqrt((sr+sp)*(sr+sa)*(sp+sa))/sqrt((xr+xp)*(xr+xa)))
@@ -314,7 +314,7 @@ function IsochroneJacELtoAlphaBeta(alpha::Float64,
 
     scaleEnergy = isochrone_E0(bc,M,astronomicalG)
     scaleAction = isochrone_L0(bc,M,astronomicalG)
-    Omega0      = Omega0Isochrone(bc,M,astronomicalG)
+    Omega0      = Ω₀Isochrone(bc,M,astronomicalG)
 
     return abs((1.0/6.0)*scaleEnergy*scaleAction/(alpha^(1/3)*(beta*(1.0-beta))^(3/2)))#*(1.0/Omega0)) # Output of the ABSOLUTE VALUE of the Jacobian. ATTENTION, contains the rescaling factor 1/Omega0
 end
@@ -332,7 +332,7 @@ this has the major advantage of always being well-posed for -1<u<1
 """
 function ThetaRpRaIsochrone(rp::Float64,ra::Float64,
                             u::Float64;
-                            bc::Float64=1.0,Ω0::Float64=1.0)::Float64
+                            bc::Float64=1.0,Ω₀::Float64=1.0)::Float64
 
     # compute helper quantities: used for the mapping from u
     Sigma, Delta = (ra+rp)*0.5, (ra-rp)*0.5
@@ -347,7 +347,7 @@ function ThetaRpRaIsochrone(rp::Float64,ra::Float64,
     sqxp, sqxa, sqxr = sqrt(1.0+xp^(2)), sqrt(1.0+xa^(2)), sqrt(1.0+xr^(2))
 
     # analytical expression of (dr/du)(1/vr), that is always well-posed
-    drduINVvr = (3.0/(sqrt(2.0)))/(Ω0)*xr*sqrt(((sqxr+sqxp)*(sqxr+sqxa)*(sqxp+sqxa))/((xr+xp)*(xr+xa)*(4.0-u^(2))))
+    drduINVvr = (3.0/(sqrt(2.0)))/(Ω₀)*xr*sqrt(((sqxr+sqxp)*(sqxr+sqxa)*(sqxp+sqxa))/((xr+xp)*(xr+xa)*(4.0-u^(2))))
 
     # output
     return drduINVvr

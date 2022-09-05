@@ -1,54 +1,54 @@
 
 
-"""AlphaBetaFromUV(u,v,n1,n2,ωmin,ωmax)
+"""αβFromUV(u,v,n1,n2,ωmin,ωmax)
 
-mapping from (alpha,beta) to (u,v)
+mapping from (α,β) to (u,v)
 
 Fouvry & Prunet B5
 
 This signature specifies ωmin and ωmax, to avoid extra calls.
 
 """
-function AlphaBetaFromUV(u::Float64,v::Float64,
-                         n1::Int64,n2::Int64,
-                         ωmin::Float64,ωmax::Float64)
+function αβFromUV(u::Float64,v::Float64,
+                  n1::Int64,n2::Int64,
+                  ωmin::Float64,ωmax::Float64)
 
     if n2 == 0
-        beta  = v
-        alpha = (1.0/(2*n1))*((ωmax-ωmin)*u + ωmin + ωmax)
+        β  = v
+        α = (1.0/(2*n1))*((ωmax-ωmin)*u + ωmin + ωmax)
     else
-        alpha = v
-        beta  = (1.0/(n2*v))*(0.5*((ωmax-ωmin)*u + ωmin + ωmax) - n1*v)
+        α = v
+        β  = (1.0/(n2*v))*(0.5*((ωmax-ωmin)*u + ωmin + ωmax) - n1*v)
     end
 
-    return alpha,beta
+    return α,β
 end
 
 
-"""UVFromAlphaBeta(alpha,beta,n1,n2,ωmin,ωmax )
+"""UVFromαβ(α,β,n1,n2,ωmin,ωmax )
 
-mapping from  (u,v) to (alpha,beta), from Fouvry & Prunet Appendix B
+mapping from  (u,v) to (α,β), from Fouvry & Prunet Appendix B
 
 @IMPROVE, this has rounding error: concern?
 
-OrbitalElements.UVFromAlphaBeta(0.5,0.7,-3,4,OrbitalElements.isochrone_dpsi_dr,OrbitalElements.isochrone_ddpsi_ddr)
+OrbitalElements.UVFromαβ(0.5,0.7,-3,4,OrbitalElements.isochrone_dpsi_dr,OrbitalElements.isochrone_ddpsi_ddr)
 
 """
-function UVFromAlphaBeta(alpha::Float64,beta::Float64,
-                           n1::Int64,n2::Int64,
-                           ωmin::Float64,ωmax::Float64)
+function UVFromαβ(α::Float64,β::Float64,
+                  n1::Int64,n2::Int64,
+                  ωmin::Float64,ωmax::Float64)
 
     # Equation B1
-    wval = n1*alpha + n2*beta*alpha
+    ωval = n1*α + n2*β*α
 
     # Equation B3
-    u = (2*wval - ωmax - ωmin)/(ωmax-ωmin)
+    u = (2*ωval - ωmax - ωmin)/(ωmax-ωmin)
 
     # Equation B4
     if (n2==0)
-        v = beta
+        v = β
     else
-        v = alpha
+        v = α
     end
 
     return u,v
@@ -58,11 +58,11 @@ end
 using the definitions for (α, β) and (u,v), compute the Jacobian.
 @ATTENTION, to match eq. B6, this has the 2/(ωmax-ωmin) term already absorbed into it. therefore, not formally the Jacobian, but adds the dimensional removal.
 """
-function JacAlphaBetaToUV(n1::Int64,n2::Int64,w_min::Float64,w_max::Float64,v::Float64)
+function JacαβToUV(n1::Int64,n2::Int64,ωmin::Float64,ωmax::Float64,v::Float64)
 
     if (n2==0)
-        return (2.0/(w_max-w_min))*abs((w_max-w_min) * (1/(2n1)))
+        return (2.0/(ωmax-ωmin))*abs((ωmax-ωmin) * (1/(2n1)))
     else
-        return (2.0/(w_max-w_min))*abs((w_max-w_min) * (1/(2n2*v)))
+        return (2.0/(ωmax-ωmin))*abs((ωmax-ωmin) * (1/(2n2*v)))
     end
 end

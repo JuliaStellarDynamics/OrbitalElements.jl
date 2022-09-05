@@ -1,10 +1,10 @@
 
 
-"""HenonThetaFrequenciesAE(ψ,dψ,d2ψ,d3ψ,a,e,[,action=false,NINT=32,EDGE=0.03,TOLECC=0.001])
+"""HenonΘFrequenciesAE(ψ,dψ,d2ψ,d3ψ,a,e,[,action=false,NINT=32,EDGE=0.03,TOLECC=0.001])
 
-use the defined function Theta(u) to compute frequency integrals
+use the defined function Θ(u) to compute frequency integrals
 """
-function HenonThetaFrequenciesAE(ψ::Function,
+function HenonΘFrequenciesAE(ψ::Function,
                                  dψ::Function,
                                  d2ψ::Function,
                                  d3ψ::Function,
@@ -20,7 +20,7 @@ function HenonThetaFrequenciesAE(ψ::Function,
     if e<TOLECC
 
         if VERBOSE > 1
-            println("OrbitalElements.Henon.Frequencies.HenonThetaFrequenciesAE: using circular approximation for a=$a, e=$e.")
+            println("OrbitalElements.Henon.Frequencies.HenonΘFrequenciesAE: using circular approximation for a=$a, e=$e.")
         end
 
         # drop into circular frequency expansion calculations:
@@ -39,16 +39,16 @@ function HenonThetaFrequenciesAE(ψ::Function,
 
     else
 
-        # using theta calculations to compute frequencies: leans heavily on Theta from Ufunc.jl
+        # using Θ calculations to compute frequencies: leans heavily on Θ from Ufunc.jl
         # @IMPROVE: EDGE could be adaptive based on circularity and small-ness of rperi
 
         # currently using Simpson's 1/3 rule for integration: requires that NINT be even.
         # @IMPROVE: we could use a better integration scheme
 
         function u3func(u::Float64)
-            # push integration forward on three different quantities: Theta(u),Theta(u)/r^2(u),Theta(u)*vr(u)
+            # push integration forward on three different quantities: Θ(u),Θ(u)/r^2(u),Θ(u)*vr(u)
 
-            th = ThetaAE(ψ,dψ,d2ψ,d3ψ,u,a,e,EDGE=EDGE)
+            th = ΘAE(ψ,dψ,d2ψ,d3ψ,u,a,e,EDGE=EDGE)
 
             return (th,
                     th/(ru(u,a,e)^2),
@@ -80,27 +80,26 @@ function HenonThetaFrequenciesAE(ψ::Function,
 
 end
 
-"""DHenonThetaFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,[da,de,action=false,NINT=32,EDGE=0.03,TOLECC=0.001])
+"""DHenonΘFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,[da,de,action=false,NINT=32,EDGE=0.03,TOLECC=0.001])
 
-use the defined function Theta(u) to compute frequency integrals
+use the defined function Θ(u) to compute frequency integrals
 AND DERIVATIVES
 """
-function DHenonThetaFrequenciesAE(ψ::Function,
-                                  dψ::Function,
-                                  d2ψ::Function,
-                                  d3ψ::Function,
-                                  d4ψ::Function,
-                                  a::Float64,
-                                  e::Float64;
-                                  da::Float64=1.0e-6,
-                                  de::Float64=1.0e-6,
-                                  NINT::Int64=32,
-                                  EDGE::Float64=0.01,
-                                  TOLECC::Float64=0.001)
+function DHenonΘFrequenciesAE(ψ::Function,
+                              dψ::Function,
+                              d2ψ::Function,
+                              d3ψ::Function,
+                              d4ψ::Function,
+                              a::Float64,
+                              e::Float64;
+                              da::Float64=1.0e-6,
+                              de::Float64=1.0e-6,
+                              NINT::Int64=32,
+                              EDGE::Float64=0.01,
+                              TOLECC::Float64=0.001)
 
+    # if nearly circular, use the epicyclic approximation
     if e<TOLECC
-        # select a smaller de for these, since we know we are expanding?
-
 
         # drop into circular frequency expansion calculations:
         Ω1 = Ω1circular(dψ,d2ψ,d3ψ,d4ψ,a,e)
@@ -119,7 +118,7 @@ function DHenonThetaFrequenciesAE(ψ::Function,
         return Ω1,Ω2,∂Ω1∂a,∂Ω1∂e,∂Ω2∂a,∂Ω2∂e
 
     else
-        # using theta calculations to compute frequencies: leans heavily on Theta from Ufunc.jl
+        # using Θ calculations to compute frequencies: leans heavily on Θ from Ufunc.jl
         # @IMPROVE: EDGE could be adaptive based on circularity and small-ness of rperi
 
         # currently using Simpson's 1/3 rule for integration: requires that NINT be even.
@@ -127,17 +126,17 @@ function DHenonThetaFrequenciesAE(ψ::Function,
 
         function u8func(u::Float64)
             # push integration forward on eight different quantities:
-            # 1. Theta(u)
-            # 2. Theta(u)/r^2(u)
-            # 3. Theta(u)*(vr(u))^2
-            # 4. dTheta(u)/da
-            # 5. dTheta(u)/da
-            # 6. dTheta(u)/da/r(u)^2
-            # 7. Theta(u)/r^3(u)
-            # 8. dTheta(u)/de/r(u)^2
+            # 1. Θ(u)
+            # 2. Θ(u)/r^2(u)
+            # 3. Θ(u)*(vr(u))^2
+            # 4. dΘ(u)/da
+            # 5. dΘ(u)/da
+            # 6. dΘ(u)/da/r(u)^2
+            # 7. Θ(u)/r^3(u)
+            # 8. dΘ(u)/de/r(u)^2
 
-            th = ThetaAE(ψ,dψ,d2ψ,d3ψ,u,a,e,EDGE=EDGE)
-            dthda,dthde = ThetaAEdade(ψ,dψ,d2ψ,d3ψ,u,a,e,EDGE=EDGE,da=da,de=de)
+            th = ΘAE(ψ,dψ,d2ψ,d3ψ,u,a,e,EDGE=EDGE)
+            dthda,dthde = ΘAEdade(ψ,dψ,d2ψ,d3ψ,u,a,e,EDGE=EDGE,da=da,de=de)
 
             r = ru(u,a,e)
 
@@ -173,15 +172,12 @@ function DHenonThetaFrequenciesAE(ψ::Function,
         ∂Ω1∂e = -((Ω1^2)/pi)*accum5
 
         # get E,L derivatives
-        beta = Ω2/Ω1
-        dbetada   = (∂L∂a*beta/Lval) - (2/a)*beta + (Lval/pi)*accum6
-        #(1/pi) * ( (∂L∂a*beta) - (2*Lval/a)*beta + Lval*accum6)
-        ∂Ω2∂a = (dbetada + (beta/Ω1)*∂Ω1∂a)*Ω1
+        β = Ω2/Ω1
+        dβda   = (∂L∂a*β/Lval) - (2/a)*β + (Lval/pi)*accum6
+        ∂Ω2∂a = (dβda + (β/Ω1)*∂Ω1∂a)*Ω1
 
-        dbetade   = (∂L∂e*beta/Lval) - (2/e)*beta + (2*a*Lval/(e*pi))*accum7 + (Lval/pi)*accum8
-        # (1/pi) * ( (∂L∂e*beta) - (2*Lval/e)*beta + (2*Lval*a/e)*accum7 + Lval*accum8)
-
-        ∂Ω2∂e = (dbetade + (beta/Ω1)*∂Ω1∂e)*Ω1
+        dβde   = (∂L∂e*β/Lval) - (2/e)*β + (2*a*Lval/(e*pi))*accum7 + (Lval/pi)*accum8
+        ∂Ω2∂e = (dβde + (β/Ω1)*∂Ω1∂e)*Ω1
 
         # return values: no option for action right now, but maybe?
         return Ω1,Ω2,∂Ω1∂a,∂Ω1∂e,∂Ω2∂a,∂Ω2∂e
@@ -190,30 +186,30 @@ function DHenonThetaFrequenciesAE(ψ::Function,
 end
 
 
-"""DHenonThetaFreqRatiosAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,[da,de,action=false,NINT=32,EDGE=0.03,TOLECC=0.001,Ω0=1.0])
-returning alpha,beta and derivatives w.r.t. (a,e) using DHenonThetaFrequenciesAE
+"""DHenonΘFreqRatiosAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,[da,de,action=false,NINT=32,EDGE=0.03,TOLECC=0.001,Ω₀=1.0])
+returning α,β and derivatives w.r.t. (a,e) using DHenonΘFrequenciesAE
 """
-function DHenonThetaFreqRatiosAE(ψ::Function,
-                                 dψ::Function,
-                                 d2ψ::Function,
-                                 d3ψ::Function,
-                                 d4ψ::Function,
-                                 a::Float64,
-                                 e::Float64;
-                                 da::Float64=1.0e-6,
-                                 de::Float64=1.0e-6,
-                                 NINT::Int64=32,
-                                 EDGE::Float64=0.01,
-                                 TOLECC::Float64=0.001,
-                                 Ω0::Float64=1.0)
+function DHenonΘFreqRatiosAE(ψ::Function,
+                             dψ::Function,
+                             d2ψ::Function,
+                             d3ψ::Function,
+                             d4ψ::Function,
+                             a::Float64,
+                             e::Float64;
+                             da::Float64=1.0e-6,
+                             de::Float64=1.0e-6,
+                             NINT::Int64=32,
+                             EDGE::Float64=0.01,
+                             TOLECC::Float64=0.001,
+                             Ω₀::Float64=1.0)
 
     # Frenquency computatio (with derivatives)
-    Ω1,Ω2,∂Ω1∂a,∂Ω1∂e,∂Ω2∂a,∂Ω2∂e = DHenonThetaFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e;da=da,de=de,NINT=NINT,EDGE=EDGE,TOLECC=TOLECC)
+    Ω1,Ω2,∂Ω1∂a,∂Ω1∂e,∂Ω2∂a,∂Ω2∂e = DHenonΘFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e;da=da,de=de,NINT=NINT,EDGE=EDGE,TOLECC=TOLECC)
 
     # From (Ω1,Ω2) to (α,β)
-    α = Ω1 / Ω0
-    ∂α∂a = ∂Ω1∂a / Ω0
-    ∂α∂e = ∂Ω1∂e / Ω0
+    α = Ω1 / Ω₀
+    ∂α∂a = ∂Ω1∂a / Ω₀
+    ∂α∂e = ∂Ω1∂e / Ω₀
 
     β = Ω2/Ω1
     ∂β∂a   = 1.0 / Ω1 * (∂Ω2∂a - β*∂Ω1∂a)

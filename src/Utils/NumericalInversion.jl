@@ -16,21 +16,23 @@ VERBOSE rules:
 
 basic Newton-Raphson algorithm to find (a,e) from (Ω₁,Ω₂) brute force derivatives.
 
-@IMPROVE add escape for circular orbits
 """
 function AEFromΩ1Ω2Brute(Ω₁::Float64,Ω₂::Float64,
-                                 ψ::Function,
-                                 dψ::Function,
-                                 d2ψ::Function,
-                                 d3ψ::Function;
-                                 eps::Float64=1*10^(-10),
-                                 ITERMAX::Int64=100,
-                                 TOLECC::Float64=0.001,TOLA::Float64=0.0001,
-                                 da::Float64=1.0e-5,de::Float64=1.0e-5,
-                                 VERBOSE::Int64=0,
-                                 EDGE::Float64=0.03,
-                                 NINT::Int64=64)
-    #
+                         ψ::Function,
+                         dψ::Function,
+                         d2ψ::Function,
+                         d3ψ::Function;
+                         eps::Float64=1*10^(-10),
+                         ITERMAX::Int64=100,
+                         TOLECC::Float64=0.001,TOLA::Float64=0.0001,
+                         da::Float64=1.0e-5,de::Float64=1.0e-5,
+                         VERBOSE::Int64=0,
+                         EDGE::Float64=0.03,
+                         NINT::Int64=64)
+    """
+    @IMPROVE add escape for circular orbits
+
+    """
 
     # get the circular orbit (maximum radius) for a given Ω₁,Ω₂. use the stronger constraint.
     acirc = RcircFromΩ1circ(Ω₁,dψ,d2ψ)

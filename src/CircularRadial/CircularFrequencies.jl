@@ -19,7 +19,7 @@ Strategies:
 #
 ########################################################################
 
-"""Ω1circular(dψ/dr,d²ψ/dr²,a)
+"""Ω1circular(dψ,d2ψ,a)
 radial frequency for circular orbits, from the epicyclic approximation
 a is the semi-major axis (equivalent to r for a circular orbit)
 """
@@ -34,7 +34,7 @@ function Ω1circular(dψ::Function,
     end
 end
 
-"""Ω1circular(dψ/dr,d²ψ/dr²,d³ψ/dr³,d⁴ψ/dr⁴,a,e)
+"""Ω1circular(dψ,d2ψ,d3ψ,d4ψ,a,e)
 radial frequency for nearly circular orbits, from Taylor expansion
 """
 function Ω1circular(dψ::Function,
@@ -70,7 +70,7 @@ function Ω1circular(dψ::Function,
 
 end
 
-"""Ω1circular(dψ/dr,d²ψ/dr²,d³ψ/dr³,a,e)
+"""Ω1circular(dψ,d2ψ,d3ψ,a,e)
 radial frequency for nearly circular orbits, from Taylor expansion
 EXCLUDING fourth derivative
 """
@@ -94,22 +94,22 @@ end
 #
 ########################################################################
 
-"""Ω2circular(dψ/dr,r)
+"""Ω2circular(dψ,r)
 azimuthal frequency for circular orbits, from the epicyclic approximation
 
 @IMPROVE: Taylor expansion in a -> 0+ (need 2nd and 4th derivative)
 """
 function Ω2circular(dψ::Function,a::Float64)
-    
+
     return sqrt(dψ(a)/a)
 end
 
-"""Ω2circular(dψ/dr,d²ψ/dr²,r)
+"""Ω2circular(dψ,d2ψ,r)
 azimuthal frequency for circular orbits, from the epicyclic approximation
 with value at a = 0.
 """
 function Ω2circular(dψ::Function,d2ψ::Function,a::Float64)
-    
+
     if (a == 0.)
         return sqrt(d2ψ(0.))
     else
@@ -166,17 +166,17 @@ function βcircular(ψ::Function,
     return zeroorder + firstorder * e + secondorder * (e)^(2)
 end
 
-"""βcircular(dψ/dr,d²ψ/dr²,d³ψ/dr³,a,e)
+"""βcircular(dψ,d2ψ,d3ψ,a,e)
 β = Ω2/Ω1 for nearly circular orbits, from Taylor expansion
 EXCLUDING fourth derivative
 """
 function βcircular(ψ::Function,
-                    dψ::Function,
-                    d2ψ::Function,
-                    d3ψ::Function,
-                    a::Float64,
-                    e::Float64;
-                    FDIFF::Float64=1.e-8)
+                   dψ::Function,
+                   d2ψ::Function,
+                   d3ψ::Function,
+                   a::Float64,
+                   e::Float64;
+                   FDIFF::Float64=1.e-8)
 
     # define a numerical fourth derivative
     d4ψ(x::Float64) = (d3ψ(x+FDIFF)-d3ψ(x))/FDIFF
@@ -185,7 +185,7 @@ function βcircular(ψ::Function,
 end
 
 
-"""βcirc(αcirc, dψ/dr,d²ψ/dr²[, Omega0, rmax])
+"""βcirc(αcirc, dψ,d2ψ[, Omega0, rmax])
 return βc(α), the frequency ratio Ω2/Ω1 as a function of α = Ω1/Ω0 .
 
 @IMPROVE: find Omega0 adaptively
@@ -212,16 +212,16 @@ end
 #
 ########################################################################
 
-"""RcircFromΩ1circ(Ω₁,dψ/dr,d²ψ/dr²[, rmin, rmax])
+"""RcircFromΩ1circ(Ω₁,dψ,d2ψ[, rmin, rmax])
 perform backwards mapping from Omega_1 for a circular orbit to radius
 
 can tune [rmin,rmax] for extra optimisation (but not needed)
 @WARNING: important assumption Ω1circular is a decreasing function of radius
 """
 function RcircFromΩ1circ(ω::Float64,
-                        dψ::Function,d2ψ::Function;
-                        rmin::Float64=1.0e-8,rmax::Float64=10000.0,
-                        tolx::Float64=1000.0*eps(Float64),tolf::Float64=1000.0*eps(Float64))
+                         dψ::Function,d2ψ::Function;
+                         rmin::Float64=1.0e-8,rmax::Float64=10000.0,
+                         tolx::Float64=1000.0*eps(Float64),tolf::Float64=1000.0*eps(Float64))
 
 
     if ω  <= 0.
@@ -234,7 +234,7 @@ function RcircFromΩ1circ(ω::Float64,
 
     rcirc = try bisection(r -> ω - Ω1circular(dψ,d2ψ,r),rmin,rmax,tolx=tolx,tolf=tolf) catch;   -1. end
 
-    if (rcirc == -1.) 
+    if (rcirc == -1.)
         if (ω  < Ω1circular(dψ,d2ψ,rmax))
             return RcircFromΩ1circ(ω,dψ,d2ψ;rmin=rmax,rmax=10*rmax,tolx=tolx,tolf=tolf)
         elseif Ω1circular(dψ,d2ψ,rmin) < ω
@@ -248,12 +248,12 @@ function RcircFromΩ1circ(ω::Float64,
 end
 
 
-"""RcircFromΩ2circ(Ω₂,dψ/dr,d²ψ/dr²[, rmin, rmax])
+"""RcircFromΩ2circ(Ω₂,dψ,d2ψ[, rmin, rmax])
 perform backwards mapping from Omega_2 for a circular orbit to radius
 
 @ASSUMPTIONS:
     - Ω2circular is a decreasing function of radius
-    - d²ψ/dr² used for value at 0.
+    - d2ψ used for value at 0.
 """
 function RcircFromΩ2circ(ω::Float64,
                         dψ::Function,
@@ -269,7 +269,7 @@ function RcircFromΩ2circ(ω::Float64,
     end
 
     rcirc = try bisection(r -> ω - Ω2circular(dψ,r), rmin, rmax) catch;  -1. end
-    if (rcirc == -1.) 
+    if (rcirc == -1.)
         if (0. < ω < Ω2circular(dψ,rmax))
             return RcircFromΩ2circ(ω,dψ,d2ψ;rmin=rmax,rmax=10*rmax)
         elseif Ω2circular(dψ,rmin) < ω

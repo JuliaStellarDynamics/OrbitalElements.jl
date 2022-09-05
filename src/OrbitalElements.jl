@@ -28,7 +28,7 @@ include("DistributionFunctions/isochrone_discs.jl")
 
 # enable energy and angular momentum computation (including expansions)
 # first, set the radius where we switch to expansions
-const ELTOLECC = 0.00001
+const ELTOLECC = 0.001
 include("Utils/ComputeEL.jl")
 
 # bring in the circular orbit frequencies
