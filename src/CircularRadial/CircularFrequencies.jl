@@ -28,7 +28,7 @@ function Ω1circular(dψ::Function,
                     a::Float64)
 
     if (a == 0.)
-        return 2.0*sqrt(d2ψ(0.))
+        return 2.0*sqrt(abs(d2ψ(0.)))
     else
         return sqrt(d2ψ(a) + 3*dψ(a)/a)
     end
@@ -111,7 +111,7 @@ with value at a = 0.
 function Ω2circular(dψ::Function,d2ψ::Function,a::Float64)
 
     if (a == 0.)
-        return sqrt(d2ψ(0.))
+        return sqrt(abs(d2ψ(0.)))
     else
         return sqrt(dψ(a)/a)
     end
