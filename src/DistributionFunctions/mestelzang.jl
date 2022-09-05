@@ -162,6 +162,11 @@ function mestel_Zang_ndDFdJ(n1::Int64,n2::Int64,E::Float64,L::Float64,ndotOmega:
                         q::IntorFloat=11.44, sigma::Float64=2.835e-1,
                         nu::Int64=4, mu::Int64=5)
 
+    if L < 0.
+        println("WARNING: L < 0.")
+        return 0.
+    end
+
     dDFdE = mestel_Zang_dDFdE(E,L;R0=R0,Rin=Rin,Rout=Rout,Rmax=Rmax,V0=V0,xi=xi,C=C,q=q,sigma=sigma,nu=nu,mu=mu)
     dDFdL = mestel_Zang_dDFdL(E,L;R0=R0,Rin=Rin,Rout=Rout,Rmax=Rmax,V0=V0,xi=xi,C=C,q=q,sigma=sigma,nu=nu,mu=mu)
     
