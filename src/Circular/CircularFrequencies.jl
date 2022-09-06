@@ -117,7 +117,7 @@ function Ω2circular(dψ::Function,d2ψ::Function,a::Float64)
     end
 end
 
-"""
+"""βcircular2ndorderExpansionCoefs(ψ,dψ,d2ψ,d3ψ,d4ψ,a)
 Coefficients of the second-order expansion of β = Ω2/Ω1 near a circular orbit
 
 """
@@ -150,7 +150,7 @@ function βcircular2ndorderExpansionCoefs(ψ::Function,
     return L0 * βoverL0, 0., L0 * βoverL0 + L2 * βoverL2
 end
 
-"""
+"""βcircular(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e)
 Second-order expansion of β = Ω2/Ω1 near a circular orbit
 """
 function βcircular(ψ::Function,
@@ -185,23 +185,26 @@ function βcircular(ψ::Function,
 end
 
 
-"""βcirc(αcirc, dψ,d2ψ[, Omega0, rmax])
-return βc(α), the frequency ratio Ω2/Ω1 as a function of α = Ω1/Ω0 .
+"""βcirc(αcirc, dψ,d2ψ[, Ω₀, rmax])
+return βc(α), the frequency ratio Ω2/Ω1 as a function of α = Ω1/Ω₀ .
 
-@IMPROVE: find Omega0 adaptively
+@IMPROVE: find Ω₀ adaptively
 """
 function βcirc(αcirc::Float64,
-                dψ::Function,d2ψ::Function,
-                Ω0::Float64=1.;
-                rmin::Float64=1.0e-8,rmax::Float64=10000.)
+               dψ::Function,d2ψ::Function,
+               Ω₀::Float64=1.;
+               rmin::Float64=1.0e-8,rmax::Float64=10000.)
 
-    # define the circular frequencies
-    Ω1 = Ω0 * αcirc
-    #rcirc = Omega1circ_to_radius(omega1,dψ,d2ψ,rmax)
+    # compute the radial frequency for a circular orbit
+    Ω1 = Ω₀ * αcirc
+
+    # get the radius corresponding to the circular orbit
     rcirc = RcircFromΩ1circ(Ω1,dψ,d2ψ;rmin=rmin,rmax=rmax)
 
-    Ω2 = Ω2circular(dψ,rcirc)
+    # get the azimuthal frequency for the radius
+    Ω2 = Ω2circular(dψ,d2ψ,rcirc)
 
+    # return β
     return Ω2/Ω1
 end
 
@@ -223,24 +226,26 @@ function RcircFromΩ1circ(ω::Float64,
                          rmin::Float64=1.0e-8,rmax::Float64=10000.0,
                          tolx::Float64=1000.0*eps(Float64),tolf::Float64=1000.0*eps(Float64))
 
-
+    # check that the input frequency is valid
     if ω  <= 0.
-        error("Negative circular frequency Ω1 = ",ω)
+        error("OrbitalElements.Circular.RcircFromΩ1circ: Negative circular frequency Ω1 = $ω")
     elseif ω > Ω1circular(dψ,d2ψ,0.)
-        error("Too high circular frequency Ω1 = ",ω," > Ω1max = ",Ω1circular(dψ,d2ψ,0.))
+        error("OrbitalElements.Circular.RcircFromΩ1circ: Too high circular frequency Ω1 = $ω > Ω1max = $(Ω1circular(dψ,d2ψ,0.))")
     elseif ω == Ω1circular(dψ,d2ψ,0.)
         return 0.
     end
 
+    # use bisection to find the circular orbit radius corresponding to given frequency
     rcirc = try bisection(r -> ω - Ω1circular(dψ,d2ψ,r),rmin,rmax,tolx=tolx,tolf=tolf) catch;   -1. end
 
+    # check if bisection failed: report why
     if (rcirc == -1.)
         if (ω  < Ω1circular(dψ,d2ψ,rmax))
             return RcircFromΩ1circ(ω,dψ,d2ψ;rmin=rmax,rmax=10*rmax,tolx=tolx,tolf=tolf)
         elseif Ω1circular(dψ,d2ψ,rmin) < ω
             return RcircFromΩ1circ(ω,dψ,d2ψ;rmin=rmin/10,rmax=rmin,tolx=tolx,tolf=tolf)
         else
-            error("Unable to find the associated radius of Ω1 = ",ω)
+            error("OrbitalElements.Circular.RcircFromΩ1circ: Unable to find the associated radius of Ω1 = $ω")
         end
     end
 
@@ -261,9 +266,9 @@ function RcircFromΩ2circ(ω::Float64,
                         rmin::Float64=1.0e-8,rmax::Float64=10000.0)
 
     if ω  <= 0.
-        error("Negative circular frequency Ω1 = ",ω)
+        error("OrbitalElements.Circular.RcircFromΩ2circ: Negative circular frequency Ω1 = ",ω)
     elseif ω > Ω2circular(dψ,d2ψ,0.)
-        error("Too high circular frequency Ω1 = ",ω," > Ω1max = ",Ω2circular(dψ,d2ψ,0.))
+        error("OrbitalElements.Circular.RcircFromΩ2circ: Too high circular frequency Ω1 = ",ω," > Ω1max = ",Ω2circular(dψ,d2ψ,0.))
     elseif ω == Ω2circular(dψ,d2ψ,0.)
         return 0.
     end
@@ -275,7 +280,7 @@ function RcircFromΩ2circ(ω::Float64,
         elseif Ω2circular(dψ,rmin) < ω
             return RcircFromΩ2circ(ω,dψ,d2ψ;rmin=rmin/10,rmax=rmin)
         else
-            error("Unable to find the associated radius of Ω2 = ",ω)
+            error("OrbitalElements.Circular.RcircFromΩ2circ: Unable to find the associated radius of Ω2 = ",ω)
         end
     end
 

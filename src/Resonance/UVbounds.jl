@@ -138,7 +138,7 @@ function FindVminVmax(u::Float64,
         #####
         # (B10) Fouvry & Prunet : 3rd inequality
         #####
-        radon = n1+0.5*n2 # Radial orbit equivalent n 
+        radon = n1+0.5*n2 # Radial orbit equivalent n
         if (n2*hval > 0.)
             if (radon*hval > 0.)
                 vmax = min(vmax, hval/radon) # Updating vmax
