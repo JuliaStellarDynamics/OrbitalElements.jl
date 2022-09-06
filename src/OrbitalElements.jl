@@ -32,7 +32,7 @@ const ELTOLECC = 0.001
 include("Utils/ComputeEL.jl")
 
 # bring in the circular orbit frequencies
-include("CircularRadial/SpecialCases.jl")
+include("Circular/CircuarFrequencies.jl")
 
 # bring in the resonance mappings
 include("Resonance/UVbounds.jl")

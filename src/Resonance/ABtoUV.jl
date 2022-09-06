@@ -25,7 +25,7 @@ function αβFromUV(u::Float64,v::Float64,
 end
 
 
-"""UVFromαβ(α,β,n1,n2,ωmin,ωmax )
+"""UVFromαβ(α,β,n1,n2,ωmin,ωmax)
 
 mapping from  (u,v) to (α,β), from Fouvry & Prunet Appendix B
 
