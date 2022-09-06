@@ -81,7 +81,38 @@ function ExtremiseFunction(fun::Function,
                            tolf::Float64=1000.0*eps(Float64),
                            VERBOSE::Int64=0)
 
+    # Finite differences derivative (only up +dx because xl can be 0. and fun not defined for x<0)
     dfun = x -> (fun(x+dx)-fun(x))/dx
+    # Searching for derivative cancellation
+    # Precision on x cannot be better than dx
     xm = try bisection(dfun,xl,xu;tolx=dx,tolf=tolf,VERBOSE=VERBOSE) catch; (abs(fun(xu)) < abs(fun(xl))) ? xl : xu end
     return xm
+end
+
+"""ExtremiseFunctionNulCure(fun, xl, xu [, VERBOSE])
+Find the extremum of a function between xl and xu.
+Cure the possible nul (finite difference) derivative in xl or xu
+"""
+function ExtremiseFunctionNulCure(fun::Function,
+                                  xl::Float64=0.,
+                                  xu::Float64=1.;
+                                  tolx::Float64=1000.0*eps(Float64),
+                                  VERBOSE::Int64=0)
+
+    dx = 1.e-3
+    dfxl, dfxu = (fun(xl+dx)-fun(xl)), (fun(xl+dx)-fun(xl))
+
+    while (dfxl == 0.) || (dfxu == 0.)
+        dx *= 10.
+        dfxl, dfxu = (fun(xl+dx)-fun(xl)), (fun(xl+dx)-fun(xl))
+    end
+
+    xm = ExtremiseFunction(fun,xl,xu,dx=dx,tolf=0.,VERBOSE=VERBOSE)
+
+    if (xm == xl) || (xm == xu)
+        return xm
+    else
+        xm = ExtremiseFunction(fun,xm-dx,xm+dx,dx=tolx,tolf=0.,VERBOSE=VERBOSE)
+        return xm
+    end
 end

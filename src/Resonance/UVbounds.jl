@@ -58,7 +58,13 @@ function Findωminωmax(n1::Int64,n2::Int64,
     ωncirc(x) = n1*Ω1circular(dψ,d2ψ,x)/Ω₀ + n2*Ω2circular(dψ,d2ψ,x)/Ω₀
 
     αmin, αmax = αminmax(dψ,d2ψ,rmin,rmax,Ω₀=Ω₀)
-    xext = ExtremiseFunction(ωncirc,rmin,rmax)
+
+    # If rmax is infinite, bisection search on a bounded interval
+    if (rmax == Inf)
+        xext = ExtremiseFunctionNulCure(ωncirc,rmin,1.e8)
+    else
+        xext = ExtremiseFunctionNulCure(ωncirc,rmin,rmax)
+    end
 
     # The extreme values of n.Ω is either :
     #   - on the radial line, at α = αmin or αmax
@@ -231,9 +237,14 @@ function FindVbound(n1::Int64,n2::Int64,
                     rmax::Float64=1.0e5)
 
     # define the function to extremise
-    ωncirc(x) = n1*Ω1circular(dψ,d2ψ,x) + n2*Ω2circular(dψ,x)
+    ωncirc(x) = n1*Ω1circular(dψ,d2ψ,x) + n2*Ω2circular(dψ,d2ψ,x)
 
-    xext = ExtremiseFunction(ωncirc,rmin,rmax)
+    # If rmax is infinite, bisection search on a bounded interval
+    if (rmax == Inf)
+        xext = ExtremiseFunctionNulCure(ωncirc,rmin,1.e8)
+    else
+        xext = ExtremiseFunctionNulCure(ωncirc,rmin,rmax)
+    end
 
     return Ω1circular(dψ,d2ψ,xext)/Ω₀
 end

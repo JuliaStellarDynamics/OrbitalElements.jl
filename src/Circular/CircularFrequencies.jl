@@ -93,7 +93,7 @@ end
 function dΩ1circular(dψ::Function,
                      d2ψ::Function,
                      d3ψ::Function,
-                     a)
+                     a::Float64)
 
     Ω1c = Ω1circular(dψ,d2ψ,a)
 
@@ -139,11 +139,11 @@ end
 function dΩ2circular(dψ::Function,
                      d2ψ::Function,
                      d3ψ::Function,
-                     a)
+                     a::Float64)
 
-    Ω2c = Ω2circular(dψ,a)
+    Ω2c = Ω2circular(dψ,d2ψ,a)
 
-    return ((1/a)*d2ψ(a) - (1/(a^2)))*(dψ(a)))/(2Ω2c)
+    return ((1/a)*d2ψ(a) - (1/(a^2)))*dψ(a)/(2Ω2c)
 
 end
 
