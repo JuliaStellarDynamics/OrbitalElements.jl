@@ -88,6 +88,22 @@ function Ω1circular(dψ::Function,
 end
 
 
+"""dΩ1circular(dψ,d2ψ,d3ψ,a)
+"""
+function dΩ1circular(dψ::Function,
+                     d2ψ::Function,
+                     d3ψ::Function,
+                     a)
+
+    Ω1c = Ω1circular(dψ,d2ψ,a)
+
+    return ((d3ψ(a) + (3/a)*d2ψ(a) - (3/(a^2))*dψ(a))/(2Ω1c))
+
+end
+
+
+
+
 ########################################################################
 #
 # Azimuthal frequency Ω2 or Frequency ratio β = Ω2 / Ω1
@@ -116,6 +132,22 @@ function Ω2circular(dψ::Function,d2ψ::Function,a::Float64)
         return sqrt(dψ(a)/a)
     end
 end
+
+
+"""dΩ2circular(dψ,d2ψ,d3ψ,a)
+"""
+function dΩ2circular(dψ::Function,
+                     d2ψ::Function,
+                     d3ψ::Function,
+                     a)
+
+    Ω2c = Ω2circular(dψ,a)
+
+    return ((1/a)*d2ψ(a) - (1/(a^2)))*(dψ(a)))/(2Ω2c)
+
+end
+
+
 
 """βcircular2ndorderExpansionCoefs(ψ,dψ,d2ψ,d3ψ,d4ψ,a)
 Coefficients of the second-order expansion of β = Ω2/Ω1 near a circular orbit
