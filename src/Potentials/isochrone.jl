@@ -1,11 +1,11 @@
-#=
+"""
 The isochrone potential definitions
 
   isochrone.jl is unique in that we can define many of the quantities analytically, which makes for a useful testbed for empirical potentials.
 
   nearly all quantities for the isochrone potential can be computed analytically
 
-=#
+"""
 
 """ψIsochrone(r[,bc,M,G])
 
@@ -95,7 +95,7 @@ end
 isochrone energy scale, from Fouvry 21 (appendix G)
 Emin = -GM/(2bc)
 """
-function isochrone_E0(bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
+function isochroneE0(bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
     #return -sqrt(astronomicalG*M/bc)
     return -astronomicalG*M/bc
 end
@@ -103,7 +103,7 @@ end
 """
 isochrone action scale, from Fouvry 21 (appendix G)
 """
-function isochrone_L0(bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
+function isochroneL0(bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
     return sqrt(astronomicalG*M*bc)
 end
 
@@ -123,8 +123,8 @@ compute the radial action
 """
 function IsochroneJrRpRa(rp::Float64,ra::Float64,
                          bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
-    E = isochrone_E_from_rpra(rp,ra,bc,M,astronomicalG)
-    L = isochrone_L_from_rpra(rp,ra,bc,M,astronomicalG)
+    E = isochroneEfromrpra(rp,ra,bc,M,astronomicalG)
+    L = isochroneLfromrpra(rp,ra,bc,M,astronomicalG)
     return (astronomicalG*M/sqrt(-2E)) - 0.5 * (L + sqrt(L*L + 4*astronomicalG*M*bc))
 end
 
@@ -174,9 +174,9 @@ analytic function to return isochrone frequencies from (rp,ra)
 """
 function IsochroneOmega12FromRpRa(rp::Float64,ra::Float64,bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
     Omega0   = Ω₀Isochrone(bc,M,astronomicalG)
-    omega_ae = IsochroneαRpRa(rp,ra,bc)
-    eta_ae   = IsochroneβRpRa(rp,ra,bc)
-    return omega_ae*Omega0,omega_ae*eta_ae*Omega0
+    omegaae = IsochroneαRpRa(rp,ra,bc)
+    etaae   = IsochroneβRpRa(rp,ra,bc)
+    return omegaae*Omega0,omegaae*etaae*Omega0
 
 end
 
@@ -185,17 +185,17 @@ analytic function to return isochrone frequencies from (a,e)
 """
 function IsochroneOmega12FromAE(a::Float64,ecc::Float64,bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
     Omega0   = Ω₀Isochrone(bc,M,astronomicalG)
-    omega_ae = IsochroneαAE(a,ecc,bc)
-    eta_ae   = IsochroneβAE(a,ecc,bc)
-    return omega_ae*Omega0,omega_ae*eta_ae*Omega0
+    omegaae = IsochroneαAE(a,ecc,bc)
+    etaae   = IsochroneβAE(a,ecc,bc)
+    return omegaae*Omega0,omegaae*etaae*Omega0
 end
 
 """
 inversion of EL -> α,β function
 """
-function isochrone_EL_from_αβ(α::Float64,β::Float64,bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
-    scaleEnergy = isochrone_E0(bc,M,astronomicalG)
-    scaleAction = isochrone_L0(bc,M,astronomicalG)
+function isochroneELfromαβ(α::Float64,β::Float64,bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
+    scaleEnergy = isochroneE0(bc,M,astronomicalG)
+    scaleAction = isochroneL0(bc,M,astronomicalG)
     E = 0.5*scaleEnergy*(α)^(2/3) # Value of the energy
     L = scaleAction*(2.0*β-1.0)/(sqrt(β*(1.0-β))) # Value of the angular momentum
     return E, L # Output
@@ -205,13 +205,13 @@ end
 
 @IMPROVE, uses a floor to avoid any sqrt problems with circular orbits
 """
-function isochrone_rpra_fromEL(E::Float64,L::Float64,bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
-    scaleEnergy = isochrone_E0(bc,M,astronomicalG)
-    scaleAction = isochrone_L0(bc,M,astronomicalG)
+function isochronerprafromEL(E::Float64,L::Float64,bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
+    scaleEnergy = isochroneE0(bc,M,astronomicalG)
+    scaleAction = isochroneL0(bc,M,astronomicalG)
     xc = ((0.5*scaleEnergy)/E) - 1.0                                 # Value of xc
-    ecc_ov = sqrt(max(0,1.0 - (L/scaleAction)^(2)*(1.0/xc)*(1.0+(1.0/xc)))) # Value of overline{e}
-    xp = sqrt(max(0,(2.0 + xc*(1.0-ecc_ov))*(xc*(1.0-ecc_ov))))             # Value of xp
-    xa = sqrt(max(0,(2.0 + xc*(1.0+ecc_ov))*(xc*(1.0+ecc_ov))))             # Value of xa
+    eccov = sqrt(max(0,1.0 - (L/scaleAction)^(2)*(1.0/xc)*(1.0+(1.0/xc)))) # Value of overline{e}
+    xp = sqrt(max(0,(2.0 + xc*(1.0-eccov))*(xc*(1.0-eccov))))             # Value of xp
+    xa = sqrt(max(0,(2.0 + xc*(1.0+eccov))*(xc*(1.0+eccov))))             # Value of xa
     rp, ra = xp*bc, xa*bc                                            # Value of rp,ra
     return rp, ra # Output
 end
@@ -221,8 +221,8 @@ function to wrap (α,β)->(E,L)->(rp,ra)->(a,e) conversions for isochrone
 """
 function IsochroneAEFromOmega1Omega2(omega1::Float64,omega2::Float64,bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
     Omega0= Ω₀Isochrone(bc,M,astronomicalG)
-    E,L   = isochrone_EL_from_αβ(omega1/Omega0,omega2/omega1,bc,M,astronomicalG)
-    rp,ra = isochrone_rpra_fromEL(E,L,bc,M,astronomicalG)
+    E,L   = isochroneELfromαβ(omega1/Omega0,omega2/omega1,bc,M,astronomicalG)
+    rp,ra = isochronerprafromEL(E,L,bc,M,astronomicalG)
     a,e   = AEfromRpRa(rp,ra)
     return a,e
 end
@@ -231,8 +231,8 @@ end
 energy from isochrone model, using rpra
 Fouvry 21 G9
 """
-function isochrone_E_from_rpra(rp::Float64,ra::Float64,bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
-    scaleEnergy = isochrone_E0(bc,M,astronomicalG)
+function isochroneEfromrpra(rp::Float64,ra::Float64,bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
+    scaleEnergy = isochroneE0(bc,M,astronomicalG)
     sp,sa       = IsochroneSpSaFromRpRa(rp,ra,bc)
     return scaleEnergy/(sp+sa)
 end
@@ -240,11 +240,11 @@ end
 """
 angular momentum from isochrone model, using rpra
 """
-function isochrone_L_from_rpra(rp::Float64,ra::Float64,bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
+function isochroneLfromrpra(rp::Float64,ra::Float64,bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
     # isochrone analytic energy, Fouvry 21 G9
     xp = rp/bc
     xa = ra/bc
-    L0 = isochrone_L0(bc,M,astronomicalG)
+    L0 = isochroneL0(bc,M,astronomicalG)
     sp,sa = IsochroneSpSaFromRpRa(rp,ra,bc)
     return sqrt(2)*L0*xp*xa/sqrt((1+sp)*(1+sa)*(sp+sa))
 end
@@ -252,11 +252,11 @@ end
 """
 energy and angular momentum from isochrone model, using rpra
 """
-function isochrone_EL_from_rpra(rp::Float64,ra::Float64,bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
+function isochroneELfromrpra(rp::Float64,ra::Float64,bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
     xp          = rp/bc
     xa          = ra/bc
-    L0          = isochrone_L0(bc,M,astronomicalG)
-    scaleEnergy = isochrone_E0(bc,M,astronomicalG)
+    L0          = isochroneL0(bc,M,astronomicalG)
+    scaleEnergy = isochroneE0(bc,M,astronomicalG)
     sp,sa       = IsochroneSpSaFromRpRa(rp,ra,bc)
     return scaleEnergy/(sp+sa),sqrt(2)*L0*xp*xa/sqrt((1+sp)*(1+sa)*(sp+sa))
 end
@@ -268,13 +268,13 @@ function IsochroneELFromAE(a::Float64,ecc::Float64,bc::Float64=1.,M::Float64=1.,
     rp,ra = a*(1-ecc),a*(1+ecc)
     xp          = rp/bc
     xa          = ra/bc
-    L0          = isochrone_L0(bc,M,astronomicalG)
-    scaleEnergy = isochrone_E0(bc,M,astronomicalG)
+    L0          = isochroneL0(bc,M,astronomicalG)
+    scaleEnergy = isochroneE0(bc,M,astronomicalG)
     sp,sa       = IsochroneSpSaFromRpRa(rp,ra,bc)
     return scaleEnergy/(sp+sa),sqrt(2)*L0*xp*xa/sqrt((1+sp)*(1+sa)*(sp+sa))
 end
 
-function isochrone_dthetadu_from_rpra(r::Float64,u::Float64,rp::Float64,ra::Float64,bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
+function isochronedthetadufromrpra(r::Float64,u::Float64,rp::Float64,ra::Float64,bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
     #=
 
      the isochrone analytic Jacobian, Fouvry 21 G10
@@ -292,9 +292,9 @@ end
 """
 Theta function for the isochrone model
 """
-function isochrone_drduINVvrfromrpra(rp::Float64,ra::Float64,u::Float64,bc::Float64=1.,Omega0::Float64=1.)
+function isochronedrduINVvrfromrpra(rp::Float64,ra::Float64,u::Float64,bc::Float64=1.,Omega0::Float64=1.)
     Sigma, Delta = (ra+rp)*0.5, (ra-rp)*0.5 # Used for the mapping from u
-    r = Sigma + Delta*henon_f(u) # Current value of the radius
+    r = Sigma + Delta*henonf(u) # Current value of the radius
     xp, xa, xr = rp/bc, ra/bc, r/bc # Rescaled pericentre, apocentre, and radius
     sqxp, sqxa, sqxr = sqrt(1.0+xp^(2)), sqrt(1.0+xa^(2)), sqrt(1.0+xr^(2)) # Pre-computing the values of sqrt(1+xp^2), sqrt(1+xa^2), and sqrt(1+xr^(2))
     #####
@@ -312,15 +312,15 @@ function IsochroneJacELtoαβ(α::Float64,
                                    M::Float64=1.,
                                    astronomicalG::Float64=1.)
 
-    scaleEnergy = isochrone_E0(bc,M,astronomicalG)
-    scaleAction = isochrone_L0(bc,M,astronomicalG)
+    scaleEnergy = isochroneE0(bc,M,astronomicalG)
+    scaleAction = isochroneL0(bc,M,astronomicalG)
     Omega0      = Ω₀Isochrone(bc,M,astronomicalG)
 
     return abs((1.0/6.0)*scaleEnergy*scaleAction/(α^(1/3)*(β*(1.0-β))^(3/2)))#*(1.0/Omega0)) # Output of the ABSOLUTE VALUE of the Jacobian. ATTENTION, contains the rescaling factor 1/Omega0
 end
 
 
-"""analytic definition of β_c"""
+"""analytic definition of βc"""
 function IsochroneβC(x::Float64)::Float64
     return 1/(1 + x^(2/3))
 end
@@ -338,7 +338,7 @@ function ThetaRpRaIsochrone(rp::Float64,ra::Float64,
     Sigma, Delta = (ra+rp)*0.5, (ra-rp)*0.5
 
     # Current value of the radius
-    r = Sigma + Delta*henon_f(u)
+    r = Sigma + Delta*henonf(u)
 
     # rescaled pericentre, apocentre, and radius
     xp, xa, xr = rp/bc, ra/bc, r/bc
@@ -367,41 +367,41 @@ end
 
 
 """
-# Function that computes omg_min and omg_max
+# Function that computes omgmin and omgmax
 # for a given resonance vector (n1,n2)
 # ATTENTION, specific to the isochrone case
-α_cut would allow for controlling the minimum frequency probed for certain resonances, if interested.
+αcut would allow for controlling the minimum frequency probed for certain resonances, if interested.
 """
 function FindWminWmaxIsochrone(n1::Int64,n2::Int64)
-    α_cut = 0.0 # Minimum value allowed for α
-    omg_1 = n1*α_cut + n2*α_cut*0.5                 # Bottom left value of omega
-    omg_2 = n1*α_cut + n2*α_cut*IsochroneβC(α_cut) # Top left value of omega
-    omg_3 = n1           + n2          *0.5                 # Bottom right value of omega
+    αcut = 0.0 # Minimum value allowed for α
+    omg1 = n1*αcut + n2*αcut*0.5                 # Bottom left value of omega
+    omg2 = n1*αcut + n2*αcut*IsochroneβC(αcut) # Top left value of omega
+    omg3 = n1           + n2          *0.5                 # Bottom right value of omega
     #####
-    omg_min, omg_max = extrema((omg_1,omg_2,omg_3)) # Computing the min/max values from the edge
+    omgmin, omgmax = extrema((omg1,omg2,omg3)) # Computing the min/max values from the edge
     #####
     if ((n1 == 0) || (n2 == 0)) # In these cases, min/max are reached in the edges
-        return omg_min, omg_max # Output
+        return omgmin, omgmax # Output
     else # In other cases, there might be a maximum along the circular orbits
         Delta = n2*(n2 - 24*n1) # Value of the discriminant of P(q)
         if (Delta <= 0.0) # There are no maximum along circular orbits
-            return omg_min, omg_max
+            return omgmin, omgmax
         else # The discriminant is positive, there might be an extremum along circular orbits
-            q_cut = 1.0 + α_cut^(2/3) # Minimum value of q
+            qcut = 1.0 + αcut^(2/3) # Minimum value of q
             sqDelta = sqrt(Delta) # Square root of the discriminant
             qm = (-n2 - sqDelta)/(6.0*n1) # First  root of P(q)
             qp = (-n2 + sqDelta)/(6.0*n1) # Second root of P(q)
             #####
             qmin, qmax = minmax(qm,qp) # We sort the roots. At this stage, we necessarily have qmin <= 0.0
             #####
-            if (q_cut <= qmax <= 2.0) # We have reached an extremum along circular orbits in the allowed domain
-                α_circ = (qmax - 1.0)^(3/2) # Value of α for which an extremum is reached along circular orbits
-                omg_circ = n1*α_circ + n2*α_circ*IsochroneβC(α_circ) # Value of the extremum
+            if (qcut <= qmax <= 2.0) # We have reached an extremum along circular orbits in the allowed domain
+                αcirc = (qmax - 1.0)^(3/2) # Value of α for which an extremum is reached along circular orbits
+                omgcirc = n1*αcirc + n2*αcirc*IsochroneβC(αcirc) # Value of the extremum
                 #####
-                omg_min, omg_max = extrema((omg_min,omg_max,omg_circ)) # Determining the new minimum and maximum values of the resonance frequency
-                return omg_min, omg_max # Output
+                omgmin, omgmax = extrema((omgmin,omgmax,omgcirc)) # Determining the new minimum and maximum values of the resonance frequency
+                return omgmin, omgmax # Output
             else # We do not reach an extremum along circular orbits in the allowed domain
-                return omg_min, omg_max # Output
+                return omgmin, omgmax # Output
             end
         end
     end
@@ -414,22 +414,22 @@ end
 # for a given resonance (n1,n2) and coordinate u
 """
 function FindVminVmaxIsochrone(n1::Int64,n2::Int64,u::Float64)
-    α_cut = 0.0
-    omg_min, omg_max = FindWminWmaxIsochrone(n1,n2) # Getting omg_min, omg_max for the current resonance
+    αcut = 0.0
+    omgmin, omgmax = FindWminWmaxIsochrone(n1,n2) # Getting omgmin, omgmax for the current resonance
     #####
-    exp_h = 0.5*(omg_max + omg_min + u*(omg_max - omg_min)) # Expression of h(u)
+    exph = 0.5*(omgmax + omgmin + u*(omgmax - omgmin)) # Expression of h(u)
     #####
     # For n2=0, the boundary takes a simple form
     if (n2 == 0)
         vm = 0.5 # Minimum bound
-        vp = IsochroneβC(exp_h/n1) # Maximum bound
+        vp = IsochroneβC(exph/n1) # Maximum bound
         return vm, vp # Output
     end
     #####
     # For n2!=0, the boundary is more complicated
     #####
     # First, we account for the easy constraints
-    vm = α_cut # Minimum bound
+    vm = αcut # Minimum bound
     vp = 1.0 # Maximum bound
     #####
     kappa = n1 + n2*0.5 # Definition of the constant kappa
@@ -437,17 +437,17 @@ function FindVminVmaxIsochrone(n1::Int64,n2::Int64,u::Float64)
     # Accounting for the third constraint
     if     (n2 < 0)
         if     (kappa < 0)
-            vp = min(vp, exp_h/kappa) # Updating vp
+            vp = min(vp, exph/kappa) # Updating vp
         elseif (kappa > 0)
-            vm = max(vm, exp_h/kappa) # Updating vm
+            vm = max(vm, exph/kappa) # Updating vm
         end
     #####
     elseif (n2 > 0)
     #####
         if     (kappa < 0)
-            vm = max(vm, exp_h/kappa) # Updating vm
+            vm = max(vm, exph/kappa) # Updating vm
         elseif (kappa > 0)
-            vp = min(vp, exp_h/kappa) # Updating vp
+            vp = min(vp, exph/kappa) # Updating vp
         end
     end
     #####
@@ -456,10 +456,10 @@ function FindVminVmaxIsochrone(n1::Int64,n2::Int64,u::Float64)
     # The case n1=0 is easy to account for
     if (n1 == 0)
         ####
-        omg_l, omg_r = (OmgCircIsochrone(n1,n2,α_cut)-exp_h), (OmgCircIsochrone(n1,n2,1.0)-exp_h) # Values on the left/right of the interval
+        omgl, omgr = (OmgCircIsochrone(n1,n2,αcut)-exph), (OmgCircIsochrone(n1,n2,1.0)-exph) # Values on the left/right of the interval
         ####
-        if (omg_l*omg_r < 0.0) # We can search for a root
-            vlim = bisection(v -> OmgCircIsochrone(n1,n2,v)-exp_h,α_cut,1.0) # Finding the transition coordinate
+        if (omgl*omgr < 0.0) # We can search for a root
+            vlim = bisection(v -> OmgCircIsochrone(n1,n2,v)-exph,αcut,1.0) # Finding the transition coordinate
             vm = max(vm,vlim) # Updating vm
         end
         #####
@@ -471,10 +471,10 @@ function FindVminVmaxIsochrone(n1::Int64,n2::Int64,u::Float64)
     #####
     if (Delta <= 0) # There is no extrema along circular orbits
         ####
-        omg_l, omg_r = (OmgCircIsochrone(n1,n2,α_cut)-exp_h), (OmgCircIsochrone(n1,n2,1.0)-exp_h) # Values on the left/right of the interval
+        omgl, omgr = (OmgCircIsochrone(n1,n2,αcut)-exph), (OmgCircIsochrone(n1,n2,1.0)-exph) # Values on the left/right of the interval
         ####
-        if (omg_l*omg_r < 0.0) # We can search for a root
-            vlim = bisection(v -> OmgCircIsochrone(n1,n2,v)-exp_h,α_cut,1.0) # Finding the transition coordinate
+        if (omgl*omgr < 0.0) # We can search for a root
+            vlim = bisection(v -> OmgCircIsochrone(n1,n2,v)-exph,αcut,1.0) # Finding the transition coordinate
             #####
             if     (n1*n2 > 0)
                 vm = max(vm,vlim) # Updating vm
@@ -488,20 +488,20 @@ function FindVminVmaxIsochrone(n1::Int64,n2::Int64,u::Float64)
     #####
     # Otherwise, we have Delta > 0, and we might find an extremum along circular orbits
     else
-        qc = 1.0 + (α_cut)^(2/3) # Left value of the range in q
+        qc = 1.0 + (αcut)^(2/3) # Left value of the range in q
         #####
-        qm = (-n2 - sqrt(Delta))/(6.0*n1) # Value of q_{-}
-        qp = (-n2 + sqrt(Delta))/(6.0*n1) # Value of q_{+}
+        qm = (-n2 - sqrt(Delta))/(6.0*n1) # Value of q{-}
+        qp = (-n2 + sqrt(Delta))/(6.0*n1) # Value of q{+}
         #####
         qmin, qmax = minmax(qm,qp) # Sorting the two roots
         #####
         # The considered range q \in [qc,2] is on the right of the two roots of P(q)
         if (qmax <= qc)
             #####
-            omg_l, omg_r = (OmgCircIsochrone(n1,n2,α_cut)-exp_h), (OmgCircIsochrone(n1,n2,1.0)-exp_h) # Values on the left/right of the interval
+            omgl, omgr = (OmgCircIsochrone(n1,n2,αcut)-exph), (OmgCircIsochrone(n1,n2,1.0)-exph) # Values on the left/right of the interval
             #####
-            if (omg_l*omg_r < 0.0) # We can search for a root
-                vlim = bisection(v -> OmgCircIsochrone(n1,n2,v)-exp_h,α_cut,1.0) # Finding the transition coordinate
+            if (omgl*omgr < 0.0) # We can search for a root
+                vlim = bisection(v -> OmgCircIsochrone(n1,n2,v)-exph,αcut,1.0) # Finding the transition coordinate
                 #####
                 if     (n1*n2 > 0)
                     vm = max(vm,vlim) # Updating vm
@@ -518,10 +518,10 @@ function FindVminVmaxIsochrone(n1::Int64,n2::Int64,u::Float64)
         # for the condition on n1*n2
         elseif (2.0 <= qmax)
             #####
-            omg_l, omg_r = (OmgCircIsochrone(n1,n2,α_cut)-exp_h), (OmgCircIsochrone(n1,n2,1.0)-exp_h) # Values on the left/right of the interval
+            omgl, omgr = (OmgCircIsochrone(n1,n2,αcut)-exph), (OmgCircIsochrone(n1,n2,1.0)-exph) # Values on the left/right of the interval
             #####
-            if (omg_l*omg_r < 0.0) # We can search for a root
-                vlim = bisection(v -> OmgCircIsochrone(n1,n2,v)-exp_h,α_cut,1.0) # Finding the transition coordinate
+            if (omgl*omgr < 0.0) # We can search for a root
+                vlim = bisection(v -> OmgCircIsochrone(n1,n2,v)-exph,αcut,1.0) # Finding the transition coordinate
                 #####
                 if     (n1*n2 > 0)
                     vp = min(vp,vlim) # Updating vp
@@ -539,45 +539,45 @@ function FindVminVmaxIsochrone(n1::Int64,n2::Int64,u::Float64)
         else
             vmax = (qmax - 1.0)^(3/2) # Position in v where the monotonicity changes
             #####
-            omg_LEFT = OmgCircIsochrone(n1,n2,α_cut) # Value of OmgCircIsochrone at the left of the interaval
-            omg_MIDD = OmgCircIsochrone(n1,n2,vmax)      # Value of OmgCircIsochrone at the centre of the interval
-            omg_RGHT = OmgCircIsochrone(n1,n2,1.0)       # Value of OmgCircIsochrone at the right of the interval
+            omgLEFT = OmgCircIsochrone(n1,n2,αcut) # Value of OmgCircIsochrone at the left of the interaval
+            omgMIDD = OmgCircIsochrone(n1,n2,vmax)      # Value of OmgCircIsochrone at the centre of the interval
+            omgRGHT = OmgCircIsochrone(n1,n2,1.0)       # Value of OmgCircIsochrone at the right of the interval
             #####
             if     ((n1 < 0) && (n2 < 0))
                 #####
-                error("BUG -- get_vmvp: CASE 1.")
+                error("BUG -- getvmvp: CASE 1.")
                 #####
             elseif ((n1 < 0) && (n2 > 0))
                 #####
-                if (omg_LEFT <= exp_h <= omg_MIDD)
-                    vlim = bisection(v -> OmgCircIsochrone(n1,n2,v)-exp_h,α_cut,vmax) # Finding the transition
+                if (omgLEFT <= exph <= omgMIDD)
+                    vlim = bisection(v -> OmgCircIsochrone(n1,n2,v)-exph,αcut,vmax) # Finding the transition
                     #####
                     vm = max(vm,vlim) # Updating vm
                 end
                 #####
-                if (omg_RGHT <= exp_h <= omg_MIDD)
-                    vlim = bisection(v -> OmgCircIsochrone(n1,n2,v)-exp_h,vmax,1.0) # Finding the transition coordinate
+                if (omgRGHT <= exph <= omgMIDD)
+                    vlim = bisection(v -> OmgCircIsochrone(n1,n2,v)-exph,vmax,1.0) # Finding the transition coordinate
                     #####
                     vp = min(vp,vlim) # Updating vp
                 end
                 #####
             elseif ((n1 > 0) && (n2 < 0))
                 #####
-                if (omg_MIDD <= exp_h <= omg_LEFT)
-                    vlim = bisection(v -> OmgCircIsochrone(n1,n2,v)-exp_h,α_cut,vmax) # Finding the transition coordinate
+                if (omgMIDD <= exph <= omgLEFT)
+                    vlim = bisection(v -> OmgCircIsochrone(n1,n2,v)-exph,αcut,vmax) # Finding the transition coordinate
                     #####
                     vm = max(vm,vlim) # Updating vm
                 end
                 #####
-                if (omg_MIDD <= exp_h <= omg_RGHT)
-                    vlim = bisection(v -> OmgCircIsochrone(n1,n2,v)-exp_h,vmax,1.0) # Finding the transition coordinate
+                if (omgMIDD <= exph <= omgRGHT)
+                    vlim = bisection(v -> OmgCircIsochrone(n1,n2,v)-exph,vmax,1.0) # Finding the transition coordinate
                     #####
                     vp = min(vp,vlim) # Updating vp
                 end
                 #####
             elseif ((n1 > 0) && (n2 > 0))
                 #####
-                error("BUG -- get_vmvp: Case 2.")
+                error("BUG -- getvmvp: Case 2.")
             end
             #####
             return vm, vp # Output
@@ -586,11 +586,11 @@ function FindVminVmaxIsochrone(n1::Int64,n2::Int64,u::Float64)
 end
 
 
-function GetVarpiIsochrone(omg::Complex{Float64},
+function GetϖIsochrone(omg::Complex{Float64},
                            n1::Int64,n2::Int64)
 
-    w_min,w_max = FindWminWmaxIsochrone(n1,n2)
+    wmin,wmax = FindWminWmaxIsochrone(n1,n2)
 
-    return GetVarpi(omg,w_min,w_max)
+    return Getϖ(omg,wmin,wmax)
 
 end
