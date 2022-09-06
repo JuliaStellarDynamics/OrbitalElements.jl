@@ -166,9 +166,10 @@ function FindVminVmax(u::Float64,
 
             if (vbound != αmin) && (vbound != αmax)
                 branch = 2
-            elseif (rmin > locrmin) || (rmax > locrmax)
+            elseif (rmin > locrmin) || (rmax < locrmax)
                 # If vboung not in the asked boundary
                 # verify that it should indeed not exist
+                locrmin, locrmax = min(rmin,locrmin), max(rmax,locrmax)
                 vbound = FindVbound(n1,n2,dψ,d2ψ,Ω₀=Ω₀,rmin=locrmin,rmax=locrmax)
 
                 if (vbound != Ω1circular(dψ,d2ψ,locrmin)/Ω₀) && (vbound != Ω1circular(dψ,d2ψ,locrmin)/Ω₀)
