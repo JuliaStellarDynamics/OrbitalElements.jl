@@ -72,9 +72,229 @@ end
 the central frequency for the Plummer potential
 """
 function Ω₀Plummer(bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
-    #=
 
-    plummer frequency scale
-    =#
     return 2*sqrt(astronomicalG*M/bc^3)
+end
+
+
+"""
+Plummer energy scale, from Tep+ 2022 (equation E2)
+"""
+function PlummerE0(bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
+    return -astronomicalG*M/bc
+end
+
+"""
+Plummer action scale, from Tep+ 2022 (equation E2)
+"""
+function PlummerL0(bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
+    return sqrt(astronomicalG*M*bc)
+end
+
+
+
+"""
+the raw Theta function from Tep et al. 2022, equation F9
+"""
+function Theta(u::Float64, sp::Float64, sa::Float64,Ω₀::Float64)
+    A = sp * (u+2.0)*(u-1.0)^2 - sa*(u-2.0)*(u+1.0)^2
+    B = sp * (u^3-3.0*u+6.0) - sa*(u^3-3.0*u-6.0)
+
+    return (1.0/Ω₀ * 3.0/(4.0*sqrt(2.0)) * sqrt(sa*sp*(sa+sp))/sqrt(4.0-u^2)
+            * A^(1.5)/sqrt(sa*sp*A + B))
+end
+
+
+
+function dThetadsp(u::Float64, sp::Float64, sa::Float64,Ω₀::Float64)
+
+    num = (3 *(4 *sp^3 *(-1 + u)^2 *(12 - 3 *u^2 + 2 *u^3 + u^4) +
+           sa *sp^2 *(108 - 120 *u - 27 *u^2 + 40 *u^3 + 18 *u^4 - 3 *u^6 +
+           3 *sp^2 *(-1 + u)^4 *(2 + u)^2) -
+           2 *sa^2 *sp *(-6 - 3 *u + u^3) *(6 - 3 *u + u^3 +
+           sp^2 *(2 - 3 *u + u^3)) -
+           sa^3 *(-2 + u) *(1 + u)^2 *(6 + 3* u - u^3 + sp^2 *(6 - 3 *u + u^3))))
+
+    den = (8 *sqrt(2)* sp *(sa +
+           sp) *sqrt(-(((-4 + u^2) *(sa^2 *sp *(-2 + u) *(1 + u)^2 -
+           sp *(6 - 3 *u + u^3) +
+           sa *(-6 - 3 *u + u^3 - sp^2 *(2 - 3* u + u^3))))/(
+           sa *sp *(sa + sp) *(sa *(-2 + u) *(1 + u)^2 -
+           sp *(2 - 3 *u + u^3)))))* (sa^2* sp *(2 + 3 *u - u^3) +
+           sp *(6 - 3* u + u^3) + sa *(6 + 3*u - u^3 + sp^2 *(2 - 3 *u + u^3))))
+
+    return 1.0/Ω₀ * num/den
+end
+
+function dThetadsa(u::Float64, sp::Float64, sa::Float64,Ω₀::Float64)
+
+    num = (3 *(-4 + u^2) *(3 *sa^4 *sp *(-2 + u)^2 *(1 + u)^4 +
+           sp^3 *(-1 + u)^2 *(12 - 3 *u^2 + 2 *u^3 + u^4) -
+           2 *sa *sp^2 *(-36 + 9 *u^2 - 6 *u^4 + u^6) -
+           2 *sa^3 *(-2 + u) *(1 + u)^2 *(12 + 6 *u - 2 *u^3 +
+           sp^2 *(6 - 3 *u + u^3)) +
+           sa^2 *sp *(108 + 120 *u - 27 *u^2 - 40*u^3 + 18 *u^4 - 3 *u^6 -
+           sp^2 *(-12 + 12 *u + 9 *u^2 - 4 *u^3 - 6 *u^4 + u^6))))
+
+    den = (8 *sqrt(2)*
+           sa^2 *sp *(sa + sp)^2 *(sa *(-2 + u) *(1 + u)^2 -
+           sp *(2 - 3 *u + u^3)) *(-(((-4 + u^2) *(sa^2 *sp *(-2 + u) *(1 + u)^2 -
+           sp *(6 - 3* u + u^3) +
+           sa *(-6 - 3* u + u^3 - sp^2 *(2 - 3 *u + u^3))))/(
+           sa *sp* (sa + sp) *(sa *(-2 + u) *(1 + u)^2 - sp *(2 - 3 *u + u^3)))))^(3/2))
+
+    return 1.0/Ω₀ * num/den
+end
+
+
+function SpSaFromRpRa(rp::Float64,ra::Float64,bc::Float64)
+    sp,sa = sqrt(1+(rp/bc)^2),sqrt(1+(ra/bc)^2)
+    return sp,sa
+end
+
+
+
+"""
+the wrapped Theta function
+"""
+function ΘRpRaPlummer(u::Float64, rp::Float64, ra::Float64, bc::Float64, Ω₀::Float64)
+    sp,sa = SpSaFromRpRa(rp,ra,bc)
+
+    return Theta(u,sp,sa,Ω₀)
+
+end
+
+
+"""
+the wrapped Theta derivative function
+"""
+function dΘRpRaPlummer(u::Float64, rp::Float64, ra::Float64, bc::Float64, Ω₀::Float64)
+    sp,sa = SpSaFromRpRa(rp,ra,bc)
+
+    return Theta(u,sp,sa,Ω₀),dThetadsp(u,sp,sa,Ω₀),dThetadsa(u,sp,sa,Ω₀)
+
+end
+
+
+function sFromUAE(u::Float64, sma::Float64, ecc::Float64)
+    fu = u * (1.5 - 0.5*u^2)
+    return sma * (1.0 + ecc * fu)
+end
+
+function RFroms(s::Float64,bc::Float64)
+    return bc * sqrt(abs(s^2 - 1.0))
+end
+
+function RFromUAE(u::Float64, a::Float64, e::Float64, bc::Float64)
+    return RFroms(sFromUAE(u,a,e),bc)
+end
+
+function RFromURpRa(u::Float64, rp::Float64, ra::Float64, bc::Float64)
+    sp,sa = SpSaFromRpRa(rp,ra,bc)
+
+    # compute a,e for the anomaly: equation F8 of Tep+ (2022)
+    a,e = AEfromRpRa(sp,sa)
+    return RFroms(sFromUAE(u,a,e),bc)
+end
+
+function PlummerELfromSpSa(sp::Float64, sa::Float64;bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
+
+    E0 = PlummerE0(bc,M,astronomicalG)
+    L0 = PlummerL0(bc,M,astronomicalG)
+
+    E = E0/sp - E0*(sa^2-1.0)/(sa*sp*(sa+sp))
+    L = L0*sqrt(2.0*(sp^2-1.0)*(sa^2-1.0)/(sa*sp*(sa+sp)))
+
+    return E, L
+end
+
+function PlummerELfromRpRa(rp::Float64, ra::Float64;bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
+
+    sp,sa = SpSaFromRpRa(rp,ra,bc)
+
+    return PlummerELfromSpSa(sp,sa)
+
+end
+
+"""Vrad()
+SQUARED vr, radial velocity for computing action
+as a function of (a,e)
+"""
+function PlummerVradAE(u::Float64,
+                       a::Float64,
+                       e::Float64,
+                       bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
+
+    rp,ra = RpRafromAE(a,e)
+
+    Eval,Lval = PlummerELfromRpRa(rp, ra, bc=bc ,M=M,astronomicalG=astronomicalG)
+
+    r = RFromURpRa(u, rp, ra, bc)
+
+    vrSQ = 2(E-ψPlummer(r,bc,M,astronomicalG)) - (L^2)/(r^2)
+
+    return vrSQ
+
+end
+
+"""Vrad()
+SQUARED vr, radial velocity for computing action
+as a function of (a,e)
+"""
+function PlummerVradRpRa(u::Float64,
+                         rp::Float64,
+                         ra::Float64,
+                         bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
+
+    Eval,Lval = PlummerELfromRpRa(rp, ra, bc=bc ,M=M,astronomicalG=astronomicalG)
+
+    r = RFromURpRa(u, rp, ra, bc)
+
+    vrSQ = 2(Eval-ψPlummer(r,bc,M,astronomicalG)) - (Lval^2)/(r^2)
+
+    return vrSQ
+
+end
+
+
+
+function PlummerOmega12FromRpRa(rp::Float64,ra::Float64,bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.;NINT=32,action::Bool=false)
+
+    # compute the helpful coordinate for Plummer
+    sp,sa = SpSaFromRpRa(rp,ra,bc)
+
+    Ω₀ = Ω₀Plummer(bc,M,astronomicalG)
+    Eval,Lval = PlummerELfromSpSa(sp, sa, bc=bc ,M=M,astronomicalG=astronomicalG)
+
+    function u3func(u::Float64)
+        # push integration forward on three different quantities: Θ(u),Θ(u)/r^2(u),Θ(u)*vr(u)
+
+        th = ΘRpRaPlummer(u, rp, ra, bc, 1.0)#Ω₀)
+
+        return (th,
+                th/(RFromURpRa(u, rp, ra, bc)^2),
+                th*PlummerVradRpRa(u,rp,ra,bc,M,astronomicalG))
+
+    end
+
+    accum = UnitarySimpsonIntegration(u3func,K_O=NINT)
+
+    #return the values
+    Ω1inv     = (1/pi)*accum[1]
+    Ω1        = 1/Ω1inv
+    Ω2        = Lval*accum[2]*(1/pi)*Ω1
+    actionj   = (1/pi)*accum[3]
+
+    # be careful with Ω2 if near radial: use analytic relation
+    #if e>(1-TOLECC)
+    #    Ω2 = 0.5*Ω1
+    #else
+    #    Ω2 = Lval*accum[2]*(1/pi)*Ω1
+    #end
+
+    if action
+        return Ω1,Ω2,actionj
+    else
+        return Ω1,Ω2
+    end
 end

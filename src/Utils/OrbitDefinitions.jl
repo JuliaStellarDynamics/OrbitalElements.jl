@@ -35,31 +35,35 @@ function Ecirc(ψ::Function,dψ::Function,r::Float64)
     return  ψ(r) + 0.5*r*dψ(r)
 end
 
+########################################################################
+#
+# vr(u) (action integrand)
+#
+########################################################################
 
-"""MakeOrbitAE
-
-initialise an orbit in (a,e) space, returning rp, ra, rcirc, L
-
-@IMPROVE: will not check that E is valid for the model!
-@IMPROVE: something better than defaulting to circular below some eccentricity?
-
+"""Vrad(ψ,dψ,d2ψd,3ψ,u,a,e[,TOLECC,fun])
+vr, radial velocity for computing action
+as a function of (a,e)
 """
-function MakeOrbitAE(ψ::Function,dψ::Function,d2ψ::Function,
-                       a::Float64,e::Float64;
-                       TOLECC::Float64=0.00005)
+function Vrad(ψ::Function,
+              dψ::Function,
+              d2ψ::Function,
+              d3ψ::Function,
+              u::Float64,
+              a::Float64,
+              e::Float64;
+              TOLECC::Float64=ELTOLECC,
+              fun::Function=henon_f)
 
-    rp, ra = RpRafromAE(a,e)
+    E, L = ELFromAE(ψ,dψ,d2ψ,d3ψ,a,e;TOLECC=TOLECC)
 
-    # get (E,L)
-    E = EFromRpRa(ψ,dψ,d2ψ,rp,ra;TOLECC=TOLECC)
-    L = LFromRpRa(ψ,dψ,d2ψ,rp,ra;TOLECC=TOLECC)
+    r = ru(u,a,e;fun=fun)
 
-    if ecc<TOLECC
-        rc = a
+    vrSQ = 2*(E - ψeff(ψ,r,L))
+
+    if vrSQ < 0.0
+        return 0.0
     else
-        rc = bisection(r -> E - Ecirc(ψ,dψ,r),rp,ra)
+        return sqrt(vrSQ)
     end
-
-    return rp, ra, rc, L
-
 end

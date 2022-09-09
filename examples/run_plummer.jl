@@ -46,4 +46,22 @@ println("(a,e)=($a,$e)")
 
 
 # select an (a,e) value for the orbit
-a,e = 0.1, 0.1
+a,e = 0.000001, 0.00
+rp,ra = OrbitalElements.RpRafromAE(a,e)
+println("rp=$rp,ra=$ra")
+
+sp,sa = OrbitalElements.SpSaFromRpRa(rp,ra,bc)
+Eval,Lval = OrbitalElements.PlummerELfromSpSa(sp, sa, bc=bc ,M=M,astronomicalG=G)
+println("anomaly E=$Eval,L=$Lval")
+
+Eval,Lval = OrbitalElements.ELFromAE(ψ,dψ,d2ψ,d3ψ,a,e)
+println("brute   E=$Eval,L=$Lval")
+
+u=-1.0
+testrp = OrbitalElements.RFromURpRa(u,rp,ra,bc)
+println("rp=$rp,rp=$testrp")
+
+O1,O2,Jr = OrbitalElements.ComputeFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,action=true)
+println("O1=$O1,O2=$O2,Jr=$Jr")
+O1,O2,Jr = OrbitalElements.PlummerOmega12FromRpRa(rp,ra,bc,M,G,action=true)
+println("O1=$O1,O2=$O2,Jr=$Jr")

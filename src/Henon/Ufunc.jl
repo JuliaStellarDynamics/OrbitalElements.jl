@@ -106,38 +106,6 @@ function d2ψeffdr2(d2ψ::Function,r::Float64,L::Float64)::Float64
     end
 end
 
-########################################################################
-#
-# vr(u) (action integrand)
-#
-########################################################################
-
-"""Vrad(ψ,dψ,d2ψd,3ψ,u,a,e[,TOLECC,fun])
-vr, radial velocity for computing action
-as a function of (a,e)
-"""
-function Vrad(ψ::Function,
-              dψ::Function,
-              d2ψ::Function,
-              d3ψ::Function,
-              u::Float64,
-              a::Float64,
-              e::Float64;
-              TOLECC::Float64=ELTOLECC,
-              fun::Function=henon_f)
-
-    E, L = ELFromAE(ψ,dψ,d2ψ,d3ψ,a,e;TOLECC=TOLECC)
-
-    r = ru(u,a,e;fun=fun)
-
-    vrSQ = 2*(E - ψeff(ψ,r,L))
-
-    if vrSQ < 0.0
-        return 0.0
-    else
-        return sqrt(vrSQ)
-    end
-end
 
 ########################################################################
 #
