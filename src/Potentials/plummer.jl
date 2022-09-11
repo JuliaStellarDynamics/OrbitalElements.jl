@@ -246,6 +246,7 @@ function PlummerVradRpRa(u::Float64,
                          ra::Float64,
                          bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
 
+    # something is weird in here with bc scaling?
     Eval,Lval = PlummerELfromRpRa(rp, ra, bc=bc ,M=M,astronomicalG=astronomicalG)
 
     r = RFromURpRa(u, rp, ra, bc)
@@ -269,7 +270,7 @@ function PlummerOmega12FromRpRa(rp::Float64,ra::Float64,bc::Float64=1.,M::Float6
     function u3func(u::Float64)
         # push integration forward on three different quantities: Θ(u),Θ(u)/r^2(u),Θ(u)*vr(u)
 
-        th = ΘRpRaPlummer(u, rp, ra, bc, 1.0)#Ω₀)
+        th = ΘRpRaPlummer(u, rp, ra, bc, Ω₀)
 
         return (th,
                 th/(RFromURpRa(u, rp, ra, bc)^2),
@@ -297,4 +298,86 @@ function PlummerOmega12FromRpRa(rp::Float64,ra::Float64,bc::Float64=1.,M::Float6
     else
         return Ω1,Ω2
     end
+end
+
+
+
+function Sc(tE::Float64)
+    t1 = 1.0/(6.0*tE)
+    t2 = (1.0+54.0*tE^2)/(216.0*tE^3)
+    t3 = (1.0/(4.0*tE)) * sqrt(1.0+1.0/(27.0*tE^2))
+    return t1 + cbrt(t2+t3) + cbrt(t2-t3)
+end
+
+function tEta(s::Float64, tE::Float64)
+    return (s^2 - 1.0)*(1.0/s - tE)
+end
+
+function Lc(E::Float64,E0::Float64,L0::Float64)
+    tE = E/E0
+    if (tE == 1.0)
+        return 0.0
+    else
+        return L0 * sqrt(abs(2*tEta(Sc(tE),tE)))
+    end
+
+end
+
+function SpSaFromEL(E::Float64, L::Float64;bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
+    # Use bissection
+    # We know that 1 < sp < sc and sc < sa < E0/E for bound non-circular non-radial orbits
+    # upper bound should be E0/E + 1 in order to get a proper bracket
+    # should find some proper cutoff for quasi circular orbits
+
+
+    E0 = PlummerE0(bc,M,astronomicalG)
+    L0 = PlummerL0(bc,M,astronomicalG)
+
+
+    tE = E/E0
+    tL = L/L0
+
+#    println((E,L))
+
+    if (tE >= 0.0) # bound orbits
+        sc = Sc(tE)
+        if (L >= Lc(E,E0,L0)) # circular orbit (inequality to take care of small Float errors)
+            return sc, sc
+        elseif (L == 0.0) # radial orbit
+            return 1.0, 1.0/tE
+        else # arbitrary orbit
+            fct = (s -> tE*s^3 - s^2 + (0.5*tL^2-tE)*s + 1.0)
+            if (abs(fct(sc)) <= 10^(-10)) # quasi circular
+                return sc, sc
+            else # not quasi-circular
+
+                # find sp
+                if (abs(fct(1.0)) <= 10.0*eps(Float64))
+                    sp = 1.0
+                else
+                    sp = bisection(fct,1.0,sc)
+                end
+
+                #find sa
+                if (abs(fct(1.0/tE)) <= 10.0*eps(Float64))
+                    sa = 1.0/tE
+                else
+                    sa = bisection(fct,sc,1.0/tE+1)
+                end
+
+                return sp, sa
+            end
+        end
+    else # unbound orbits
+        if (L == 0.0) # radial orbits
+            return 1.0, Inf
+        else # arbitrary orbit
+            fct = (s -> tE*s^3 - s^2 + (0.5*tL^2-tE)*s + 1.0)
+            sp = bisection(fct,1.0,1.0/(0.5*tL^2-tE))
+            return sp, Inf
+
+        end
+    end
+
+
 end

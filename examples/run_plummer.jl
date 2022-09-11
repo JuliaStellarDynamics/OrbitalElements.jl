@@ -46,13 +46,19 @@ println("(a,e)=($a,$e)")
 
 
 # select an (a,e) value for the orbit
-a,e = 0.000001, 0.00
+a,e = 0.1, 0.5
 rp,ra = OrbitalElements.RpRafromAE(a,e)
 println("rp=$rp,ra=$ra")
 
 sp,sa = OrbitalElements.SpSaFromRpRa(rp,ra,bc)
+println("sp=$sp,sa=$sa")
+
 Eval,Lval = OrbitalElements.PlummerELfromSpSa(sp, sa, bc=bc ,M=M,astronomicalG=G)
 println("anomaly E=$Eval,L=$Lval")
+
+spo,sao = OrbitalElements.SpSaFromEL(Eval,Lval, bc=bc ,M=M,astronomicalG=G)
+println("sp=$spo,sa=$sao")
+
 
 Eval,Lval = OrbitalElements.ELFromAE(ψ,dψ,d2ψ,d3ψ,a,e)
 println("brute   E=$Eval,L=$Lval")
