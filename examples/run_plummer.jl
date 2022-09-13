@@ -46,17 +46,17 @@ println("(a,e)=($a,$e)")
 
 
 # select an (a,e) value for the orbit
-a,e = 0.1, 0.5
-rp,ra = OrbitalElements.RpRafromAE(a,e)
+a,e = 0.01, 0.5
+rp,ra = OrbitalElements.RpRaFromAE(a,e)
 println("rp=$rp,ra=$ra")
 
 sp,sa = OrbitalElements.SpSaFromRpRa(rp,ra,bc)
 println("sp=$sp,sa=$sa")
 
-Eval,Lval = OrbitalElements.PlummerELfromSpSa(sp, sa, bc=bc ,M=M,astronomicalG=G)
+Eval,Lval = OrbitalElements.PlummerELFromSpSa(sp, sa, bc=bc ,M=M,G=G)
 println("anomaly E=$Eval,L=$Lval")
 
-spo,sao = OrbitalElements.SpSaFromEL(Eval,Lval, bc=bc ,M=M,astronomicalG=G)
+spo,sao = OrbitalElements.SpSaFromEL(Eval,Lval, bc=bc ,M=M,G=G)
 println("sp=$spo,sa=$sao")
 
 
@@ -71,3 +71,12 @@ O1,O2,Jr = OrbitalElements.ComputeFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,action
 println("O1=$O1,O2=$O2,Jr=$Jr")
 O1,O2,Jr = OrbitalElements.PlummerOmega12FromRpRa(rp,ra,bc,M,G,action=true)
 println("O1=$O1,O2=$O2,Jr=$Jr")
+
+α,β = OrbitalElements.PlummerAlphaBetaFromRpRa(rp,ra,bc,M,G)
+println("α=$α,β=$β")
+
+
+dJrdE, dJrdL, d2JrdE2, d2JrdEL, d2JrdL2 = OrbitalElements.GradJrELWrap(Eval,Lval,bc=bc,M=M,G=G)
+
+Etest,Ltest = OrbitalElements.ELFromAlphaBeta(α,β,bc=bc,M=M,G=G)
+println("output  E=$Etest,L=$Ltest")

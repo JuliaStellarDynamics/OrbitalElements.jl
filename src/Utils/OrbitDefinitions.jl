@@ -13,12 +13,23 @@ function AEfromRpRa(rp::Float64,ra::Float64)
     return (rp+ra)/2,(ra-rp)/(rp+ra)
 end
 
+function AEFromRpRa(rp::Float64,ra::Float64)
+
+    return (rp+ra)/2,(ra-rp)/(rp+ra)
+end
+
 """RpRafromAE
 
 function to translate semi-major axis and eccentricity to pericentre and apocentre
 
 """
 function RpRafromAE(a::Float64,e::Float64)
+
+    return a*(1-e),a*(1+e)
+end
+
+
+function RpRaFromAE(a::Float64,e::Float64)
 
     return a*(1-e),a*(1+e)
 end
