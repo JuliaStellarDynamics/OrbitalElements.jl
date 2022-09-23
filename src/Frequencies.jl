@@ -82,6 +82,7 @@ function ComputeFrequenciesAE(ψ::Function,
 
     # define a numerical third derivative
     d3ψ(x::Float64) = (d2ψ(x+FDIFF)-d2ψ(x))/FDIFF
+
     # Nul fourth derivative
     d4ψ(x::Float64) = 0.
 
@@ -95,7 +96,7 @@ end
 #
 ########################################################################
 
-"""ComputeFrequenciesAEWithDeriv(ψ,dψ,d2ψa,e[,TOLECC,VERBOSE])
+"""ComputeFrequenciesAEWithDeriv(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e[,da,de,TOLECC,VERBOSE,NINT,EDGE])
 wrapper to select which type of frequency computation to perform, from (a,e), but DERIVATIVES
 """
 function ComputeFrequenciesAEWithDeriv(ψ::Function,
@@ -142,7 +143,7 @@ function ComputeFrequenciesAEWithDeriv(ψ::Function,
         return Ω1c,Ω2c,dΩ1da,dΩ2da,dΩ1de,dΩ2de
 end
 
-"""ComputeFrequenciesAEWithDeriv(ψ,dψ,d2ψa,e[,TOLECC,VERBOSE])
+"""ComputeFrequenciesAEWithDeriv(ψ,dψ,d2ψ,d3ψ,a,e[,da,de,TOLECC,VERBOSE,NINT,FDIFF,EDGE])
 wrapper to select which type of frequency computation to perform, from (a,e), but DERIVATIVES
 EXCEPT fourth derivative
 """
@@ -166,7 +167,7 @@ function ComputeFrequenciesAEWithDeriv(ψ::Function,
     return ComputeFrequenciesAEWithDeriv(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e;da=da,de=de,TOLECC=TOLECC,VERBOSE=VERBOSE,NINT=NINT,EDGE=EDGE)
 end
 
-"""ComputeFrequenciesAEWithDeriv(ψ,dψ,d2ψa,e[,TOLECC,VERBOSE])
+"""ComputeFrequenciesAEWithDeriv(ψ,dψ,d2ψ,a,e[,TOLECC,VERBOSE])
 wrapper to select which type of frequency computation to perform, from (a,e), but DERIVATIVES
 EXCEPT third derivative
 """
