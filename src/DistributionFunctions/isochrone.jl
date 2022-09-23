@@ -1,7 +1,7 @@
 """
 """
 function isochrone_Q_ROI(E::Float64,L::Float64,Ra::Float64,bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
-    scaleEnergy = isochrone_E0(bc,M,astronomicalG)
+    scaleEnergy = isochroneE0(bc,M,astronomicalG)
     Q = (E + L^(2)/(2.0*Ra^(2)))/scaleEnergy # Computing the Q parameter
     return Q # Output
 end
@@ -12,7 +12,7 @@ Saha distribution function
 ra is the anisotropy radius
 """
 function isochrone_Saha_DF(E::Float64,L::Float64,ra::Float64,bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
-    #scaleEnergy = isochrone_E0(bc,M,astronomicalG)
+    #scaleEnergy = isochroneE0(bc,M,astronomicalG)
 
     Q = isochrone_Q_ROI(E,L,ra,bc,M,astronomicalG)
     gamma = (bc/ra)^2
@@ -55,7 +55,7 @@ end
 jacobian for converting dF/dQ dQ/dE -> dF/dE
 """
 function isochrone_dQdE_ROI(E::Float64,L::Float64,Ra::Float64,bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
-    scaleEnergy = isochrone_E0(bc,M,astronomicalG)
+    scaleEnergy = isochroneE0(bc,M,astronomicalG)
     return 1.0/scaleEnergy # Output
 end
 
@@ -66,7 +66,7 @@ jacobian for converting dF/dQ dQ/dL -> dF/dL
 @IMPROVE, does this need an extra factor of bc?
 """
 function isochrone_dQdL_ROI(E::Float64,L::Float64,Ra::Float64,bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
-    scaleEnergy = isochrone_E0(bc,M,astronomicalG)
+    scaleEnergy = isochroneE0(bc,M,astronomicalG)
     return (L)/(scaleEnergy*Ra^(2)) # Output
 end
 
@@ -77,7 +77,7 @@ the isotropic DF
 """
 function isochrone_isotropic_DF(E::Float64,bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
     # get the relevant scale energy
-    scaleEnergy = isochrone_E0(bc,M,astronomicalG)
+    scaleEnergy = isochroneE0(bc,M,astronomicalG)
 
     # rescale dimensionless energy to goes between 0 and 1/2
     mE = E/scaleEnergy
@@ -95,7 +95,7 @@ the isotropic DF derivative w.r.t. E
 function isochrone_isotropic_dDFdE(E::Float64,bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
 
     # get the relevant scale energy
-    scaleEnergy = isochrone_E0(bc,M,astronomicalG)
+    scaleEnergy = isochroneE0(bc,M,astronomicalG)
 
     # rescale dimensionless energy to goes between 0 and 1/2
     mE = E/scaleEnergy

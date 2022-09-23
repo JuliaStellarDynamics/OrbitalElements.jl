@@ -293,8 +293,8 @@ end
 Theta function for the isochrone model
 """
 function isochronedrduINVvrfromrpra(rp::Float64,ra::Float64,u::Float64,bc::Float64=1.,Omega0::Float64=1.)
-    Sigma, Delta = (ra+rp)*0.5, (ra-rp)*0.5 # Used for the mapping from u
-    r = Sigma + Delta*henonf(u) # Current value of the radius
+    a,e = AEFromRpRa(rp,ra)
+    r = ru(u,a,e)
     xp, xa, xr = rp/bc, ra/bc, r/bc # Rescaled pericentre, apocentre, and radius
     sqxp, sqxa, sqxr = sqrt(1.0+xp^(2)), sqrt(1.0+xa^(2)), sqrt(1.0+xr^(2)) # Pre-computing the values of sqrt(1+xp^2), sqrt(1+xa^2), and sqrt(1+xr^(2))
     #####
@@ -335,10 +335,8 @@ function ThetaRpRaIsochrone(rp::Float64,ra::Float64,
                             bc::Float64=1.0,Ω₀::Float64=1.0)::Float64
 
     # compute helper quantities: used for the mapping from u
-    Sigma, Delta = (ra+rp)*0.5, (ra-rp)*0.5
-
-    # Current value of the radius
-    r = Sigma + Delta*henonf(u)
+    a,e = AEFromRpRa(rp,ra)
+    r = ru(u,a,e)
 
     # rescaled pericentre, apocentre, and radius
     xp, xa, xr = rp/bc, ra/bc, r/bc
