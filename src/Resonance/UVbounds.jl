@@ -12,11 +12,11 @@ Fouvry & Prunet B3
     - ω is dimensionless, that is, rescaled by Ω₀ already.
 """
 function Getϖ(ω::Complex{Float64},
-                   n1::Int64,n2::Int64,
-                   dψ::Function,d2ψ::Function;
-                   Ω₀::Float64=1.,
-                   rmin::Float64=1.e-10,
-                   rmax::Float64=1000.)
+              n1::Int64,n2::Int64,
+              dψ::Function,d2ψ::Function;
+              Ω₀::Float64=1.,
+              rmin::Float64=1.e-10,
+              rmax::Float64=1000.)
 
     ωmin, ωmax = Findωminωmax(n1,n2,dψ,d2ψ;Ω₀=Ω₀,rmin=rmin,rmax=rmax)
 
@@ -49,7 +49,8 @@ for a given resonance, find the maximum frequencies
 """
 function Findωminωmax(n1::Int64,n2::Int64,
                       dψ::Function,
-                      d2ψ::Function;
+                      d2ψ::Function,
+                      αmin::Float64,αmax::Float64;
                       Ω₀::Float64=1.,
                       rmin::Float64=1.0e-8,
                       rmax::Float64=1.0e5)
@@ -57,14 +58,8 @@ function Findωminωmax(n1::Int64,n2::Int64,
     # define the function to extremise
     ωncirc(x) = n1*Ω1circular(dψ,d2ψ,x)/Ω₀ + n2*Ω2circular(dψ,d2ψ,x)/Ω₀
 
-    αmin, αmax = αminmax(dψ,d2ψ,rmin,rmax,Ω₀=Ω₀)
-
     # If rmax is infinite, bisection search on a bounded interval
-    if (rmax == Inf)
-        xext = ExtremiseFunctionNulCure(ωncirc,rmin,1.e8)
-    else
-        xext = ExtremiseFunctionNulCure(ωncirc,rmin,rmax)
-    end
+    xext = (rmax == Inf) ? ExtremiseFunctionNulCure(ωncirc,rmin,1.e8) : ExtremiseFunctionNulCure(ωncirc,rmin,rmax)
 
     # The extreme values of n.Ω is either :
     #   - on the radial line, at α = αmin or αmax
@@ -72,6 +67,19 @@ function Findωminωmax(n1::Int64,n2::Int64,
     ωmin,ωmax = extrema([ωncirc(xext), ωncirc(rmin), ωncirc(rmax), (n1+0.5*n2)*αmin, (n1+0.5*n2)*αmax])
     return ωmin,ωmax
 end
+
+function Findωminωmax(n1::Int64,n2::Int64,
+                      dψ::Function,
+                      d2ψ::Function;
+                      Ω₀::Float64=1.,
+                      rmin::Float64=1.0e-8,
+                      rmax::Float64=1.0e5)
+
+    αmin, αmax = αminmax(dψ,d2ψ,rmin,rmax,Ω₀=Ω₀)
+
+    return Findωminωmax(n1,n2,dψ,d2ψ,αmin,αmax,Ω₀=Ω₀,rmin=rmin,rmax=rmax)
+end
+
 
 """αminmax(dψ,d2ψ,rmin,rmax[, Ω₀])
 maximal and minimal considered radial frequencies (rescaled)
@@ -91,13 +99,13 @@ function αminmax(dψ::Function,
     return Ω1circular(dψ,d2ψ,rmax)/Ω₀, Ω1circular(dψ,d2ψ,rmin)/Ω₀
 end
 
+
+
 ########################################################################
 #
 # (u,v) mapping : v boundary (at given u, n1, n2)
 #
 ########################################################################
-
-
 
 """FindVminVmax(u,ωmin,ωmax,n₁,n₂,vbound,βc)
 for a given resonance, at a specific value of u, find the v coordinate boundaries.
@@ -145,14 +153,10 @@ function FindVminVmax(u::Float64,
         # (B10) Fouvry & Prunet : 3rd inequality
         #####
         radon = n1+0.5*n2 # Radial orbit equivalent n
-        if (n2*hval > 0.)
-            if (radon*hval > 0.)
-                vmax = min(vmax, hval/radon) # Updating vmax
-            end
-        elseif (n2*hval < 0.)
-            if     (radon*hval > 0.)
-                vmin = max(vmin, hval/radon) # Updating vmin
-            end
+        if (n2*hval > 0.) && (radon*hval > 0.)
+            vmax = min(vmax, hval/radon) # Updating vmax
+        elseif (n2*hval < 0.) && (radon*hval > 0.)
+            vmin = max(vmin, hval/radon) # Updating vmin
         end
 
         #####
@@ -178,11 +182,7 @@ function FindVminVmax(u::Float64,
                 locrmin, locrmax = min(rmin,locrmin), max(rmax,locrmax)
                 vbound = FindVbound(n1,n2,dψ,d2ψ,Ω₀=Ω₀,rmin=locrmin,rmax=locrmax)
 
-                if (vbound != Ω1circular(dψ,d2ψ,locrmin)/Ω₀) && (vbound != Ω1circular(dψ,d2ψ,locrmin)/Ω₀)
-                    branch = 2
-                else
-                    branch = 1
-                end
+                branch = ((vbound != Ω1circular(dψ,d2ψ,locrmin)/Ω₀) && (vbound != Ω1circular(dψ,d2ψ,locrmin)/Ω₀)) ? 2 : 1
             else
                 branch = 1
             end
@@ -221,7 +221,9 @@ end
 return h_n(u) = ω_n(u), a helper quantity
 Fouvry & Prunet B8
 """
-function HUFunc(u::Float64,ωmin::Float64,ωmax::Float64)
+function HUFunc(u::Float64,
+                ωmin::Float64,ωmax::Float64)
+
     return 0.5*(ωmax+ωmin + u*(ωmax-ωmin))
 end
 
@@ -240,11 +242,7 @@ function FindVbound(n1::Int64,n2::Int64,
     ωncirc(x) = n1*Ω1circular(dψ,d2ψ,x) + n2*Ω2circular(dψ,d2ψ,x)
 
     # If rmax is infinite, bisection search on a bounded interval
-    if (rmax == Inf)
-        xext = ExtremiseFunctionNulCure(ωncirc,rmin,1.e8)
-    else
-        xext = ExtremiseFunctionNulCure(ωncirc,rmin,rmax)
-    end
+    xext = (rmax == Inf) ? ExtremiseFunctionNulCure(ωncirc,rmin,1.e8) : ExtremiseFunctionNulCure(ωncirc,rmin,rmax)
 
     return Ω1circular(dψ,d2ψ,xext)/Ω₀
 end

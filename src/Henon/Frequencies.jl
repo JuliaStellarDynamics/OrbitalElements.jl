@@ -30,7 +30,7 @@ function HenonΘFrequenciesAE(ψ::Function,
 
         if action
             u1func(u::Float64)::Float64 = drdu(u,a,e)*Vrad(ψ,dψ,d2ψ,d3ψ,u,a,e)
-            accum = UnitarySimpsonIntegration(u1func,K_O=NINT)
+            accum = UnitarySimpsonIntegration(u1func,K=NINT)
             actionj   = (1/pi)*accum
             return Ω1,Ω2,actionj
         else
@@ -56,7 +56,7 @@ function HenonΘFrequenciesAE(ψ::Function,
 
         end
 
-        accum = UnitarySimpsonIntegration(u3func,K_O=NINT)
+        accum = UnitarySimpsonIntegration(u3func,K=NINT)
 
         #return the values
         Ω1inv = (1/pi)*accum[1]
@@ -151,7 +151,7 @@ function DHenonΘFrequenciesAE(ψ::Function,
 
         end
 
-        accum1,accum2,accum3,accum4,accum5,accum6,accum7,accum8 = UnitarySimpsonIntegration(u8func,K_O=NINT)
+        accum1,accum2,accum3,accum4,accum5,accum6,accum7,accum8 = UnitarySimpsonIntegration(u8func,K=NINT)
 
         #return the values
         Ω1inv = (1/pi)*accum1
