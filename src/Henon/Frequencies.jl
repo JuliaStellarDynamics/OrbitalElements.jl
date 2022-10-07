@@ -19,9 +19,7 @@ function HenonΘFrequenciesAE(ψ::Function,
 
     if e<TOLECC
 
-        if VERBOSE > 1
-            println("OrbitalElements.Henon.Frequencies.HenonΘFrequenciesAE: using circular approximation for a=$a, e=$e.")
-        end
+        (VERBOSE > 1) && println("OrbitalElements.Henon.Frequencies.HenonΘFrequenciesAE: using circular approximation for a=$a, e=$e.")
 
         # drop into circular frequency expansion calculations:
         Ω1 = Ω1circular(dψ,d2ψ,d3ψ,d4ψ,a,e)
@@ -217,4 +215,17 @@ function DHenonΘFreqRatiosAE(ψ::Function,
 
     # return values: no option for action right now, but maybe?
     return α,β,∂α∂a,∂α∂e,∂β∂a,∂β∂e
+end
+
+function HenonJFromAE(ψ::Function,
+                      dψ::Function,
+                      d2ψ::Function,
+                      d3ψ::Function,
+                      a::Float64,
+                      e::Float64;
+                      NINT::Int64=32)
+
+    u1func(u::Float64)::Float64 = drdu(u,a,e)*Vrad(ψ,dψ,d2ψ,d3ψ,u,a,e)
+
+    return (1/pi)*UnitarySimpsonIntegration(u1func,K=NINT)
 end

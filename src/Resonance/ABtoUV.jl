@@ -45,11 +45,7 @@ function UVFromαβ(α::Float64,β::Float64,
     u = (2*ωval - ωmax - ωmin)/(ωmax-ωmin)
 
     # Equation B4
-    if (n2==0)
-        v = β
-    else
-        v = α
-    end
+    v = (n2==0) ? β : α
 
     return u,v
 end
@@ -57,12 +53,9 @@ end
 """
 using the definitions for (α, β) and (u,v), compute the Jacobian.
 @ATTENTION, to match eq. B6, this has the 2/(ωmax-ωmin) term already absorbed into it. therefore, not formally the Jacobian, but adds the dimensional removal.
+@ATTENTION, hypothesis ωmin < ωmax
 """
 function JacαβToUV(n1::Int64,n2::Int64,ωmin::Float64,ωmax::Float64,v::Float64)
 
-    if (n2==0)
-        return (2.0/(ωmax-ωmin))*abs((ωmax-ωmin) * (1/(2n1)))
-    else
-        return (2.0/(ωmax-ωmin))*abs((ωmax-ωmin) * (1/(2n2*v)))
-    end
+    return (n2==0) ? 1.0 / abs(n1) : 1.0 / abs(n2*v)
 end
