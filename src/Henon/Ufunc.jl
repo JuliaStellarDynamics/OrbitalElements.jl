@@ -244,7 +244,7 @@ function ΘAEdade(ψ::Function,
                      d3f::Function=henon_d3f,
                      d4f::Function=henon_d4f,
                      da::Float64=1.0e-8,
-                     de::Float64=1.0e-8)::Floa64
+                     de::Float64=1.0e-8)::Float64
 
     # derivative w.r.t. semimajor axis: always safe
     thHa = ΘAE(ψ,dψ,d2ψ,d3ψ,u,a+da,e,EDGE=EDGE,TOLECC=TOLECC,f=f,df=df,d2f=d2f,d3f=d3f,d4f=d4f)

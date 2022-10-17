@@ -14,7 +14,7 @@ d2ψ(r::Float64)::Float64  = OrbitalElements.d2ψIsochrone(r,bc,M,G)
 d3ψ(r::Float64)::Float64  = OrbitalElements.d3ψIsochrone(r,bc,M,G)
 d4ψ(r::Float64)::Float64  = OrbitalElements.d4ψIsochrone(r,bc,M,G)
 
-Ω₀ = OrbitalElements.Omega0Isochrone(bc,M,G)
+Ω₀ = OrbitalElements.Ω₀Isochrone(bc,M,G)
 
 x = -1.0
 n1,n2 = 1,2
@@ -46,11 +46,11 @@ println("truth Ω₁=$Ω₁e,Ω₂=$Ω₂e")
 Ω₁r,Ω₂r,Jrr = OrbitalElements.ComputeFrequenciesAE(ψ,dψ,d2ψ,a,e,NINT=512,action=true)
 println("oldae O1=$Ω₁r O2=$Ω₂r Jr=$Jrr")
 
-#@time Ω₁c,Ω₂c,Jrc = OrbitalElements.HenonThetaFrequenciesRpRa(ψ,dψ,d2ψ,rp,ra,NINT=64,action=true)
-#println("theta O1=$Ω₁c O2=$Ω₂c Jr=$Jrc")
+#@time Ω₁c,Ω₂c,Jrc = OrbitalElements.HenonΘFrequenciesRpRa(ψ,dψ,d2ψ,rp,ra,NINT=64,action=true)
+#println("Θ O1=$Ω₁c O2=$Ω₂c Jr=$Jrc")
 
-@time Ω₁c2,Ω₂c2,Jrc2 = OrbitalElements.HenonThetaFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,NINT=256,action=true)
-println("theta O1=$Ω₁c2 O2=$Ω₂c2 Jr=$Jrc2")
+@time Ω₁c2,Ω₂c2,Jrc2 = OrbitalElements.HenonΘFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,NINT=256,action=true)
+println("Θ O1=$Ω₁c2 O2=$Ω₂c2 Jr=$Jrc2")
 
 @time Ec,Lc,dEda,dEde,dLda,dLde = OrbitalElements.dELFromAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e)
 Em,Lm = OrbitalElements.IsochroneELFromAE(a,e,bc,M,G)
@@ -80,7 +80,7 @@ println("TJacobian(EL,ab):$J_EL_abT")
 f1c,f2c,df1da,df2da,df1de,df2de = OrbitalElements.ComputeFrequenciesAEWithDeriv(ψ,dψ,d2ψ,d3ψ,a,e,NINT=512,da=1.e-6,de=1.0e-6)
 
 
-f1h,f2h,df1dah,df1deh,df2dah,df2deh = OrbitalElements.DHenonThetaFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,NINT=128,EDGE=0.2)
+f1h,f2h,df1dah,df1deh,df2dah,df2deh = OrbitalElements.DHenonΘFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,NINT=128,EDGE=0.2)
 
 
 # check isochrone numerical diff for frequencies
@@ -97,7 +97,7 @@ df1da2,df1de2,df2da2,df2de2 = (f1a-f1m)/da,(f1e-f1m)/de,(f2a-f2m)/da,(f2e-f2m)/d
 
 println("Compare derivatives:")
 println("NDiff : df1da=$df1da,df2da=$df2da,df1de=$df1de,df2de=$df2de")
-println("DTheta: df1da=$df1dah,df2da=$df2dah,df1de=$df1deh,df2de=$df2deh")
+println("DΘ: df1da=$df1dah,df2da=$df2dah,df1de=$df1deh,df2de=$df2deh")
 println("Truth : df1da=$df1da2,df2da=$df2da2,df1de=$df1de2,df2de=$df2de2")
 
 
