@@ -234,7 +234,7 @@ function ComputeFrequenciesAEWithDeriv(ψ::Function,
                                        da::Float64=0.0001,
                                        de::Float64=0.0001,
                                        TOLECC::Float64=ELTOLECC,
-                                       VERBOSE::Int64=0,
+                                       #VERBOSE::Int64=0,
                                        NINT::Int64=32,
                                        FDIFF::Float64=1.e-8,
                                        EDGE::Float64=0.01)
@@ -242,7 +242,8 @@ function ComputeFrequenciesAEWithDeriv(ψ::Function,
     # define a numerical fourth derivative
     d4ψ(x::Float64) = (d3ψ(x+FDIFF)-d3ψ(x))/FDIFF
 
-    return ComputeFrequenciesAEWithDeriv(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e;da=da,de=de,TOLECC=TOLECC,VERBOSE=VERBOSE,NINT=NINT,EDGE=EDGE)
+    return ComputeFrequenciesAEWithDeriv(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e;da,de,TOLECC,NINT,EDGE)
+
 end
 
 """ComputeFrequenciesAEWithDeriv(ψ,dψ,d2ψ,a,e[,TOLECC,VERBOSE])
@@ -267,7 +268,7 @@ function ComputeFrequenciesAEWithDeriv(ψ::Function,
     # Nul fourth derivative
     d4ψ(x::Float64) = 0.
 
-    return ComputeFrequenciesAEWithDeriv(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e;da=da,de=de,TOLECC=TOLECC,VERBOSE=VERBOSE,NINT=NINT,EDGE=EDGE)
+    return ComputeFrequenciesAEWithDeriv(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,da,de,TOLECC,NINT,EDGE)
 end
 
 
@@ -298,8 +299,7 @@ function ComputeAEFromFrequencies(ψ::Function,
 
         a,e,iter,finaltol = AEFromΩ1Ω2Brute(Ω1,Ω2,ψ,dψ,d2ψ,d3ψ;
                                                     eps=eps,ITERMAX=maxiter,
-                                                    TOLECC=TOLECC,TOLA=TOLA,da=da,de=de,
-                                                    VERBOSE=VERBOSE)
+                                                    TOLECC=TOLECC,TOLA=TOLA,da=da,de=de)
 
         return a,e
 end
@@ -383,6 +383,8 @@ end
 @IMPROVE add massaging parameters for numerical derivatives
 @IMPROVE fix boundary values when using limited development
 @IMPROVE noisy at the boundaries
+
+@IMPROVE, give this more derivatives!
 """
 function JacELToαβAE(a::Float64,
                             e::Float64,
