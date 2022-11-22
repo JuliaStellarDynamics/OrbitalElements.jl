@@ -25,21 +25,46 @@ include("Utils/NumericalInversion.jl")
 """ComputeFrequenciesAE(ψ,dψ,d2ψ,d3ψ,a,e[,TOLECC,VERBOSE])
 wrapper to select which type of frequency computation to perform, from (a,e)
 """
-function ComputeFrequenciesAE(ψ::Function,
+@inline function ComputeFrequenciesAE(ψ::Function,
                               dψ::Function,
                               d2ψ::Function,
                               d3ψ::Function,
                               d4ψ::Function,
-                              a::Float64,e::Float64;
+                              a::Float64,
+                              e::Float64,
+                              action::Bool,
+                              TOLECC::Float64,
+                              #VERBOSE::Int64=0,
+                              NINT::Int64,
+                              EDGE::Float64,
+                              TOLA::Float64)
+
+    if action
+        return HenonΘJFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e;action=action,TOLECC=TOLECC,NINT=NINT,EDGE=EDGE)
+
+    else
+        return HenonΘFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,TOLECC,NINT,EDGE)
+
+    end
+
+end
+
+@inline function ComputeFrequenciesAE(ψ::Function,
+                              dψ::Function,
+                              d2ψ::Function,
+                              d3ψ::Function,
+                              d4ψ::Function,
+                              a::Float64,
+                              e::Float64;
                               action::Bool=false,
                               TOLECC::Float64=0.001,
-                              VERBOSE::Int64=0,
+                              #VERBOSE::Int64=0,
                               NINT::Int64=32,
                               EDGE::Float64=0.01,
                               TOLA::Float64=0.001)
 
 
-    return HenonΘFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e;action=action,TOLECC=TOLECC,VERBOSE=VERBOSE,NINT=NINT,EDGE=EDGE)
+    return ComputeFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,action,TOLECC,NINT,EDGE,TOLA)
 
 end
 
@@ -54,15 +79,15 @@ function ComputeFrequenciesAE(ψ::Function,
                               a::Float64,e::Float64;
                               action::Bool=false,
                               TOLECC::Float64=0.001,
-                              VERBOSE::Int64=0,
+                              #VERBOSE::Int64=0,
                               NINT::Int64=32,
                               EDGE::Float64=0.01,
                               FDIFF::Float64=1.e-8)
 
     # define a numerical fourth derivative
-    d4ψ(x::Float64) = (d3ψ(x+FDIFF)-d3ψ(x))/FDIFF
+    @inline d4ψ(x::Float64) = (d3ψ(x+FDIFF)-d3ψ(x))/FDIFF
 
-    return ComputeFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e;action=action,TOLECC=TOLECC,VERBOSE=VERBOSE,NINT=NINT,EDGE=EDGE)
+    return ComputeFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e;action=action,TOLECC=TOLECC,NINT=NINT,EDGE=EDGE)
 end
 
 """ComputeFrequenciesAE(ψ,dψ,d2ψ,a,e[,TOLECC,VERBOSE])
@@ -75,18 +100,18 @@ function ComputeFrequenciesAE(ψ::Function,
                               a::Float64,e::Float64;
                               action::Bool=false,
                               TOLECC::Float64=0.001,
-                              VERBOSE::Int64=0,
+                              #VERBOSE::Int64=0,
                               NINT::Int64=32,
                               EDGE::Float64=0.01,
                               FDIFF::Float64=1.e-8)
 
     # define a numerical third derivative
-    d3ψ(x::Float64) = (d2ψ(x+FDIFF)-d2ψ(x))/FDIFF
+    @inline d3ψ(x::Float64) = (d2ψ(x+FDIFF)-d2ψ(x))/FDIFF
 
     # Nul fourth derivative
-    d4ψ(x::Float64) = 0.
+    @inline d4ψ(x::Float64) = 0.
 
-    return ComputeFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e;action=action,TOLECC=TOLECC,VERBOSE=VERBOSE,NINT=NINT,EDGE=EDGE)
+    return ComputeFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e;action=action,TOLECC=TOLECC,NINT=NINT,EDGE=EDGE)
 end
 
 
@@ -98,8 +123,59 @@ end
 
 """ComputeFrequenciesAEWithDeriv(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e[,da,de,TOLECC,VERBOSE,NINT,EDGE])
 wrapper to select which type of frequency computation to perform, from (a,e), but DERIVATIVES
+
+Presently Henon-specific
 """
-function ComputeFrequenciesAEWithDeriv(ψ::Function,
+@inline function ComputeFrequenciesAEWithDeriv(ψ::Function,
+                                       dψ::Function,
+                                       d2ψ::Function,
+                                       d3ψ::Function,
+                                       d4ψ::Function,
+                                       a::Float64,
+                                       e::Float64,
+                                       da::Float64,
+                                       de::Float64,
+                                       TOLECC::Float64,
+                                       #VERBOSE::Int64=0,
+                                       NINT::Int64,
+                                       EDGE::Float64)::Tuple{Float64,Float64,Float64,Float64,Float64,Float64}
+
+        # first, check for values that need to be expanded
+
+        # grid is structured like
+        # (Ω1h,Ω2h) [+da]
+        #    ^
+        # (Ω1c,Ω2c)-> (Ω1r,Ω2r) [+de]
+
+        # @IMPROVE watch out for close to TOLECC, will fail across boundary
+        #Ω1c,Ω2c = ComputeFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e;action=false,TOLECC=TOLECC,VERBOSE=VERBOSE,NINT=NINT,EDGE=EDGE)
+        Ω1c,Ω2c = HenonΘFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,TOLECC,NINT,EDGE)
+
+        # the offset in a
+        #Ω1h,Ω2h = ComputeFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a+da,e;action=false,TOLECC=TOLECC,VERBOSE=VERBOSE,NINT=NINT,EDGE=EDGE)
+        a2 = a+da
+        Ω1h,Ω2h = HenonΘFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a2,e,TOLECC,NINT,EDGE)
+        # the offset in e
+        # if this is already a radial orbit, don't go to super radial
+        e2 = e+de
+        if e2 > 1.0
+            de *= -1.0
+            e2 = e+de
+        end
+
+        #Ω1r,Ω2r = ComputeFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e+de;action=false,TOLECC=TOLECC,VERBOSE=VERBOSE,NINT=NINT,EDGE=EDGE)
+        Ω1r,Ω2r = HenonΘFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e2,TOLECC,NINT,EDGE)
+
+        dΩ1da = (Ω1h-Ω1c)/da
+        dΩ2da = (Ω2h-Ω2c)/da
+
+        dΩ1de = (Ω1r-Ω1c)/de
+        dΩ2de = (Ω2r-Ω2c)/de
+
+        return Ω1c,Ω2c,dΩ1da,dΩ2da,dΩ1de,dΩ2de
+end
+
+@inline function ComputeFrequenciesAEWithDeriv(ψ::Function,
                                        dψ::Function,
                                        d2ψ::Function,
                                        d3ψ::Function,
@@ -109,7 +185,7 @@ function ComputeFrequenciesAEWithDeriv(ψ::Function,
                                        da::Float64=0.0001,
                                        de::Float64=0.0001,
                                        TOLECC::Float64=ELTOLECC,
-                                       VERBOSE::Int64=0,
+                                       #VERBOSE::Int64=0,
                                        NINT::Int64=32,
                                        EDGE::Float64=0.01)
 
@@ -121,18 +197,20 @@ function ComputeFrequenciesAEWithDeriv(ψ::Function,
         # (Ω1c,Ω2c)-> (Ω1r,Ω2r) [+de]
 
         # @IMPROVE watch out for close to TOLECC, will fail across boundary
-        Ω1c,Ω2c = ComputeFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e;action=false,TOLECC=TOLECC,VERBOSE=VERBOSE,NINT=NINT,EDGE=EDGE)
+        #Ω1c,Ω2c = ComputeFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e;action=false,TOLECC=TOLECC,VERBOSE=VERBOSE,NINT=NINT,EDGE=EDGE)
+        Ω1c,Ω2c = HenonΘFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,TOLECC,NINT,EDGE)
 
         # the offset in a
-        Ω1h,Ω2h = ComputeFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a+da,e;action=false,TOLECC=TOLECC,VERBOSE=VERBOSE,NINT=NINT,EDGE=EDGE)
-
+        #Ω1h,Ω2h = ComputeFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a+da,e;action=false,TOLECC=TOLECC,VERBOSE=VERBOSE,NINT=NINT,EDGE=EDGE)
+        Ω1h,Ω2h = HenonΘFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a+da,e,TOLECC,NINT,EDGE)
         # the offset in e
         # if this is already a radial orbit, don't go to super radial
         if e+de > 1.0
             de *= -1.0
         end
 
-        Ω1r,Ω2r = ComputeFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e+de;action=false,TOLECC=TOLECC,VERBOSE=VERBOSE,NINT=NINT,EDGE=EDGE)
+        #Ω1r,Ω2r = ComputeFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e+de;action=false,TOLECC=TOLECC,VERBOSE=VERBOSE,NINT=NINT,EDGE=EDGE)
+        Ω1r,Ω2r = HenonΘFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e+de,TOLECC,NINT,EDGE)
 
         dΩ1da = (Ω1h-Ω1c)/da
         dΩ2da = (Ω2h-Ω2c)/da

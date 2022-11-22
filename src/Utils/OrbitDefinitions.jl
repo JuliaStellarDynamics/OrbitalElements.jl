@@ -8,12 +8,12 @@ basic orbit transformations
 function to translate pericentre and apocentre to semi-major axis and eccentricity
 
 """
-function AEfromRpRa(rp::Float64,ra::Float64)
+function AEfromRpRa(rp::Float64,ra::Float64)::Tuple{Float64,Float64}
 
     return (rp+ra)/2,(ra-rp)/(rp+ra)
 end
 
-function AEFromRpRa(rp::Float64,ra::Float64)
+function AEFromRpRa(rp::Float64,ra::Float64)::Tuple{Float64,Float64}
 
     return (rp+ra)/2,(ra-rp)/(rp+ra)
 end
@@ -23,13 +23,13 @@ end
 function to translate semi-major axis and eccentricity to pericentre and apocentre
 
 """
-function RpRafromAE(a::Float64,e::Float64)
+function RpRafromAE(a::Float64,e::Float64)::Tuple{Float64,Float64}
 
     return a*(1-e),a*(1+e)
 end
 
 
-function RpRaFromAE(a::Float64,e::Float64)
+function RpRaFromAE(a::Float64,e::Float64)::Tuple{Float64,Float64}
 
     return a*(1-e),a*(1+e)
 end
@@ -41,7 +41,7 @@ compute the energy of a circular orbit at some radius
 must define the potential and potential derivative a priori
 
 """
-function Ecirc(ψ::Function,dψ::Function,r::Float64)
+function Ecirc(ψ::Function,dψ::Function,r::Float64)::Float64
 
     return  ψ(r) + 0.5*r*dψ(r)
 end
@@ -56,7 +56,7 @@ end
 vr, radial velocity for computing action
 as a function of (a,e)
 """
-function Vrad(ψ::Function,
+@inline function Vrad(ψ::Function,
               dψ::Function,
               d2ψ::Function,
               d3ψ::Function,
@@ -64,9 +64,9 @@ function Vrad(ψ::Function,
               a::Float64,
               e::Float64;
               TOLECC::Float64=ELTOLECC,
-              fun::Function=henon_f)
+              fun::Function=henon_f)::Float64
 
-    E, L = ELFromAE(ψ,dψ,d2ψ,d3ψ,a,e;TOLECC=TOLECC)
+    E, L = ELFromAE(ψ,dψ,d2ψ,d3ψ,a,e,TOLECC)
 
     r = ru(u,a,e;fun=fun)
 

@@ -20,13 +20,13 @@ Strategies:
 energy as a function of (a,e) for a given potential ψ (and its derivatives)
 INCLUDING third derivative of the potential
 """
-function EFromAE(ψ::Function,
+@inline function EFromAE(ψ::Function,
                  dψ::Function,
                  d2ψ::Function,
                  d3ψ::Function,
                  a::Float64,
                  e::Float64;
-                 TOLECC::Float64=ELTOLECC)
+                 TOLECC::Float64=ELTOLECC)::Float64
 
     if e<TOLECC
         # switch to the expanded case
@@ -42,13 +42,13 @@ end
 """
 angular momentum as a function of (a,e) for a given potenial ψ (and its derivatives)
 """
-function LFromAE(ψ::Function,
+@inline function LFromAE(ψ::Function,
                  dψ::Function,
                  d2ψ::Function,
                  d3ψ::Function,
                  a::Float64,
                  e::Float64;
-                 TOLECC::Float64=ELTOLECC)
+                 TOLECC::Float64=ELTOLECC)::Float64
 
     if e<TOLECC
         # switch to the expanded case
@@ -64,19 +64,52 @@ end
 """
 combined energy + angular momentum as a function of (a,e) for a given potenial ψ (and its derivatives)
 """
-function ELFromAE(ψ::Function,
+@inline function ELFromAE(ψ::Function,
                   dψ::Function,
                   d2ψ::Function,
                   d3ψ::Function,
                   a::Float64,
                   e::Float64;
-                  TOLECC::Float64=ELTOLECC)
+                  TOLECC::Float64=ELTOLECC)::Tuple{Float64,Float64}
 
-    E = EFromAE(ψ,dψ,d2ψ,d3ψ,a,e;TOLECC=TOLECC)
-    L = LFromAE(ψ,dψ,d2ψ,d3ψ,a,e;TOLECC=TOLECC)
+    #E = EFromAE(ψ,dψ,d2ψ,d3ψ,a,e;TOLECC=TOLECC)
+    #L = LFromAE(ψ,dψ,d2ψ,d3ψ,a,e;TOLECC=TOLECC)
 
-    return E, L
+    if e<TOLECC
+        # switch to the expanded case
+        return EcircExpansion(ψ,dψ,d2ψ,d3ψ,a,e),LcircExpansion(ψ,dψ,d2ψ,d3ψ,a,e)
+    elseif (e == 1.) # up to numerical precision
+        return Erad(ψ,a),0.0
+    else
+        # the analytic version of the angular momentum
+        return ((1+e)^(2)*ψ(a*(1+e)) - (1-e)^(2)*ψ(a*(1-e))) / (4e),a * (1-(e)^(2)) * sqrt( (ψ(a*(1+e)) - ψ(a*(1-e))) / (2e) )
+    end
+
+    #return E, L
 end
+
+# make a definition with TOLECC specified, for speed
+@inline function ELFromAE(ψ::Function,
+                          dψ::Function,
+                          d2ψ::Function,
+                          d3ψ::Function,
+                          a::Float64,
+                          e::Float64,
+                          TOLECC::Float64)::Tuple{Float64,Float64}
+
+    if e<TOLECC
+        # switch to the expanded case
+        return EcircExpansion(ψ,dψ,d2ψ,d3ψ,a,e),LcircExpansion(ψ,dψ,d2ψ,d3ψ,a,e)
+    elseif (e == 1.) # up to numerical precision
+        return Erad(ψ,a),0.0
+    else
+        # the analytic version of the angular momentum
+        return ((1+e)^(2)*ψ(a*(1+e)) - (1-e)^(2)*ψ(a*(1-e))) / (4e),a * (1-(e)^(2)) * sqrt( (ψ(a*(1+e)) - ψ(a*(1-e))) / (2e) )
+    end
+
+    #return E, L
+end
+
 
 ########################################################################
 #
@@ -85,8 +118,8 @@ end
 ########################################################################
 
 function Erad(ψ::Function,
-              a::Float64)
-    
+              a::Float64)::Float64
+
     return ψ(2*a)
 end
 
@@ -104,7 +137,7 @@ function EcircExpansion(ψ::Function,
                         d2ψ::Function,
                         d3ψ::Function,
                         a::Float64,
-                        e::Float64)
+                        e::Float64)::Float64
 
     # compute the Taylor expansion of E
     return (0.5*a*dψ(a) + ψ(a)) + (0.5*a*dψ(a) + 0.5*(a)^(2)*d2ψ(a) + (a)^(3)*d3ψ(a)/12) * (e)^(2)
@@ -113,11 +146,11 @@ end
 """
 Coefficients of the second-order expansion of angular momentum equation near a circular orbit
 """
-function Lcirc2ndorderExpansionCoefs(ψ::Function,
+@inline function Lcirc2ndorderExpansionCoefs(ψ::Function,
                             dψ::Function,
                             d2ψ::Function,
                             d3ψ::Function,
-                            a::Float64)
+                            a::Float64)::Tuple{Float64,Float64,Float64}
 
     Lcirc = (sqrt(a))^(3)*sqrt(dψ(a))
     return Lcirc, 0., ((a)^(5)*d3ψ(a)/(12*Lcirc) - Lcirc)
@@ -131,7 +164,7 @@ function LcircExpansion(ψ::Function,
                         d2ψ::Function,
                         d3ψ::Function,
                         a::Float64,
-                        e::Float64)
+                        e::Float64)::Float64
 
     # compute the Taylor expansion of L
     zeroorder, firstorder, secondorder = Lcirc2ndorderExpansionCoefs(ψ,dψ,d2ψ,d3ψ,a)
@@ -155,7 +188,7 @@ function dELFromAE(ψ::Function,
                    d4ψ::Function,
                    a::Float64,
                    e::Float64;
-                   TOLECC::Float64=ELTOLECC)
+                   TOLECC::Float64=ELTOLECC)::Tuple{Float64,Float64,Float64,Float64,Float64,Float64}
 
     E, L = ELFromAE(ψ,dψ,d2ψ,d3ψ,a,e;TOLECC=TOLECC)
 
@@ -196,7 +229,7 @@ function dELFromAE(ψ::Function,
                    a::Float64,
                    e::Float64;
                    TOLECC::Float64=ELTOLECC,
-                   FDIFF::Float64=1.e-8)
+                   FDIFF::Float64=1.e-8)::Tuple{Float64,Float64,Float64,Float64,Float64,Float64}
 
    # define a numerical fourth derivative
    d4ψ(x::Float64) = (d3ψ(x+FDIFF)-d3ψ(x))/FDIFF
@@ -216,7 +249,7 @@ function dELFromAE(ψ::Function,
                    a::Float64,
                    e::Float64;
                    TOLECC::Float64=ELTOLECC,
-                   FDIFF::Float64=1.e-8)
+                   FDIFF::Float64=1.e-8)::Tuple{Float64,Float64,Float64,Float64,Float64,Float64}
 
    # define a numerical third derivative
    d3ψ(x::Float64) = (d2ψ(x+FDIFF)-d2ψ(x))/FDIFF
@@ -245,7 +278,7 @@ function dELcircExpansion(ψ::Function,
                           d3ψ::Function,
                           d4ψ::Function,
                           a::Float64,
-                          e::Float64)
+                          e::Float64)::Tuple{Float64,Float64,Float64,Float64}
 
     # compute all potential and derivative values
     ψa, dψa, ddψa, dddψa, ddddψa = ψ(a), dψ(a), d2ψ(a), d3ψ(a), d4ψ(a)
@@ -281,7 +314,7 @@ function JacELToAE(ψ::Function,
                    d4ψ::Function,
                    a::Float64,
                    e::Float64;
-                   TOLECC::Float64=ELTOLECC)
+                   TOLECC::Float64=ELTOLECC)::Float64
 
     E, L, ∂E∂a, ∂E∂e, ∂L∂a, ∂L∂e = dELFromAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,TOLECC=TOLECC)
 
@@ -300,7 +333,7 @@ function JacELToAE(ψ::Function,
                    a::Float64,
                    e::Float64;
                    TOLECC::Float64=ELTOLECC,
-                   dr::Float64=1.e-6)
+                   dr::Float64=1.e-6)::Float64
 
     d4ψ(r::Float64)::Float64 = (d3ψ(r+dr)-d3ψ(r))/dr
 
@@ -320,7 +353,7 @@ function JacELToAE(ψ::Function,
                    a::Float64,
                    e::Float64;
                    TOLECC::Float64=ELTOLECC,
-                   dr::Float64=1.e-6)
+                   dr::Float64=1.e-6)::Float64
 
     d3ψ(r::Float64)::Float64 = (d2ψ(r+dr)-d2ψ(r))/dr
     d4ψ(r::Float64)::Float64 = 0.
@@ -348,7 +381,7 @@ function EFromRpRa(ψ::Function,
                    d3ψ::Function,
                    rp::Float64,
                    ra::Float64;
-                   TOLECC::Float64=ELTOLECC)
+                   TOLECC::Float64=ELTOLECC)::Float64
 
     a,e = ae_from_rpra(rp,ra)
 
@@ -365,7 +398,7 @@ function EFromRpRa(ψ::Function,
                    rp::Float64,
                    ra::Float64;
                    TOLECC::Float64=ELTOLECC,
-                   FDIFF::Float64=1.e-8)
+                   FDIFF::Float64=1.e-8)::Float64
 
     a,e = ae_from_rpra(rp,ra)
 
@@ -385,7 +418,7 @@ function LFromRpRa(ψ::Function,
                    d3ψ::Function,
                    rp::Float64,
                    ra::Float64;
-                   TOLECC::Float64=ELTOLECC)
+                   TOLECC::Float64=ELTOLECC)::Float64
 
     a,e = ae_from_rpra(rp,ra)
 
@@ -402,7 +435,7 @@ function LFromRpRa(ψ::Function,
                    rp::Float64,
                    ra::Float64;
                    TOLECC::Float64=ELTOLECC,
-                   FDIFF::Float64=1.e-8)
+                   FDIFF::Float64=1.e-8)::Float64
 
     a,e = ae_from_rpra(rp,ra)
 
@@ -423,7 +456,7 @@ function ELFromRpRa(ψ::Function,
                     d3ψ::Function,
                     rp::Float64,
                     ra::Float64;
-                    TOLECC::Float64=ELTOLECC)
+                    TOLECC::Float64=ELTOLECC)::Tuple{Float64,Float64}
 
     a,e = ae_from_rpra(rp,ra)
     E = EFromAE(ψ,dψ,d2ψ,d3ψ,a,e;TOLECC=TOLECC)
@@ -442,7 +475,7 @@ function ELFromRpRa(ψ::Function,
                     rp::Float64,
                     ra::Float64;
                     TOLECC::Float64=ELTOLECC,
-                    FDIFF::Float64=1.e-8)
+                    FDIFF::Float64=1.e-8)::Tuple{Float64,Float64}
 
     a,e = ae_from_rpra(rp,ra)
 

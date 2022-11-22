@@ -17,16 +17,17 @@ VERBOSE rules:
 basic Newton-Raphson algorithm to find (a,e) from (Ω₁,Ω₂) brute force derivatives.
 
 """
-function AEFromΩ1Ω2Brute(Ω₁::Float64,Ω₂::Float64,
+@inline function AEFromΩ1Ω2Brute(Ω₁::Float64,Ω₂::Float64,
                          ψ::Function,
                          dψ::Function,
                          d2ψ::Function,
-                         d3ψ::Function;
+                         d3ψ::Function,
+                         d4ψ::Function;
                          eps::Float64=1*10^(-10),
                          ITERMAX::Int64=100,
                          TOLECC::Float64=0.001,TOLA::Float64=0.0001,
                          da::Float64=1.0e-5,de::Float64=1.0e-5,
-                         VERBOSE::Int64=0,
+                         #VERBOSE::Int64=0,
                          EDGE::Float64=0.03,
                          NINT::Int64=64)
     """
@@ -40,17 +41,19 @@ function AEFromΩ1Ω2Brute(Ω₁::Float64,Ω₂::Float64,
     # then start from ecc=0.5 and take numerical derivatives
     aguess = acirc
     eguess = 0.5
-    f1,f2 = ComputeFrequenciesAE(ψ,dψ,d2ψ,d3ψ,aguess,eguess,NINT=NINT,EDGE=EDGE)
+    #f1,f2 = ComputeFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,aguess,eguess,NINT=NINT,EDGE=EDGE,TOLECC=TOLECC)
+    f1,f2 = ComputeFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,aguess,eguess,false,TOLECC,NINT,EDGE,TOLA)
 
     # 2d Newton Raphson inversion and find new increments
     iter = 0
     while (((Ω₁ - f1)^2 + (Ω₂ - f2)^2) > eps^2)
 
-        f1,f2,df1da,df2da,df1de,df2de = ComputeFrequenciesAEWithDeriv(ψ,dψ,d2ψ,d3ψ,aguess,eguess,da=da,de=de,TOLECC=TOLECC,VERBOSE=VERBOSE,NINT=NINT,EDGE=EDGE)
+        #f1,f2,df1da,df2da,df1de,df2de = ComputeFrequenciesAEWithDeriv(ψ,dψ,d2ψ,d3ψ,d4ψ,aguess,eguess,da=da,de=de,TOLECC=TOLECC,NINT=NINT,EDGE=EDGE)
+        f1,f2,df1da,df2da,df1de,df2de = ComputeFrequenciesAEWithDeriv(ψ,dψ,d2ψ,d3ψ,d4ψ,aguess,eguess,da,de,TOLECC,NINT,EDGE)
 
         # one break: negative frequencies when getting very close to the centre.
         # define the failure mode: return circular orbit at the minimum size
-        if (f1 < 0) | (f2 < 0)
+        if (f1 < 0.0) | (f2 < 0.0)
             return da,0.0,iter+1,1.
         end
 
@@ -64,12 +67,10 @@ function AEFromΩ1Ω2Brute(Ω₁::Float64,Ω₂::Float64,
             increment = jacobian \ (-([f1 ; f2] - [Ω₁ ; Ω₂]))
             aguess,eguess = aguess + increment[1],eguess + increment[2]
         catch e # this catch appears to not work because LAPACK is doing something under the hood
-            if VERBOSE>1
-                println("OrbitalElements.NumericalInversion.AEFromΩ1Ω2Brute: bad division for Jacobian=$jacobian and (f1,f2)=($f1,$f2), (Ω₁,Ω₂)=($Ω₁,$Ω₂) at (a,e)=($aguess,$eguess).")
-            end
+            #(VERBOSE > 1) && println("OrbitalElements.NumericalInversion.AEFromΩ1Ω2Brute: bad division for Jacobian=$jacobian and (f1,f2)=($f1,$f2), (Ω₁,Ω₂)=($Ω₁,$Ω₂) at (a,e)=($aguess,$eguess).")
             # are we just in some tiny bad patch? # reset to 'safe' values
             aguess,eguess = aguess + 10da,0.5
-            increment = [0;0]
+            increment = [0.0;0.0]
 
             if iter > ITERMAX
                 finaltol = ((Ω₁ - f1)^2 + (Ω₂ - f2)^2)
@@ -79,7 +80,7 @@ function AEFromΩ1Ω2Brute(Ω₁::Float64,Ω₂::Float64,
 
         # the try...catch above is failing for some reason
         if (@isdefined increment) == false
-            increment = [0;0]
+            increment = [0.0;0.0]
         end
 
         # @WARNING: these appear to have broken something.
@@ -92,21 +93,19 @@ function AEFromΩ1Ω2Brute(Ω₁::Float64,Ω₂::Float64,
                 eguess = eguess - increment[2]
                 eguess = max(TOLECC,0.5eguess)
             catch e
-                if VERBOSE>1
-                    println("OrbitalElements.NumericalInversion.AEFromΩ1Ω2Brute: guessing close to ecc=0: ",eguess," (a=",aguess,")")
-                end
+                #(VERBOSE > 1) && println("OrbitalElements.NumericalInversion.AEFromΩ1Ω2Brute: guessing close to ecc=0: ",eguess," (a=",aguess,")")
                 eguess = max(TOLECC,0.5eguess)
             end
         end
 
-        if eguess >= (1-TOLECC)
+        if eguess >= (1.0-TOLECC)
             # go halfway between the previous guess and 1.
             try
                 eguess = eguess - increment[2]
-                eguess = min(1-TOLECC,eguess + 0.5*(1-eguess))
+                eguess = min(1.0-TOLECC,eguess + 0.5*(1-eguess))
             catch e
                 println("OrbitalElements.NumericalInversion.AEFromΩ1Ω2Brute: guessing close to ecc=1: ",eguess," (a=",aguess,") for increment ",increment)
-                eguess = min(1-TOLECC,eguess + 0.5*(1-eguess))
+                eguess = min(1.0-TOLECC,eguess + 0.5*(1-eguess))
             end
         end
 
@@ -119,17 +118,13 @@ function AEFromΩ1Ω2Brute(Ω₁::Float64,Ω₂::Float64,
     end
 
 
-    if VERBOSE > 2
-        println("OrbitalElements.NumericalInversion.AEFromΩ1Ω2Brute: niter=",iter)
-    end
+    #(VERBOSE > 2) && println("OrbitalElements.NumericalInversion.AEFromΩ1Ω2Brute: niter=",iter)
 
     finaltol = ((Ω₁ - f1)^2 + (Ω₂ - f2)^2)
 
     # check here to not allow bad values?
     if isnan(aguess) | isnan(eguess)
-        if VERBOSE>1
-            println("OrbitalElements.NumericalInversion.AEFromΩ1Ω2Brute: failed for inputs (Ω₁,Ω₂)=($Ω₁,$Ω₂).")
-        end
+        #(VERBOSE > 1) && println("OrbitalElements.NumericalInversion.AEFromΩ1Ω2Brute: failed for inputs (Ω₁,Ω₂)=($Ω₁,$Ω₂).")
 
         # return a semi-equivalent circular orbit, as the failure mode is mostly very small orbits
         return acirc,0.0,-1,finaltol
@@ -138,7 +133,6 @@ function AEFromΩ1Ω2Brute(Ω₁::Float64,Ω₂::Float64,
         return aguess,eguess,iter,finaltol
     end
 end
-
 
 
 """ae_from_EL_brute(E,L,ψ,dψ,d2ψ[,eps,maxiter,TOLECC,VERBOSE])

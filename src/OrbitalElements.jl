@@ -39,6 +39,8 @@ include("Resonance/UVbounds.jl")
 include("Resonance/ABtoUV.jl")
 
 # the main wrapper for frequency and action calculations
+# first, set the u (\in[-1,1]) integration limit to switch to expansions
+const ULIMIT = 0.01
 include("Frequencies.jl")
 
 end # module
