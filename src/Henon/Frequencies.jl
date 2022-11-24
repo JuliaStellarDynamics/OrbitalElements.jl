@@ -254,6 +254,7 @@ returning α,β and derivatives w.r.t. (a,e) using DHenonΘFrequenciesAE
                              e::Float64,
                              params::OrbitsParameters)::Tuple{Float64,Float64,Float64,Float64,Float64,Float64}
 
+    Ω₀ = params.Ω₀
     # Frenquency computatio (with derivatives)
     Ω1,Ω2,∂Ω1∂a,∂Ω1∂e,∂Ω2∂a,∂Ω2∂e = DHenonΘFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,params)
 

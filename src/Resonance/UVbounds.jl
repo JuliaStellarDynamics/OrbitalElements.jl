@@ -50,11 +50,14 @@ function Findωminωmax(n1::Int64,n2::Int64,
                       d2ψ::Function,
                       params::OrbitsParameters)::Tuple{Float64,Float64}
 
+
+    rmin, rmax = params.rmin, params.rmax
+    Ω₀ = params.Ω₀
     # define the function to extremise
     ωncirc(x) = n1*Ω1circular(dψ,d2ψ,x)/Ω₀ + n2*Ω2circular(dψ,d2ψ,x)/Ω₀
 
     # If rmax is infinite, bisection search on a bounded interval
-    xext = (rmax == Inf) ? ExtremiseFunctionNulCure(ωncirc,params.rmin,1.e8) : ExtremiseFunctionNulCure(ωncirc,params.rmin,params.rmax)
+    xext = (rmax == Inf) ? ExtremiseFunctionNulCure(ωncirc,rmin,1.e8) : ExtremiseFunctionNulCure(ωncirc,rmin,rmax)
 
     # The extreme values of n.Ω is either :
     #   - on the radial line, at α = αmin or αmax
@@ -110,6 +113,7 @@ function FindVminVmax(u::Float64,
 
     rmin, rmax = params.rmin, params.rmax
     αmin, αmax = params.αmin, params.αmax
+    Ω₀ = params.Ω₀
 
     if (n2==0)
         #####
