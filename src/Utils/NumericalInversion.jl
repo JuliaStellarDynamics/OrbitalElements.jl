@@ -34,9 +34,7 @@ basic Newton-Raphson algorithm to find (a,e) from (Ω₁,Ω₂) brute force deri
                          d2ψ::Function,
                          d3ψ::Function,
                          d4ψ::Function,
-                         params::OrbitsParameters;
-                         eps::Float64=1*10^(-10),
-                         ITERMAX::Int64=100)::Tuple{Float64,Float64,Int64,Float64}
+                         params::OrbitsParameters)::Tuple{Float64,Float64,Int64,Float64}
     """
     @IMPROVE add escape for circular orbits
 
@@ -54,7 +52,7 @@ basic Newton-Raphson algorithm to find (a,e) from (Ω₁,Ω₂) brute force deri
 
     # 2d Newton Raphson inversion and find new increments
     iter = 0
-    while (((Ω₁ - f1)^2 + (Ω₂ - f2)^2) > eps^2)
+    while (((Ω₁ - f1)^2 + (Ω₂ - f2)^2) > (params.invε)^2)
 
         #f1,f2,df1da,df2da,df1de,df2de = ComputeFrequenciesAEWithDeriv(ψ,dψ,d2ψ,d3ψ,d4ψ,aguess,eguess,da=da,de=de,TOLECC=TOLECC,NINT=NINT,EDGE=EDGE)
         f1,f2,df1da,df2da,df1de,df2de = ComputeFrequenciesAEWithDeriv(ψ,dψ,d2ψ,d3ψ,d4ψ,aguess,eguess,params)
@@ -77,7 +75,7 @@ basic Newton-Raphson algorithm to find (a,e) from (Ω₁,Ω₂) brute force deri
             aguess,eguess = aguess + 10*da,0.5
             increment1, increment2 = 0.0, 0.0
 
-            if iter > ITERMAX
+            if iter > params.ITERMAX
                 finaltol = ((Ω₁ - f1)^2 + (Ω₂ - f2)^2)
                 return aguess,eguess,-2,finaltol
             end
@@ -116,7 +114,7 @@ basic Newton-Raphson algorithm to find (a,e) from (Ω₁,Ω₂) brute force deri
 
         iter += 1
 
-        if iter > ITERMAX
+        if iter > params.ITERMAX
             break
         end
 

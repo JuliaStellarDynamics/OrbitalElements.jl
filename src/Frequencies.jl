@@ -190,23 +190,21 @@ include("Utils/NumericalInversion.jl")
 """ComputeAEFromFrequencies(ψ,dψ,d2ψ,d3ψ,a,e[,eps,maxiter,TOLECC,TOLA])
 wrapper to select which type of inversion to compute for (Omega1,Omega2)->(a,e)
 """
-function ComputeAEFromFrequencies(ψ::Function,
+@inline function ComputeAEFromFrequencies(ψ::Function,
                                   dψ::Function,
                                   d2ψ::Function,
                                   d3ψ::Function,
                                   d4ψ::Function,
                                   Ω1::Float64,Ω2::Float64,
-                                  params::OrbitsParameters;
-                                  eps::Float64=1*10^(-12),
-                                  maxiter::Int64=1000)::Tuple{Float64,Float64}
+                                  params::OrbitsParameters)::Tuple{Float64,Float64}
 
         # use adaptive da, de branches
         # da max(0.0001,0.01a)
         # de min(max(0.0001,0.1a*e)
 
-        a,e,iter,finaltol = AEFromΩ1Ω2Brute(Ω1,Ω2,ψ,dψ,d2ψ,d3ψ,d4ψ,params;eps=eps,ITERMAX=maxiter)
+        a, e, _, _ = AEFromΩ1Ω2Brute(Ω1,Ω2,ψ,dψ,d2ψ,d3ψ,d4ψ,params)
 
-        return a,e
+        return a, e
 end
 
 
