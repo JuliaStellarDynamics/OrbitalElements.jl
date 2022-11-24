@@ -8,12 +8,7 @@ basic orbit transformations
 function to translate pericentre and apocentre to semi-major axis and eccentricity
 
 """
-function AEfromRpRa(rp::Float64,ra::Float64)::Tuple{Float64,Float64}
-
-    return (rp+ra)/2,(ra-rp)/(rp+ra)
-end
-
-function AEFromRpRa(rp::Float64,ra::Float64)::Tuple{Float64,Float64}
+@inline function AEfromRpRa(rp::Float64,ra::Float64)::Tuple{Float64,Float64}
 
     return (rp+ra)/2,(ra-rp)/(rp+ra)
 end
@@ -23,16 +18,11 @@ end
 function to translate semi-major axis and eccentricity to pericentre and apocentre
 
 """
-function RpRafromAE(a::Float64,e::Float64)::Tuple{Float64,Float64}
+@inline function RpRafromAE(a::Float64,e::Float64)::Tuple{Float64,Float64}
 
     return a*(1-e),a*(1+e)
 end
 
-
-function RpRaFromAE(a::Float64,e::Float64)::Tuple{Float64,Float64}
-
-    return a*(1-e),a*(1+e)
-end
 
 
 """Ecirc
@@ -41,7 +31,7 @@ compute the energy of a circular orbit at some radius
 must define the potential and potential derivative a priori
 
 """
-function Ecirc(ψ::Function,dψ::Function,r::Float64)::Float64
+@inline function Ecirc(ψ::Function,dψ::Function,r::Float64)::Float64
 
     return  ψ(r) + 0.5*r*dψ(r)
 end
@@ -62,13 +52,12 @@ as a function of (a,e)
               d3ψ::Function,
               u::Float64,
               a::Float64,
-              e::Float64;
-              TOLECC::Float64=ELTOLECC,
-              fun::Function=henon_f)::Float64
+              e::Float64,
+              params::OrbitsParameters)::Float64
 
-    E, L = ELFromAE(ψ,dψ,d2ψ,d3ψ,a,e,TOLECC)
+    E, L = ELFromAE(ψ,dψ,d2ψ,d3ψ,a,e,params)
 
-    r = ru(u,a,e;fun=fun)
+    r = ru(u,a,e)
 
     vrSQ = 2*(E - ψeff(ψ,r,L))
 

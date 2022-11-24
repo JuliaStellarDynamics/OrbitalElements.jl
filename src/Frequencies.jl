@@ -12,9 +12,6 @@ include("Henon/Frequencies.jl")
 # bring in the anomaly mapping (i.e. f(u))
 include("Henon/Ufunc.jl")
 
-# bring in the frequency inversion
-include("Utils/NumericalInversion.jl")
-
 
 ########################################################################
 #
@@ -32,40 +29,21 @@ wrapper to select which type of frequency computation to perform, from (a,e)
                               d4ψ::Function,
                               a::Float64,
                               e::Float64,
-                              action::Bool,
-                              TOLECC::Float64,
-                              #VERBOSE::Int64=0,
-                              NINT::Int64,
-                              EDGE::Float64,
-                              TOLA::Float64)
+                              params::OrbitsParameters)::Tuple{Float64,Float64}
 
-    if action
-        return HenonΘJFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e;action=action,TOLECC=TOLECC,NINT=NINT,EDGE=EDGE)
-
-    else
-        return HenonΘFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,TOLECC,NINT,EDGE)
-
-    end
-
+    return HenonΘFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,params)
 end
 
-@inline function ComputeFrequenciesAE(ψ::Function,
+@inline function ComputeFrequenciesJAE(ψ::Function,
                               dψ::Function,
                               d2ψ::Function,
                               d3ψ::Function,
                               d4ψ::Function,
                               a::Float64,
-                              e::Float64;
-                              action::Bool=false,
-                              TOLECC::Float64=0.001,
-                              #VERBOSE::Int64=0,
-                              NINT::Int64=32,
-                              EDGE::Float64=0.01,
-                              TOLA::Float64=0.001)
+                              e::Float64,
+                              params::OrbitsParameters)::Tuple{Float64,Float64,Float64}
 
-
-    return ComputeFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,action,TOLECC,NINT,EDGE,TOLA)
-
+    return HenonΘFrequenciesJAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,params)
 end
 
 """ComputeFrequenciesAE(ψ,dψ,d2ψ,d3ψ,a,e[,TOLECC,VERBOSE])
@@ -76,18 +54,13 @@ function ComputeFrequenciesAE(ψ::Function,
                               dψ::Function,
                               d2ψ::Function,
                               d3ψ::Function,
-                              a::Float64,e::Float64;
-                              action::Bool=false,
-                              TOLECC::Float64=0.001,
-                              #VERBOSE::Int64=0,
-                              NINT::Int64=32,
-                              EDGE::Float64=0.01,
-                              FDIFF::Float64=1.e-8)
+                              a::Float64,e::Float64,
+                              params::OrbitsParameters)::Tuple{Float64,Float64}
 
     # define a numerical fourth derivative
-    @inline d4ψ(x::Float64) = (d3ψ(x+FDIFF)-d3ψ(x))/FDIFF
+    d4ψ(x::Float64) = (d3ψ(x+FDIFF)-d3ψ(x))/params.FDIFF
 
-    return ComputeFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e;action=action,TOLECC=TOLECC,NINT=NINT,EDGE=EDGE)
+    return ComputeFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,params)
 end
 
 """ComputeFrequenciesAE(ψ,dψ,d2ψ,a,e[,TOLECC,VERBOSE])
@@ -97,21 +70,16 @@ EXCEPT third derivative
 function ComputeFrequenciesAE(ψ::Function,
                               dψ::Function,
                               d2ψ::Function,
-                              a::Float64,e::Float64;
-                              action::Bool=false,
-                              TOLECC::Float64=0.001,
-                              #VERBOSE::Int64=0,
-                              NINT::Int64=32,
-                              EDGE::Float64=0.01,
-                              FDIFF::Float64=1.e-8)
+                              a::Float64,e::Float64,
+                              params::OrbitsParameters)::Tuple{Float64,Float64}
 
     # define a numerical third derivative
-    @inline d3ψ(x::Float64) = (d2ψ(x+FDIFF)-d2ψ(x))/FDIFF
+    d3ψ(x::Float64) = (d2ψ(x+FDIFF)-d2ψ(x))/FDIFF
 
     # Nul fourth derivative
-    @inline d4ψ(x::Float64) = 0.
+    d4ψ(x::Float64) = 0.
 
-    return ComputeFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e;action=action,TOLECC=TOLECC,NINT=NINT,EDGE=EDGE)
+    return ComputeFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,params)
 end
 
 
@@ -133,15 +101,11 @@ Presently Henon-specific
                                        d4ψ::Function,
                                        a::Float64,
                                        e::Float64,
-                                       da::Float64,
-                                       de::Float64,
-                                       TOLECC::Float64,
-                                       #VERBOSE::Int64=0,
-                                       NINT::Int64,
-                                       EDGE::Float64)::Tuple{Float64,Float64,Float64,Float64,Float64,Float64}
+                                       params::OrbitsParameters)::Tuple{Float64,Float64,Float64,Float64,Float64,Float64}
 
         # first, check for values that need to be expanded
 
+        da, de = params.da, params.de
         # grid is structured like
         # (Ω1h,Ω2h) [+da]
         #    ^
@@ -149,12 +113,12 @@ Presently Henon-specific
 
         # @IMPROVE watch out for close to TOLECC, will fail across boundary
         #Ω1c,Ω2c = ComputeFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e;action=false,TOLECC=TOLECC,VERBOSE=VERBOSE,NINT=NINT,EDGE=EDGE)
-        Ω1c,Ω2c = HenonΘFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,TOLECC,NINT,EDGE)
+        Ω1c,Ω2c = HenonΘFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,params)
 
         # the offset in a
         #Ω1h,Ω2h = ComputeFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a+da,e;action=false,TOLECC=TOLECC,VERBOSE=VERBOSE,NINT=NINT,EDGE=EDGE)
         a2 = a+da
-        Ω1h,Ω2h = HenonΘFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a2,e,TOLECC,NINT,EDGE)
+        Ω1h,Ω2h = HenonΘFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a2,e,params)
         # the offset in e
         # if this is already a radial orbit, don't go to super radial
         e2 = e+de
@@ -164,53 +128,7 @@ Presently Henon-specific
         end
 
         #Ω1r,Ω2r = ComputeFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e+de;action=false,TOLECC=TOLECC,VERBOSE=VERBOSE,NINT=NINT,EDGE=EDGE)
-        Ω1r,Ω2r = HenonΘFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e2,TOLECC,NINT,EDGE)
-
-        dΩ1da = (Ω1h-Ω1c)/da
-        dΩ2da = (Ω2h-Ω2c)/da
-
-        dΩ1de = (Ω1r-Ω1c)/de
-        dΩ2de = (Ω2r-Ω2c)/de
-
-        return Ω1c,Ω2c,dΩ1da,dΩ2da,dΩ1de,dΩ2de
-end
-
-@inline function ComputeFrequenciesAEWithDeriv(ψ::Function,
-                                       dψ::Function,
-                                       d2ψ::Function,
-                                       d3ψ::Function,
-                                       d4ψ::Function,
-                                       a::Float64,
-                                       e::Float64;
-                                       da::Float64=0.0001,
-                                       de::Float64=0.0001,
-                                       TOLECC::Float64=ELTOLECC,
-                                       #VERBOSE::Int64=0,
-                                       NINT::Int64=32,
-                                       EDGE::Float64=0.01)
-
-        # first, check for values that need to be expanded
-
-        # grid is structured like
-        # (Ω1h,Ω2h) [+da]
-        #    ^
-        # (Ω1c,Ω2c)-> (Ω1r,Ω2r) [+de]
-
-        # @IMPROVE watch out for close to TOLECC, will fail across boundary
-        #Ω1c,Ω2c = ComputeFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e;action=false,TOLECC=TOLECC,VERBOSE=VERBOSE,NINT=NINT,EDGE=EDGE)
-        Ω1c,Ω2c = HenonΘFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,TOLECC,NINT,EDGE)
-
-        # the offset in a
-        #Ω1h,Ω2h = ComputeFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a+da,e;action=false,TOLECC=TOLECC,VERBOSE=VERBOSE,NINT=NINT,EDGE=EDGE)
-        Ω1h,Ω2h = HenonΘFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a+da,e,TOLECC,NINT,EDGE)
-        # the offset in e
-        # if this is already a radial orbit, don't go to super radial
-        if e+de > 1.0
-            de *= -1.0
-        end
-
-        #Ω1r,Ω2r = ComputeFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e+de;action=false,TOLECC=TOLECC,VERBOSE=VERBOSE,NINT=NINT,EDGE=EDGE)
-        Ω1r,Ω2r = HenonΘFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e+de,TOLECC,NINT,EDGE)
+        Ω1r,Ω2r = HenonΘFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e2,params)
 
         dΩ1da = (Ω1h-Ω1c)/da
         dΩ2da = (Ω2h-Ω2c)/da
@@ -230,19 +148,13 @@ function ComputeFrequenciesAEWithDeriv(ψ::Function,
                                        d2ψ::Function,
                                        d3ψ::Function,
                                        a::Float64,
-                                       e::Float64;
-                                       da::Float64=0.0001,
-                                       de::Float64=0.0001,
-                                       TOLECC::Float64=ELTOLECC,
-                                       #VERBOSE::Int64=0,
-                                       NINT::Int64=32,
-                                       FDIFF::Float64=1.e-8,
-                                       EDGE::Float64=0.01)
+                                       e::Float64,
+                                       params::OrbitsParameters)::Tuple{Float64,Float64,Float64,Float64,Float64,Float64}
 
     # define a numerical fourth derivative
-    d4ψ(x::Float64) = (d3ψ(x+FDIFF)-d3ψ(x))/FDIFF
+    d4ψ(x::Float64) = (d3ψ(x+FDIFF)-d3ψ(x))/params.FDIFF
 
-    return ComputeFrequenciesAEWithDeriv(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e;da,de,TOLECC,NINT,EDGE)
+    return ComputeFrequenciesAEWithDeriv(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,params)
 
 end
 
@@ -254,21 +166,15 @@ function ComputeFrequenciesAEWithDeriv(ψ::Function,
                                        dψ::Function,
                                        d2ψ::Function,
                                        a::Float64,
-                                       e::Float64;
-                                       da::Float64=0.0001,
-                                       de::Float64=0.0001,
-                                       TOLECC::Float64=ELTOLECC,
-                                       VERBOSE::Int64=0,
-                                       NINT::Int64=32,
-                                       FDIFF::Float64=1.e-8,
-                                       EDGE::Float64=0.01)
+                                       e::Float64,
+                                       params::OrbitsParameters)::Tuple{Float64,Float64,Float64,Float64,Float64,Float64}
 
     # define a numerical third derivative
-    d3ψ(x::Float64) = (d2ψ(x+FDIFF)-d2ψ(x))/FDIFF
+    d3ψ(x::Float64) = (d2ψ(x+FDIFF)-d2ψ(x))/params.FDIFF
     # Nul fourth derivative
     d4ψ(x::Float64) = 0.
 
-    return ComputeFrequenciesAEWithDeriv(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,da,de,TOLECC,NINT,EDGE)
+    return ComputeFrequenciesAEWithDeriv(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,params)
 end
 
 
@@ -278,6 +184,9 @@ end
 #
 ########################################################################
 
+# bring in the frequency inversion
+include("Utils/NumericalInversion.jl")
+
 """ComputeAEFromFrequencies(ψ,dψ,d2ψ,d3ψ,a,e[,eps,maxiter,TOLECC,TOLA])
 wrapper to select which type of inversion to compute for (Omega1,Omega2)->(a,e)
 """
@@ -285,21 +194,17 @@ function ComputeAEFromFrequencies(ψ::Function,
                                   dψ::Function,
                                   d2ψ::Function,
                                   d3ψ::Function,
+                                  d4ψ::Function,
                                   Ω1::Float64,Ω2::Float64,
+                                  params::OrbitsParameters;
                                   eps::Float64=1*10^(-12),
-                                  maxiter::Int64=1000,
-                                  TOLECC::Float64=ELTOLECC,
-                                  TOLA::Float64=0.0001,
-                                  da::Float64=0.0001,de::Float64=0.0001,
-                                  VERBOSE::Int64=0)
+                                  maxiter::Int64=1000)::Tuple{Float64,Float64}
 
         # use adaptive da, de branches
         # da max(0.0001,0.01a)
         # de min(max(0.0001,0.1a*e)
 
-        a,e,iter,finaltol = AEFromΩ1Ω2Brute(Ω1,Ω2,ψ,dψ,d2ψ,d3ψ;
-                                                    eps=eps,ITERMAX=maxiter,
-                                                    TOLECC=TOLECC,TOLA=TOLA,da=da,de=de)
+        a,e,iter,finaltol = AEFromΩ1Ω2Brute(Ω1,Ω2,ψ,dψ,d2ψ,d3ψ,d4ψ,params;eps=eps,ITERMAX=maxiter)
 
         return a,e
 end
@@ -314,25 +219,22 @@ end
 """
 compute the jacobian J = |d(E,L)/d(α,β)| = |d(E,L)/d(a,e)|/|d(α,β)/d(a,e)|
 """
-function JacELToαβAE(ψ::Function,
+@inline function JacELToαβAE(ψ::Function,
                      dψ::Function,
                      d2ψ::Function,
                      d3ψ::Function,
                      d4ψ::Function,
                      a::Float64,
-                     e::Float64;
-                     NINT::Int64=64,
-                     EDGE::Float64=0.02,
-                     Ω₀::Float64=1.0,
-                     TOLECC::Float64=ELTOLECC)
+                     e::Float64,
+                     params::OrbitsParameters)
 
 
     # the (E,L) -> (a,e) Jacobian (in Utils/ComputeEL.jl)
     #Jac_EL_AE = JacELToAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,TOLECC=TOLECC)
-    Jac_EL_AE = JacELToAE(ψ,dψ,d2ψ,a,e,TOLECC=TOLECC)
+    Jac_EL_AE = JacELToAE(ψ,dψ,d2ψ,a,e,params)
 
     # the (α,β) -> (a,e) Jacobian (below)
-    Jac_AB_AE = JacαβToAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,NINT=NINT,EDGE=EDGE,Ω₀=Ω₀)
+    Jac_AB_AE = JacαβToAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,params)
 
     # compute the Jacobian
     Jac = Jac_EL_AE/Jac_AB_AE
@@ -356,19 +258,17 @@ end
 
 
 """
-function JacαβToAE(ψ::Function,
+@inline function JacαβToAE(ψ::Function,
                           dψ::Function,
                           d2ψ::Function,
                           d3ψ::Function,
                           d4ψ::Function,
                           a::Float64,
-                          e::Float64;
-                          NINT::Int64=64,
-                          EDGE::Float64=0.02,
-                          Ω₀::Float64=1.0)
+                          e::Float64,
+                          params::OrbitsParameters)
 
     # calculate the frequency derivatives
-    α,β,∂α∂a,∂α∂e,∂β∂a,∂β∂e = OrbitalElements.DHenonΘFreqRatiosAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,NINT=NINT,EDGE=EDGE,Ω₀=Ω₀)
+    α,β,∂α∂a,∂α∂e,∂β∂a,∂β∂e = OrbitalElements.DHenonΘFreqRatiosAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,params)
 
     # return the Jacobian
     Jacαβae = abs(∂α∂a*∂β∂e - ∂β∂a*∂α∂e)
@@ -391,9 +291,8 @@ function JacELToαβAE(a::Float64,
                             ψ::Function,
                             dψ::Function,
                             d2ψ::Function,
-                            Ω₀::Float64=1.0;
-                            nancheck::Bool=false,
-                            NINT::Int64=64)
+                            params::OrbitsParameters;
+                            nancheck::Bool=false)
 
     tmpe = e
     # to be fixed for limited development...
@@ -409,12 +308,12 @@ function JacELToαβAE(a::Float64,
     # get all numerical derivatives
 
     # these are dangerous, and break down fairly easily.
-    Ω1c,Ω2c,dΩ1da,dΩ2da,dΩ1de,dΩ2de = ComputeFrequenciesAEWithDeriv(ψ,dψ,d2ψ,a,tmpe,NINT=NINT)
+    Ω1c,Ω2c,dΩ1da,dΩ2da,dΩ1de,dΩ2de = ComputeFrequenciesAEWithDeriv(ψ,dψ,d2ψ,a,tmpe,params)
 
     # this is nearly always safe
     # the (E,L) -> (a,e) Jacobian (in Utils/ComputeEL.jl)
     #Jac_EL_AE = JacELToAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e)
-    Jac_EL_AE = JacELToAE(ψ,dψ,d2ψ,a,tmpe)
+    Jac_EL_AE = JacELToAE(ψ,dψ,d2ψ,a,tmpe,params)
 
 
     J_o1o2_ae = abs(dΩ1da*dΩ2de - dΩ1de*dΩ2da)

@@ -7,6 +7,9 @@ using Roots
 # for interpolations
 using Interpolations
 
+# structure to hold all parameters
+include("Utils/ParameterStructure.jl")
+
 # utils: simple function extremisation, input/output, basic orbit coordinate transformations, simple integrators
 include("Utils/Extremise.jl")
 include("Utils/IO.jl")
@@ -28,7 +31,6 @@ include("DistributionFunctions/isochrone_discs.jl")
 
 # enable energy and angular momentum computation (including expansions)
 # first, set the radius where we switch to expansions
-const ELTOLECC = 0.001
 include("Utils/ComputeEL.jl")
 
 # bring in the circular orbit frequencies
@@ -40,7 +42,6 @@ include("Resonance/ABtoUV.jl")
 
 # the main wrapper for frequency and action calculations
 # first, set the u (\in[-1,1]) integration limit to switch to expansions
-const ULIMIT = 0.01
 include("Frequencies.jl")
 
 end # module
