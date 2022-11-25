@@ -108,7 +108,7 @@ Zang star distribution function.
 
 @ WARNING : Cut off at large radius to add !
 """
-function mestel_Zang_DF(E::Float64,L::Float64;
+function mestel_Zang_DF(E::Float64,L::Float64,
                         R0::Float64=20., Rin::Float64=1., Rout::Float64=11.5, Rmax::Float64=20.,
                         V0::Float64=1.,
                         xi::Float64=0.5, C::Float64=1.444e-14,
@@ -121,7 +121,7 @@ end
     mestel_Zang_dDFdE(E, L[, R0, Rin, Rout, Rmax, V0, xi, C, q, sigma, nu, mu])
 Zang star DF derivative w.r.t. E.
 """
-function mestel_Zang_dDFdE(E::Float64,L::Float64;
+function mestel_Zang_dDFdE(E::Float64,L::Float64,
                         R0::Float64=20., Rin::Float64=1., Rout::Float64=11.5, Rmax::Float64=20.,
                         V0::Float64=1.,
                         xi::Float64=0.5, C::Float64=1.444e-14,
@@ -134,7 +134,7 @@ end
     mestel_Zang_dDFdL(E, L[, R0, Rin, Rout, Rmax, V0, xi, C, q, sigma, nu, mu])
 Zang star DF derivative w.r.t. L.
 """
-function mestel_Zang_dDFdL(E::Float64,L::Float64;
+function mestel_Zang_dDFdL(E::Float64,L::Float64,
                         R0::Float64=20., Rin::Float64=1., Rout::Float64=11.5, Rmax::Float64=20.,
                         V0::Float64=1.,
                         xi::Float64=0.5, C::Float64=1.444e-14,
@@ -155,7 +155,7 @@ end
     mestel_Zang_ndDFdJ(n1, n2, E, L, ndotOmega[, R0, Rin, Rout, Rmax, V0, xi, C, q, sigma, nu, mu])
 Zang star DF derivative w.r.t. the actions J.
 """
-function mestel_Zang_ndDFdJ(n1::Int64,n2::Int64,E::Float64,L::Float64,ndotOmega::Float64;
+function mestel_Zang_ndDFdJ(n1::Int64,n2::Int64,E::Float64,L::Float64,ndotOmega::Float64,
                         R0::Float64=20., Rin::Float64=1., Rout::Float64=11.5, Rmax::Float64=20.,
                         V0::Float64=1.,
                         xi::Float64=0.5, C::Float64=1.444e-14,
@@ -167,8 +167,8 @@ function mestel_Zang_ndDFdJ(n1::Int64,n2::Int64,E::Float64,L::Float64,ndotOmega:
         return 0.
     end
 
-    dDFdE = mestel_Zang_dDFdE(E,L;R0=R0,Rin=Rin,Rout=Rout,Rmax=Rmax,V0=V0,xi=xi,C=C,q=q,sigma=sigma,nu=nu,mu=mu)
-    dDFdL = mestel_Zang_dDFdL(E,L;R0=R0,Rin=Rin,Rout=Rout,Rmax=Rmax,V0=V0,xi=xi,C=C,q=q,sigma=sigma,nu=nu,mu=mu)
+    dDFdE = mestel_Zang_dDFdE(E,L,R0,Rin,Rout,Rmax,V0,xi,C,q,sigma,nu,mu)
+    dDFdL = mestel_Zang_dDFdL(E,L,R0,Rin,Rout,Rmax,V0,xi,C,q,sigma,nu,mu)
     
     return ndotOmega*dDFdE + n2*dDFdL
 end

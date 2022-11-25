@@ -15,31 +15,31 @@ Specific to Henon mapping.
 
 """the henon anomaly increment
 """
-@inline function henonf(u::Float64)
-    u*(3/2 - (u^2)/2)
+@inline function henonf(u::Float64)::Float64
+    return u*(3/2 - (u^2)/2)
 end
 
 """the derivative of the henon anomaly increment
 """
-@inline function henondf(u::Float64)
+@inline function henondf(u::Float64)::Float64
     return 1.5*(1.0 - u^(2))
 end
 
 """the second derivative of the henon anomaly increment
 """
-@inline function henond2f(u::Float64)
+@inline function henond2f(u::Float64)::Float64
     return -3u
 end
 
 """the third derivative of the henon anomaly increment
 """
-@inline function henond3f(u::Float64)
+@inline function henond3f(u::Float64)::Float64
     return -3.
 end
 
 """the fourth derivative of the henon anomaly increment
 """
-@inline function henond4f(u::Float64)
+@inline function henond4f(u::Float64)::Float64
     return 0.
 end
 
@@ -146,10 +146,9 @@ equivalent to Θ = (dr/du)(1/Vrad)
         if denomsq < 0.0
             # go back to the expansion -- or should we return 0.0?
             return ΘExpansionAE(ψ,dψ,d2ψ,d3ψ,u,a,e,params)
+        else 
+            return a * e * henondf(u) / sqrt(denomsq)
         end
-
-        # do the standard return
-        return a * e * henondf(u) / sqrt(denomsq)
     end
 end
 

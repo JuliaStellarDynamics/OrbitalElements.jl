@@ -254,7 +254,7 @@ can tune [rmin,rmax] for extra optimisation (but not needed)
 """
 @inline function RcircFromΩ1circ(ω::Float64,
                          dψ::Function,d2ψ::Function,
-                         rmin::Float64,rmax::Float64;
+                         rmin::Float64,rmax::Float64,
                          tolx::Float64=1000.0*eps(Float64),tolf::Float64=1000.0*eps(Float64))::Float64
 
     # check that the input frequency is valid
@@ -267,14 +267,14 @@ can tune [rmin,rmax] for extra optimisation (but not needed)
     end
 
     # use bisection to find the circular orbit radius corresponding to given frequency
-    rcirc = try bisection(r -> ω - Ω1circular(dψ,d2ψ,r),rmin,rmax;tolx=tolx,tolf=tolf) catch;   -1. end
+    rcirc = try bisection(r -> ω - Ω1circular(dψ,d2ψ,r),rmin,rmax,tolx,tolf) catch;   -1. end
 
     # check if bisection failed: report why
     if (rcirc == -1.)
         if (ω  < Ω1circular(dψ,d2ψ,rmax))
-            return RcircFromΩ1circ(ω,dψ,d2ψ,rmax,10*rmax;tolx=tolx,tolf=tolf)
+            return RcircFromΩ1circ(ω,dψ,d2ψ,rmax,10*rmax,tolx,tolf)
         elseif Ω1circular(dψ,d2ψ,rmin) < ω
-            return RcircFromΩ1circ(ω,dψ,d2ψ,rmin/10,rmin;tolx=tolx,tolf=tolf)
+            return RcircFromΩ1circ(ω,dψ,d2ψ,rmin/10,rmin,tolx,tolf)
         else
             error("OrbitalElements.Circular.RcircFromΩ1circ: Unable to find the associated radius of Ω1 = $ω")
         end
@@ -293,7 +293,7 @@ perform backwards mapping from Omega_2 for a circular orbit to radius
 """
 @inline function RcircFromΩ2circ(ω::Float64,
                         dψ::Function,d2ψ::Function,
-                        rmin::Float64,rmax::Float64;
+                        rmin::Float64,rmax::Float64,
                         tolx::Float64=1000.0*eps(Float64),tolf::Float64=1000.0*eps(Float64))::Float64
 
     if ω  <= 0.
@@ -304,12 +304,12 @@ perform backwards mapping from Omega_2 for a circular orbit to radius
         return 0.
     end
 
-    rcirc = try bisection(r -> ω - Ω2circular(dψ,r), rmin, rmax;tolx=tolx,tolf=tolf) catch;  -1. end
+    rcirc = try bisection(r -> ω - Ω2circular(dψ,r),rmin,rmax,tolx,tolf) catch;  -1. end
     if (rcirc == -1.)
         if (0. < ω < Ω2circular(dψ,rmax))
-            return RcircFromΩ2circ(ω,dψ,d2ψ,rmax,10*rmax;tolx=tolx,tolf=tolf)
+            return RcircFromΩ2circ(ω,dψ,d2ψ,rmax,10*rmax,tolx,tolf)
         elseif Ω2circular(dψ,rmin) < ω
-            return RcircFromΩ2circ(ω,dψ,d2ψ,rmin/10,rmin;tolx=tolx,tolf=tolf)
+            return RcircFromΩ2circ(ω,dψ,d2ψ,rmin/10,rmin,tolx,tolf)
         else
             error("OrbitalElements.Circular.RcircFromΩ2circ: Unable to find the associated radius of Ω2 = ",ω)
         end

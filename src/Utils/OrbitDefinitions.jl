@@ -10,7 +10,7 @@ function to translate pericentre and apocentre to semi-major axis and eccentrici
 """
 @inline function AEfromRpRa(rp::Float64,ra::Float64)::Tuple{Float64,Float64}
 
-    return (rp+ra)/2,(ra-rp)/(rp+ra)
+    return (rp+ra)/2, (ra-rp)/(rp+ra)
 end
 
 """RpRafromAE
@@ -20,7 +20,7 @@ function to translate semi-major axis and eccentricity to pericentre and apocent
 """
 @inline function RpRafromAE(a::Float64,e::Float64)::Tuple{Float64,Float64}
 
-    return a*(1-e),a*(1+e)
+    return a*(1-e), a*(1+e)
 end
 
 

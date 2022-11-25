@@ -97,6 +97,18 @@ end
 ########################################################################
 
 """
+Circular orbit E value
+"""
+@inline function Ecirc(ψ::Function,
+                        dψ::Function,
+                        d2ψ::Function,
+                        d3ψ::Function,
+                        a::Float64)::Float64
+
+    return (0.5*a*dψ(a) + ψ(a)) 
+end
+
+"""
 Second-order expansion of energy equation near a circular orbit
 """
 @inline function EcircExpansion(ψ::Function,
@@ -111,6 +123,15 @@ Second-order expansion of energy equation near a circular orbit
 end
 
 """
+Circular orbit L value
+"""
+@inline function Lcirc(dψ::Function,
+                       a::Float64)::Float64
+
+    return (sqrt(a))^(3)*sqrt(dψ(a))
+end
+
+"""
 Coefficients of the second-order expansion of angular momentum equation near a circular orbit
 """
 @inline function Lcirc2ndorderExpansionCoefs(ψ::Function,
@@ -119,8 +140,8 @@ Coefficients of the second-order expansion of angular momentum equation near a c
                             d3ψ::Function,
                             a::Float64)::Tuple{Float64,Float64,Float64}
 
-    Lcirc = (sqrt(a))^(3)*sqrt(dψ(a))
-    return Lcirc, 0., ((a)^(5)*d3ψ(a)/(12*Lcirc) - Lcirc)
+    Lc = Lcirc(dψ,a)
+    return Lc, 0., ((a)^(5)*d3ψ(a)/(12*Lc) - Lc)
 end
 
 """
@@ -148,7 +169,7 @@ end
 """
 energy and angular momentum derivatives w.r.t. (a,e)
 """
-@inline function dELFromAE(ψ::Function,
+function dELFromAE(ψ::Function,
                    dψ::Function,
                    d2ψ::Function,
                    d3ψ::Function,
@@ -281,7 +302,7 @@ function JacELToAE(ψ::Function,
                    e::Float64,
                    params::OrbitsParameters)::Float64
 
-    E, L, ∂E∂a, ∂E∂e, ∂L∂a, ∂L∂e = dELFromAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,params)
+    _, _, ∂E∂a, ∂E∂e, ∂L∂a, ∂L∂e = dELFromAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,params)
 
     return abs(∂E∂a*∂L∂e - ∂L∂a*∂E∂e)
 end
@@ -441,4 +462,49 @@ function ELFromRpRa(ψ::Function,
     d3ψ(x::Float64) = (d2ψ(x+FDIFF)-d2ψ(x))/params.FDIFF
 
     return ELFromAE(ψ,dψ,d2ψ,d3ψ,a,e,params)
+end
+
+
+########################################################################
+#
+# Circular Radius as a function of angular momentum (mapping inversion)
+#
+########################################################################
+
+
+"""RcircFromL(L,dψ,d2ψ[, rmin, rmax])
+perform backwards mapping from L for a circular orbit to radius
+
+can tune [rmin,rmax] for extra optimisation (but not needed)
+@WARNING: important assumption Ω1circular is a decreasing function of radius
+"""
+@inline function RcircFromL(L::Float64,
+                         dψ::Function,
+                         rmin::Float64,rmax::Float64,
+                         tolx::Float64=1000.0*eps(Float64),tolf::Float64=1000.0*eps(Float64))::Float64
+
+    # check that the input frequency is valid
+    if L  < 0.
+        error("OrbitalElements.Utils.RcircFromL: Negative angular momentum L = $L")
+        return -1.
+    elseif L == 0.
+        return 0.
+    else 
+        # use bisection to find the circular orbit radius corresponding to given frequency
+        rcirc = try bisection(r -> L - Lcirc(dψ,r),rmin,rmax,tolx,tolf) catch;   -1. end
+
+        # check if bisection failed: report why
+        if (rcirc == -1.)
+            if (Lcirc(dψ,rmax) < L)
+                return RcircFromL(L,dψ,rmax,10*rmax,tolx,tolf)
+            elseif (L < Lcirc(dψ,rmin))
+                return RcircFromL(L,dψ,rmin/10,rmin,tolx,tolf)
+            else
+                error("OrbitalElements.Utils.RcircFromL: Unable to find the associated radius of L = $L")
+                return -1.
+            end
+        end
+
+        return rcirc
+    end
 end

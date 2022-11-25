@@ -34,7 +34,7 @@ wrapper to select which type of frequency computation to perform, from (a,e)
     return HenonΘFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,params)
 end
 
-@inline function ComputeFrequenciesJAE(ψ::Function,
+function ComputeFrequenciesJAE(ψ::Function,
                               dψ::Function,
                               d2ψ::Function,
                               d3ψ::Function,
@@ -177,6 +177,80 @@ function ComputeFrequenciesAEWithDeriv(ψ::Function,
     return ComputeFrequenciesAEWithDeriv(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,params)
 end
 
+########################################################################
+#
+# (a,e) -> (J,L) mapping : Wrappers
+#
+########################################################################
+
+"""ComputeActionsAE(ψ,dψ,d2ψ,d3ψ,a,e[,TOLECC,VERBOSE])
+wrapper to select which type of actions computation to perform, from (a,e)
+"""
+@inline function ComputeActionsAE(ψ::Function,
+                              dψ::Function,
+                              d2ψ::Function,
+                              d3ψ::Function,
+                              a::Float64,
+                              e::Float64,
+                              params::OrbitsParameters)::Tuple{Float64,Float64}
+
+    J = HenonJFromAE(ψ,dψ,d2ψ,d3ψ,a,e,params)
+    L = LFromAE(ψ,dψ,d2ψ,d3ψ,a,e,params)
+    return J, L
+end
+
+########################################################################
+#
+# (a,e) -> (J,L) mapping : derivatives wrappers
+#
+########################################################################
+
+"""ComputeActionsAEWithDeriv(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,params)
+wrapper to select which type of actions computation to perform, from (a,e), but DERIVATIVES
+
+Presently Henon-specific
+"""
+@inline function ComputeActionsAEWithDeriv(ψ::Function,
+                                       dψ::Function,
+                                       d2ψ::Function,
+                                       d3ψ::Function,
+                                       a::Float64,
+                                       e::Float64,
+                                       params::OrbitsParameters)::Tuple{Float64,Float64,Float64,Float64,Float64,Float64}
+
+        # first, check for values that need to be expanded
+
+        da, de = params.da, params.de
+        # grid is structured like
+        # (Jh,Lh) [+da]
+        #    ^
+        # (Jc,Lc)-> (Jr,Lr) [+de]
+
+        # @IMPROVE watch out for close to TOLECC, will fail across boundary
+        Jc, Lc = ComputeActionsAE(ψ,dψ,d2ψ,d3ψ,a,e,params)
+
+        # the offset in a
+        a2 = a+da
+        Jh, Lh = ComputeActionsAE(ψ,dψ,d2ψ,d3ψ,a2,e,params)
+        # the offset in e
+        # if this is already a radial orbit, don't go to super radial
+        e2 = e+de
+        if e2 > 1.0
+            de *= -1.0
+            e2 = e+de
+        end
+
+        Jr,Lr = ComputeActionsAE(ψ,dψ,d2ψ,d3ψ,a,e2,params)
+
+        dJda = (Jh-Jc)/da
+        dLda = (Lh-Lc)/da
+
+        dJde = (Jr-Jc)/de
+        dLde = (Lr-Lc)/de
+
+        return Jc, Lc, dJda, dLda, dJde, dLde
+end
+
 
 ########################################################################
 #
@@ -208,6 +282,24 @@ wrapper to select which type of inversion to compute for (Omega1,Omega2)->(a,e)
 end
 
 
+"""ComputeAEFromActions(ψ,dψ,d2ψ,d3ψ,a,e,params)
+wrapper to select which type of inversion to compute for (Omega1,Omega2)->(a,e)
+"""
+@inline function ComputeAEFromActions(ψ::Function,
+                                  dψ::Function,
+                                  d2ψ::Function,
+                                  d3ψ::Function,
+                                  d4ψ::Function,
+                                  J::Float64,L::Float64,
+                                  params::OrbitsParameters)::Tuple{Float64,Float64}
+
+        a, e, _, _ = AEFromJLBrute(J,L,ψ,dψ,d2ψ,d3ψ,d4ψ,params)
+
+        return a, e
+end
+
+
+
 ########################################################################
 #
 # (E,L) -> (α,β) mapping : Jacobian
@@ -217,14 +309,14 @@ end
 """
 compute the jacobian J = |d(E,L)/d(α,β)| = |d(E,L)/d(a,e)|/|d(α,β)/d(a,e)|
 """
-@inline function JacELToαβAE(ψ::Function,
+function JacELToαβAE(ψ::Function,
                      dψ::Function,
                      d2ψ::Function,
                      d3ψ::Function,
                      d4ψ::Function,
                      a::Float64,
                      e::Float64,
-                     params::OrbitsParameters)
+                     params::OrbitsParameters)::Float64
 
 
     # the (E,L) -> (a,e) Jacobian (in Utils/ComputeEL.jl)
@@ -247,7 +339,6 @@ compute the jacobian J = |d(E,L)/d(α,β)| = |d(E,L)/d(a,e)|/|d(α,β)/d(a,e)|
     end
 
     return Jac
-
 end
 
 """
@@ -256,90 +347,19 @@ end
 
 
 """
-@inline function JacαβToAE(ψ::Function,
+function JacαβToAE(ψ::Function,
                           dψ::Function,
                           d2ψ::Function,
                           d3ψ::Function,
                           d4ψ::Function,
                           a::Float64,
                           e::Float64,
-                          params::OrbitsParameters)
+                          params::OrbitsParameters)::Float64
 
     # calculate the frequency derivatives
-    α,β,∂α∂a,∂α∂e,∂β∂a,∂β∂e = OrbitalElements.DHenonΘFreqRatiosAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,params)
+    _, _, ∂α∂a, ∂α∂e, ∂β∂a, ∂β∂e = OrbitalElements.DHenonΘFreqRatiosAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,params)
 
     # return the Jacobian
-    Jacαβae = abs(∂α∂a*∂β∂e - ∂β∂a*∂α∂e)
-
-end
-
-"""
-
-@ATTENTION this takes (a,e) as arguments.
-@ATTENTION this combines several numerical derivatives; please take care!
-
-@IMPROVE add massaging parameters for numerical derivatives
-@IMPROVE fix boundary values when using limited development
-@IMPROVE noisy at the boundaries
-
-@IMPROVE, give this more derivatives!
-"""
-function JacELToαβAE(a::Float64,
-                            e::Float64,
-                            ψ::Function,
-                            dψ::Function,
-                            d2ψ::Function,
-                            params::OrbitsParameters;
-                            nancheck::Bool=false)
-
-    tmpe = e
-    # to be fixed for limited development...
-    if e>0.99
-        tmpe=0.99
-    end
-
-    if e<0.01
-        #println("faking the eentricity...")
-        tmpe=0.01
-    end
-
-    # get all numerical derivatives
-
-    # these are dangerous, and break down fairly easily.
-    Ω1c,Ω2c,dΩ1da,dΩ2da,dΩ1de,dΩ2de = ComputeFrequenciesAEWithDeriv(ψ,dψ,d2ψ,a,tmpe,params)
-
-    # this is nearly always safe
-    # the (E,L) -> (a,e) Jacobian (in Utils/ComputeEL.jl)
-    #Jac_EL_AE = JacELToAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e)
-    Jac_EL_AE = JacELToAE(ψ,dψ,d2ψ,a,tmpe,params)
-
-
-    J_o1o2_ae = abs(dΩ1da*dΩ2de - dΩ1de*dΩ2da)
-
-    # check for NaN or zero values
-    if nancheck
-        if isnan(Jac_EL_AE)
-            println("OrbitalElements.Frequencies.JacELToαβAE: J_EL_ae is NaN for a=$a,e=$e")
-            return 0.0
-        end
-
-        if Jac_EL_AE <= 0.0
-            println("OrbitalElements.Frequencies.JacELToαβAE: J_EL_ae is 0 for a=$a,e=$e")
-            return 0.0
-        end
-
-        if isnan(J_o1o2_ae)
-            println("OrbitalElements.Frequencies.JacELToαβAE: J_o12_ae is NaN for a=$a,e=$e")
-            return 0.0
-        end
-
-        if J_o1o2_ae <= 0.0
-            println("OrbitalElements.Frequencies.JacELToαβAE: J_o12_ae is 0 for a=$a,e=$e")
-            return 0.0
-        end
-    end
-
-    # combine and return
-    return Ω1c*Ω₀*Jac_EL_AE/J_o1o2_ae
+    return abs(∂α∂a*∂β∂e - ∂β∂a*∂α∂e)
 
 end

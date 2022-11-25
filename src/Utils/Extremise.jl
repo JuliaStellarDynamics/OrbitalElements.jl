@@ -11,7 +11,7 @@ A simple bisection algorithm, but it makes no allocations and is sufficiently fa
 """
 function bisection(fun::Function,
                    xl::Float64,
-                   xu::Float64;
+                   xu::Float64,
                    tolx::Float64=1000.0*eps(Float64),
                    tolf::Float64=1000.0*eps(Float64),
                    VERBOSE::Int64=0)
@@ -76,7 +76,7 @@ Find the single extremum of a function (with monotonic derivative) between xl an
 """
 function ExtremiseFunction(fun::Function,
                            xl::Float64=0.,
-                           xu::Float64=1.;
+                           xu::Float64=1.,
                            dx::Float64=1.e-9,
                            tolf::Float64=1000.0*eps(Float64),
                            VERBOSE::Int64=0)
@@ -85,7 +85,7 @@ function ExtremiseFunction(fun::Function,
     dfun = x -> (fun(x+dx)-fun(x))/dx
     # Searching for derivative cancellation
     # Precision on x cannot be better than dx
-    xm = try bisection(dfun,xl,xu;tolx=dx,tolf=tolf,VERBOSE=VERBOSE) catch; (abs(fun(xu)) < abs(fun(xl))) ? xl : xu end
+    xm = try bisection(dfun,xl,xu,dx,tolf,VERBOSE) catch; (abs(fun(xu)) < abs(fun(xl))) ? xl : xu end
     return xm
 end
 
@@ -95,7 +95,7 @@ Cure the possible nul (finite difference) derivative in xl or xu
 """
 function ExtremiseFunctionNulCure(fun::Function,
                                   xl::Float64=0.,
-                                  xu::Float64=1.;
+                                  xu::Float64=1.,
                                   tolx::Float64=1000.0*eps(Float64),
                                   VERBOSE::Int64=0)
 
@@ -107,12 +107,12 @@ function ExtremiseFunctionNulCure(fun::Function,
         dfxl, dfxu = (fun(xl+dx)-fun(xl)), (fun(xl+dx)-fun(xl))
     end
 
-    xm = ExtremiseFunction(fun,xl,xu,dx=dx,tolf=0.,VERBOSE=VERBOSE)
+    xm = ExtremiseFunction(fun,xl,xu,dx,0.,VERBOSE)
 
     if (xm == xl) || (xm == xu)
         return xm
     else
-        xm = ExtremiseFunction(fun,xm-dx,xm+dx,dx=tolx,tolf=0.,VERBOSE=VERBOSE)
+        xm = ExtremiseFunction(fun,xm-dx,xm+dx,tolx,0.,VERBOSE)
         return xm
     end
 end
