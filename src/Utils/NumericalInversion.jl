@@ -61,54 +61,25 @@ basic Newton-Raphson algorithm to find (a,e) from (Ω₁,Ω₂) brute force deri
             return da,0.0,iter+1,1.
         end
 
-        # another failure mode: very small O1
+        increment1, increment2 = inverse2Dlinear(df1da,df1de,df2da,df2de,Ω₁-f1,Ω₂-f2) 
 
-        # this increment reports occasional failures; why?
-        try
-            increment1, increment2 = inverse2Dlinear(df1da,df1de,df2da,df2de,Ω₁-f1,Ω₂-f2) 
-            aguess,eguess = aguess + increment1,eguess + increment2
-        catch e # this catch appears to not work because LAPACK is doing something under the hood
-            #(VERBOSE > 1) && println("OrbitalElements.NumericalInversion.AEFromΩ1Ω2Brute: bad division for Jacobian=$jacobian and (f1,f2)=($f1,$f2), (Ω₁,Ω₂)=($Ω₁,$Ω₂) at (a,e)=($aguess,$eguess).")
-            # are we just in some tiny bad patch? # reset to 'safe' values
-            aguess,eguess = aguess + 10*da,0.5
-            increment1, increment2 = 0.0, 0.0
-
-            if iter > params.ITERMAX
-                finaltol = ((Ω₁ - f1)^2 + (Ω₂ - f2)^2)
-                return aguess,eguess,-2,finaltol
-            end
+        # If non inversible 
+        if (increment1 == 0.) && (increment2 == 0.)
+            break
+        end
+        
+        # If end point not in the domain ( a >= 0, e in [0,1] )
+        if ((eguess == 0.) && (increment2 < 0.)) || ((eguess == 1.) && (increment2 > 0.))
+            increment2 = 0.
+        end
+        while (aguess + increment1 < 0.) || (eguess + increment2 < 0.) || (eguess + increment2 > 1.) 
+            increment1 /= 2
+            increment2 /= 2
         end
 
-        # the try...catch above is failing for some reason
-        if (@isdefined increment1) == false
-            increment1, increment2 = 0.0, 0.0
-        end
-
-        # @WARNING: these appear to have broken something.
-        # if bad guesses, needs to reset to a different part of space
-        # can't go too small
-        if eguess < TOLECC
-            # go halfway between the previous guess and 0.
-            try
-                # reset eguess value
-                eguess = eguess - increment2
-                eguess = max(TOLECC,0.5eguess)
-            catch e
-                #(VERBOSE > 1) && println("OrbitalElements.NumericalInversion.AEFromΩ1Ω2Brute: guessing close to ecc=0: ",eguess," (a=",aguess,")")
-                eguess = max(TOLECC,0.5eguess)
-            end
-        end
-
-        if eguess >= (1.0-TOLECC)
-            # go halfway between the previous guess and 1.
-            try
-                eguess = eguess - increment2
-                eguess = min(1.0-TOLECC,eguess + 0.5*(1-eguess))
-            catch e
-                println("OrbitalElements.NumericalInversion.AEFromΩ1Ω2Brute: guessing close to ecc=1: ",eguess," (a=",aguess,") for increment ",increment1," ",increment2)
-                eguess = min(1.0-TOLECC,eguess + 0.5*(1-eguess))
-            end
-        end
+        # Update guesses
+        aguess += increment1
+        eguess += increment2
 
         iter += 1
 
