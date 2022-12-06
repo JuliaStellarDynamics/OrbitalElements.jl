@@ -256,7 +256,8 @@ returning α,β and derivatives w.r.t. (a,e) using DHenonΘFrequenciesAE
 
     Ω₀ = params.Ω₀
     # Frenquency computatio (with derivatives)
-    Ω1,Ω2,∂Ω1∂a,∂Ω1∂e,∂Ω2∂a,∂Ω2∂e = DHenonΘFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,params)
+    # Ω1,Ω2,∂Ω1∂a,∂Ω1∂e,∂Ω2∂a,∂Ω2∂e = DHenonΘFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,params)
+    Ω1,Ω2,∂Ω1∂a,∂Ω1∂e,∂Ω2∂a,∂Ω2∂e = ComputeFrequenciesAEWithDeriv(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,params)
 
     # From (Ω1,Ω2) to (α,β)
     α = Ω1 / Ω₀

@@ -219,7 +219,8 @@ function dELFromAE(ψ::Function,
                    params::OrbitsParameters)::Tuple{Float64,Float64,Float64,Float64,Float64,Float64}
 
    # define a numerical fourth derivative
-   d4ψ(x::Float64) = (d3ψ(x+FDIFF)-d3ψ(x))/params.FDIFF
+   FDIFF = params.FDIFF
+   d4ψ(x::Float64) = (d3ψ(x+FDIFF)-d3ψ(x))/FDIFF
 
     E, L, ∂E∂a, ∂E∂e, ∂L∂a, ∂L∂e = dELFromAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,params)
 
@@ -238,8 +239,8 @@ function dELFromAE(ψ::Function,
                    params::OrbitsParameters)::Tuple{Float64,Float64,Float64,Float64,Float64,Float64}
 
    # define a numerical third derivative
-   d3ψ(x::Float64) = (d2ψ(x+FDIFF)-d2ψ(x))/params.FDIFF
-
+   FDIFF = params.FDIFF
+   d3ψ(x::Float64) = (d2ψ(x+FDIFF)-d2ψ(x))/FDIFF
    # zero out fourth derivative
    d4ψ(x::Float64) = 0.
 
@@ -320,7 +321,8 @@ function JacELToAE(ψ::Function,
                    e::Float64,
                    params::OrbitsParameters)::Float64
 
-    d4ψ(r::Float64)::Float64 = (d3ψ(r+dr)-d3ψ(r))/params.FDIFF
+    FDIFF = params.FDIFF
+    d4ψ(r::Float64)::Float64 = (d3ψ(r+FDIFF)-d3ψ(r))/FDIFF
 
     E, L, ∂E∂a, ∂E∂e, ∂L∂a, ∂L∂e = dELFromAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,params)
 
@@ -339,7 +341,8 @@ function JacELToAE(ψ::Function,
                    e::Float64,
                    params::OrbitsParameters)::Float64
 
-    d3ψ(r::Float64)::Float64 = (d2ψ(r+dr)-d2ψ(r))/params.FDIFF
+    FDIFF = params.FDIFF
+    d3ψ(r::Float64)::Float64 = (d2ψ(r+FDIFF)-d2ψ(r))/FDIFF
     d4ψ(r::Float64)::Float64 = 0.
 
     E, L, ∂E∂a, ∂E∂e, ∂L∂a, ∂L∂e = dELFromAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,params)
@@ -386,7 +389,8 @@ function EFromRpRa(ψ::Function,
     a,e = AEFromRpRa(rp,ra)
 
     # define a numerical third derivative
-    d3ψ(x::Float64) = (d2ψ(x+FDIFF)-d2ψ(x))/params.FDIFF
+    FDIFF = params.FDIFF
+    d3ψ(x::Float64) = (d2ψ(x+FDIFF)-d2ψ(x))/FDIFF
 
     return EFromAE(ψ,dψ,d2ψ,d3ψ,a,e,params)
 end
@@ -422,6 +426,7 @@ function LFromRpRa(ψ::Function,
     a,e = AEFromRpRa(rp,ra)
 
     # define a numerical third derivative
+    FDIFF = params.FDIFF
     d3ψ(x::Float64) = (d2ψ(x+FDIFF)-d2ψ(x))/FDIFF
 
     return LFromAE(ψ,dψ,d2ψ,d3ψ,a,e,params)
@@ -459,7 +464,8 @@ function ELFromRpRa(ψ::Function,
     a,e = AEFromRpRa(rp,ra)
 
     # define a numerical third derivative
-    d3ψ(x::Float64) = (d2ψ(x+FDIFF)-d2ψ(x))/params.FDIFF
+    FDIFF = params.FDIFF
+    d3ψ(x::Float64) = (d2ψ(x+FDIFF)-d2ψ(x))/FDIFF
 
     return ELFromAE(ψ,dψ,d2ψ,d3ψ,a,e,params)
 end

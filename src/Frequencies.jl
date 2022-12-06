@@ -320,8 +320,7 @@ function JacELToαβAE(ψ::Function,
 
 
     # the (E,L) -> (a,e) Jacobian (in Utils/ComputeEL.jl)
-    #Jac_EL_AE = JacELToAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,TOLECC=TOLECC)
-    Jac_EL_AE = JacELToAE(ψ,dψ,d2ψ,a,e,params)
+    Jac_EL_AE = JacELToAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,params)
 
     # the (α,β) -> (a,e) Jacobian (below)
     Jac_AB_AE = JacαβToAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,params)
