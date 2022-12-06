@@ -39,27 +39,22 @@ basic Newton-Raphson algorithm to find (a,e) from (Ω₁,Ω₂) brute force deri
     @IMPROVE add escape for circular orbits
 
     """
-    da, de = params.da, params.de
-    TOLECC = params.TOLECC
     # get the circular orbit (maximum radius) for a given Ω₁,Ω₂. use the stronger constraint.
     acirc = RcircFromΩ1circ(Ω₁,dψ,d2ψ,params.rmin,params.rmax)
 
     # then start from ecc=0.5 and take numerical derivatives
     aguess = acirc
     eguess = 0.5
-    f1,f2 = ComputeFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,aguess,eguess,params)
+
+    f1,f2,df1da,df2da,df1de,df2de = ComputeFrequenciesAEWithDeriv(ψ,dψ,d2ψ,d3ψ,d4ψ,aguess,eguess,params)
+
+    tol = (Ω₁ - f1)^2 + (Ω₂ - f2)^2
+    if (tol < (params.invε)^2)
+        return aguess, eguess, iter, tol
+    end
 
     # 2d Newton Raphson inversion and find new increments
-    iter = 0
-    while (((Ω₁ - f1)^2 + (Ω₂ - f2)^2) > (params.invε)^2)
-
-        f1,f2,df1da,df2da,df1de,df2de = ComputeFrequenciesAEWithDeriv(ψ,dψ,d2ψ,d3ψ,d4ψ,aguess,eguess,params)
-
-        # one break: negative frequencies when getting very close to the centre.
-        # define the failure mode: return circular orbit at the minimum size
-        if (f1 < 0.0) | (f2 < 0.0)
-            return da,0.0,iter+1,1.
-        end
+    for iter = 1:params.ITERMAX
 
         increment1, increment2 = inverse2Dlinear(df1da,df1de,df2da,df2de,Ω₁-f1,Ω₂-f2) 
 
@@ -81,29 +76,15 @@ basic Newton-Raphson algorithm to find (a,e) from (Ω₁,Ω₂) brute force deri
         aguess += increment1
         eguess += increment2
 
-        iter += 1
+        f1,f2,df1da,df2da,df1de,df2de = ComputeFrequenciesAEWithDeriv(ψ,dψ,d2ψ,d3ψ,d4ψ,aguess,eguess,params)
 
-        if iter > params.ITERMAX
-            break
+        tol = (Ω₁ - f1)^2 + (Ω₂ - f2)^2
+        if (tol < (params.invε)^2)
+            return aguess, eguess, iter, tol
         end
-
     end
 
-
-    #(VERBOSE > 2) && println("OrbitalElements.NumericalInversion.AEFromΩ1Ω2Brute: niter=",iter)
-
-    finaltol = ((Ω₁ - f1)^2 + (Ω₂ - f2)^2)
-
-    # check here to not allow bad values?
-    if isnan(aguess) | isnan(eguess)
-        #(VERBOSE > 1) && println("OrbitalElements.NumericalInversion.AEFromΩ1Ω2Brute: failed for inputs (Ω₁,Ω₂)=($Ω₁,$Ω₂).")
-
-        # return a semi-equivalent circular orbit, as the failure mode is mostly very small orbits
-        return acirc,0.0,-1,finaltol
-
-    else
-        return aguess,eguess,iter,finaltol
-    end
+    return aguess,eguess,params.ITERMAX,tol
 end
 
 
@@ -119,97 +100,51 @@ basic Newton-Raphson algorithm to find (a,e) from (Jᵣ,L) brute force derivativ
                          d3ψ::Function,
                          d4ψ::Function,
                          params::OrbitsParameters)::Tuple{Float64,Float64,Int64,Float64}
-    """
-    @IMPROVE add escape for circular orbits
 
-    """
-    da, de = params.da, params.de
-    TOLECC = params.TOLECC
-    # get the circular orbit (maximum radius) for a given Ω₁,Ω₂. use the stronger constraint.
+    # get the circular orbit (maximum radius) for a given angular momentum.
     acirc = RcircFromL(L,dψ,params.rmin,params.rmax)
 
     # then start from ecc=0.5 and take numerical derivatives
     aguess = acirc
     eguess = 0.5
 
-    Jguess,Lguess = ComputeActionsAE(ψ,dψ,d2ψ,d3ψ,aguess,eguess,params)
+    Jguess, Lguess, dJgda, dLgda, dJgde, dLgde = ComputeActionsAEWithDeriv(ψ,dψ,d2ψ,d3ψ,aguess,eguess,params)
+
+    tol = (Jguess - J)^2 + (Lguess - L)^2
+    if (tol < (params.invε)^2)
+        return aguess, eguess, iter, tol
+    end
 
     # 2d Newton Raphson inversion and find new increments
-    iter = 0
-    while (((Jguess - J)^2 + (Lguess - L)^2) > (params.invε)^2)
+    for iter = 1:params.ITERMAX
+
+        increment1, increment2 = inverse2Dlinear(dJgda,dJgde,dLgda,dLgde,J-Jguess,L-Lguess)
+
+        # If non inversible 
+        if (increment1 == 0.) && (increment2 == 0.)
+            break
+        end
+        
+        # If end point not in the domain ( a >= 0, e in [0,1] )
+        if ((eguess == 0.) && (increment2 < 0.)) || ((eguess == 1.) && (increment2 > 0.))
+            increment2 = 0.
+        end
+        while (aguess + increment1 < 0.) || (eguess + increment2 < 0.) || (eguess + increment2 > 1.) 
+            increment1 /= 2
+            increment2 /= 2
+        end
+
+        # Update guesses
+        aguess += increment1
+        eguess += increment2
 
         Jguess, Lguess, dJgda, dLgda, dJgde, dLgde = ComputeActionsAEWithDeriv(ψ,dψ,d2ψ,d3ψ,aguess,eguess,params)
 
-        # one break: negative actions when getting very close to the centre.
-        # define the failure mode: return circular orbit at the minimum size
-        if (Jguess < 0.0) | (Lguess < 0.0)
-            return da,0.0,iter+1,1.
+        tol = (Jguess - J)^2 + (Lguess - L)^2
+        if (tol < (params.invε)^2)
+            return aguess, eguess, iter, tol
         end
-
-        # this increment reports occasional failures; why?
-        try
-            increment1, increment2 = inverse2Dlinear(dJgda,dJgde,dLgda,dLgde,J-Jguess,L-Lguess) 
-            aguess, eguess = aguess + increment1, eguess + increment2
-        catch e
-            # reset to 'safe' values
-            aguess, eguess = aguess + 10*da, 0.5
-            increment1, increment2 = 0.0, 0.0
-
-            if iter > params.ITERMAX
-                finaltol = ((J - Jguess)^2 + (L - Lguess)^2)
-                return aguess,eguess,-2,finaltol
-            end
-        end
-
-        # the try...catch above is failing for some reason
-        if (@isdefined increment1) == false
-            increment1, increment2 = 0.0, 0.0
-        end
-
-        # @WARNING: these appear to have broken something.
-        # if bad guesses, needs to reset to a different part of space
-        # can't go too small
-        if eguess < TOLECC
-            # go halfway between the previous guess and 0.
-            try
-                # reset eguess value
-                eguess = eguess - increment2
-                eguess = max(TOLECC,0.5eguess)
-            catch e
-                #(VERBOSE > 1) && println("OrbitalElements.NumericalInversion.AEFromΩ1Ω2Brute: guessing close to ecc=0: ",eguess," (a=",aguess,")")
-                eguess = max(TOLECC,0.5eguess)
-            end
-        end
-
-        if eguess >= (1.0-TOLECC)
-            # go halfway between the previous guess and 1.
-            try
-                eguess = eguess - increment2
-                eguess = min(1.0-TOLECC,eguess + 0.5*(1-eguess))
-            catch e
-                println("OrbitalElements.NumericalInversion.AEFromJLBrute: guessing close to ecc=1: ",eguess," (a=",aguess,") for increment ",increment1," ",increment2)
-                eguess = min(1.0-TOLECC,eguess + 0.5*(1-eguess))
-            end
-        end
-
-        iter += 1
-
-        if iter > params.ITERMAX
-            break
-        end
-
     end
 
-    finaltol = ((J - Jguess)^2 + (L - Lguess)^2)
-
-    # check here to not allow bad values?
-    if isnan(aguess) | isnan(eguess)
-        #(VERBOSE > 1) && println("OrbitalElements.NumericalInversion.AEFromΩ1Ω2Brute: failed for inputs (Ω₁,Ω₂)=($Ω₁,$Ω₂).")
-
-        # return a semi-equivalent circular orbit, as the failure mode is mostly very small orbits
-        return acirc,0.0,-1,finaltol
-
-    else
-        return aguess,eguess,iter,finaltol
-    end
+    return aguess,eguess,params.ITERMAX,tol
 end

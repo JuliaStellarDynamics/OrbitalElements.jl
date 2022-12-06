@@ -58,7 +58,7 @@ amin, amax = 1.e-4, 80.
 #####
 # Output filename
 #####
-filename = outdir*"AB_AE_"*modelname*".hf5"
+filename = outdir*"JL_AE_"*modelname*".hf5"
 
 
 function run_test!(filename::String,
@@ -76,7 +76,7 @@ function run_test!(filename::String,
     taba = collect(LinRange(amin,amax,na))
     tabe = collect(LinRange(0.,1.,ne))
     tabae = zeros(Float64,nae,2)
-    tabαβfromae = zeros(Float64,nae,2)
+    tabJLfromae = zeros(Float64,nae,2)
 
     # Filling the values
     tmp1 = 1
@@ -90,8 +90,8 @@ function run_test!(filename::String,
     #####
     # (α,β) points to map to (a,e)
     #####
-    nαβ = nae
-    tabaefromαβ = zeros(Float64,nαβ,2)
+    nJL = nae
+    tabaefromJL = zeros(Float64,nJL,2)
 
     ####
     # Mapping computation
@@ -101,17 +101,17 @@ function run_test!(filename::String,
     #####
     # (a,e) -> (α,β)
     #####
-    println("(a,e) to (alpha,beta) computations :")
+    println("(a,e) to (J,L) computations :")
     for ae = 1:nae
         print("\r$ae / $nae")
         a, e = tabae[ae,1], tabae[ae,2]
-        Ω1, Ω2 = OrbitalElements.ComputeFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,params)
-        if isnan(Ω1) 
-            tabαβfromae[ae,1], tabαβfromae[ae,2] = -1., -1.
-        elseif (Ω1 == 0.) || isnan(Ω2)
-            tabαβfromae[ae,1], tabαβfromae[ae,2] = -2., -1.
+        J, L = OrbitalElements.ComputeActionsAE(ψ,dψ,d2ψ,d3ψ,a,e,params)
+        if isnan(J) 
+            tabJLfromae[ae,1], tabJLfromae[ae,2] = -1., -1.
+        elseif isnan(L)
+            tabJLfromae[ae,1], tabJLfromae[ae,2] = -2., -1.
         else 
-            tabαβfromae[ae,1], tabαβfromae[ae,2] = Ω1/Ω₀, Ω2/Ω1
+            tabJLfromae[ae,1], tabJLfromae[ae,2] = J, L
         end   
     end
     print("\rDONE                   \n")
@@ -119,15 +119,14 @@ function run_test!(filename::String,
     #####
     # (α,β) -> (a,e)
     #####
-    println("(alpha,beta) to (a,e) computations :")
-    for αβ = 1:nαβ
-        print("\r$αβ / $nαβ")
-        α, β = tabαβfromae[αβ,1], tabαβfromae[αβ,2]
-        if β == -1.
-            tabaefromαβ[αβ,1], tabaefromαβ[αβ,2] = -1., -1.
+    println("(J,L) to (a,e) computations :")
+    for j = 1:nJL
+        print("\r$j / $nJL")
+        J, L = tabJLfromae[j,1], tabJLfromae[j,2]
+        if L == -1.
+            tabaefromJL[j,1], tabaefromJL[j,2] = -1., -1.
         else
-            Ω1, Ω2 = Ω₀*α, Ω₀*α*β
-            tabaefromαβ[αβ,1], tabaefromαβ[αβ,2] = OrbitalElements.ComputeAEFromFrequencies(ψ,dψ,d2ψ,d3ψ,d4ψ,Ω1,Ω2,params)
+            tabaefromJL[j,1], tabaefromJL[j,2] = OrbitalElements.ComputeAEFromActions(ψ,dψ,d2ψ,d3ψ,d4ψ,J,L,params)
         end
     end
     print("\rDONE                   \n")
@@ -142,10 +141,10 @@ function run_test!(filename::String,
 
     # (a,e) -> (α,β) 
     write(file,"tabAE",tabae)
-    write(file,"tabAlphaBetafromAE",tabαβfromae)
+    write(file,"tabJLfromAE",tabJLfromae)
 
     # (α,β) -> (a,e)
-    write(file,"tabAEfromAlphaBeta",tabaefromαβ)
+    write(file,"tabAEfromJL",tabaefromJL)
 
     close(file)
 end
