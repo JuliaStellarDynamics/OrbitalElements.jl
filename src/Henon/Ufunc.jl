@@ -16,7 +16,7 @@ Specific to Henon mapping.
 """the henon anomaly increment
 """
 @inline function henonf(u::Float64)::Float64
-    return u*(3/2 - (u^2)/2)
+    return u*(1.5 - 0.5*(u^2))
 end
 
 """the derivative of the henon anomaly increment
@@ -81,7 +81,7 @@ the effective potential: note the relationship to Q
     if L == 0.
         return ψ(r)
     else
-        return ψ(r) + (1/2) * (L/r)^(2)
+        return ψ(r) + 0.5 * (L/r)^(2)
     end
 end
 
@@ -143,7 +143,7 @@ equivalent to Θ = (dr/du)(1/Vrad)
         # this can somehow be negative: do we need an extra check?
         denomsq = 2*(E - ψeff(ψ,r,L))
 
-        if denomsq < 0.0
+        if denomsq <= 0.0
             # go back to the expansion -- or should we return 0.0?
             return ΘExpansionAE(ψ,dψ,d2ψ,d3ψ,u,a,e,params)
         else 
