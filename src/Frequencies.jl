@@ -329,12 +329,8 @@ function JacELToαβAE(ψ::Function,
     Jac = Jac_EL_AE/Jac_AB_AE
 
     # do some cursory checks for quality
-    if Jac < 0.0
-        return 0.0
-    end
-
-    if isnan(Jac)
-        return 0.0
+    if (Jac < 0.0) || isinf(Jac) || isnan(Jac)
+        Jac = 0.0
     end
 
     return Jac
