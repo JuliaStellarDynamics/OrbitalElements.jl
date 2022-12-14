@@ -7,10 +7,11 @@ but this is where one could select for different anomalies
 
 =#
 
-# bring in the frequency mapping
-include("Henon/Frequencies.jl")
 # bring in the anomaly mapping (i.e. f(u))
 include("Henon/Ufunc.jl")
+# bring in the frequency mapping
+include("Henon/Frequencies.jl")
+
 
 
 ########################################################################
@@ -19,10 +20,10 @@ include("Henon/Ufunc.jl")
 #
 ########################################################################
 
-"""ComputeFrequenciesAE(ψ,dψ,d2ψ,d3ψ,a,e[,TOLECC,VERBOSE])
+"""ComputeFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,params)
 wrapper to select which type of frequency computation to perform, from (a,e)
 """
-@inline function ComputeFrequenciesAE(ψ::Function,
+function ComputeFrequenciesAE(ψ::Function,
                               dψ::Function,
                               d2ψ::Function,
                               d3ψ::Function,
@@ -46,7 +47,7 @@ function ComputeFrequenciesJAE(ψ::Function,
     return HenonΘFrequenciesJAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,params)
 end
 
-"""ComputeFrequenciesAE(ψ,dψ,d2ψ,d3ψ,a,e[,TOLECC,VERBOSE])
+"""ComputeFrequenciesAE(ψ,dψ,d2ψ,d3ψ,a,e,params)
 wrapper to select which type of frequency computation to perform, from (a,e)
 EXCEPT fourth derivative
 """
@@ -63,7 +64,7 @@ function ComputeFrequenciesAE(ψ::Function,
     return ComputeFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,params)
 end
 
-"""ComputeFrequenciesAE(ψ,dψ,d2ψ,a,e[,TOLECC,VERBOSE])
+"""ComputeFrequenciesAE(ψ,dψ,d2ψ,a,e,params)
 wrapper to select which type of frequency computation to perform, from (a,e)
 EXCEPT third derivative
 """
@@ -94,14 +95,14 @@ wrapper to select which type of frequency computation to perform, from (a,e), bu
 
 Presently Henon-specific
 """
-@inline function ComputeFrequenciesAEWithDeriv(ψ::Function,
-                                       dψ::Function,
-                                       d2ψ::Function,
-                                       d3ψ::Function,
-                                       d4ψ::Function,
+function ComputeFrequenciesAEWithDeriv(ψ::F0,
+                                       dψ::F1,
+                                       d2ψ::F2,
+                                       d3ψ::F3,
+                                       d4ψ::F4,
                                        a::Float64,
                                        e::Float64,
-                                       params::OrbitsParameters)::Tuple{Float64,Float64,Float64,Float64,Float64,Float64}
+                                       params::OrbitsParameters)::Tuple{Float64,Float64,Float64,Float64,Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function, F4 <: Function}
 
         # first, check for values that need to be expanded
 
@@ -113,12 +114,12 @@ Presently Henon-specific
 
         # @IMPROVE watch out for close to TOLECC, will fail across boundary
         #Ω1c,Ω2c = ComputeFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e;action=false,TOLECC=TOLECC,VERBOSE=VERBOSE,NINT=NINT,EDGE=EDGE)
-        Ω1c,Ω2c = HenonΘFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,params)
+        Ω1c,Ω2c = ComputeFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,params)
 
         # the offset in a
         #Ω1h,Ω2h = ComputeFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a+da,e;action=false,TOLECC=TOLECC,VERBOSE=VERBOSE,NINT=NINT,EDGE=EDGE)
         a2 = a+da
-        Ω1h,Ω2h = HenonΘFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a2,e,params)
+        Ω1h,Ω2h = ComputeFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a2,e,params)
         # the offset in e
         # if this is already a radial orbit, don't go to super radial
         e2 = e+de
@@ -128,7 +129,7 @@ Presently Henon-specific
         end
 
         #Ω1r,Ω2r = ComputeFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e+de;action=false,TOLECC=TOLECC,VERBOSE=VERBOSE,NINT=NINT,EDGE=EDGE)
-        Ω1r,Ω2r = HenonΘFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e2,params)
+        Ω1r,Ω2r = ComputeFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e2,params)
 
         dΩ1da = (Ω1h-Ω1c)/da
         dΩ2da = (Ω2h-Ω2c)/da
@@ -186,13 +187,13 @@ end
 """ComputeActionsAE(ψ,dψ,d2ψ,d3ψ,a,e[,TOLECC,VERBOSE])
 wrapper to select which type of actions computation to perform, from (a,e)
 """
-@inline function ComputeActionsAE(ψ::Function,
-                              dψ::Function,
-                              d2ψ::Function,
-                              d3ψ::Function,
-                              a::Float64,
-                              e::Float64,
-                              params::OrbitsParameters)::Tuple{Float64,Float64}
+function ComputeActionsAE(ψ::Function,
+                          dψ::Function,
+                          d2ψ::Function,
+                          d3ψ::Function,
+                          a::Float64,
+                          e::Float64,
+                          params::OrbitsParameters)::Tuple{Float64,Float64}
 
     J = HenonJFromAE(ψ,dψ,d2ψ,d3ψ,a,e,params)
     L = LFromAE(ψ,dψ,d2ψ,d3ψ,a,e,params)
@@ -210,13 +211,13 @@ wrapper to select which type of actions computation to perform, from (a,e), but 
 
 Presently Henon-specific
 """
-@inline function ComputeActionsAEWithDeriv(ψ::Function,
-                                       dψ::Function,
-                                       d2ψ::Function,
-                                       d3ψ::Function,
-                                       a::Float64,
-                                       e::Float64,
-                                       params::OrbitsParameters)::Tuple{Float64,Float64,Float64,Float64,Float64,Float64}
+function ComputeActionsAEWithDeriv(ψ::F0,
+                                   dψ::F1,
+                                   d2ψ::F2,
+                                   d3ψ::F3,
+                                   a::Float64,
+                                   e::Float64,
+                                   params::OrbitsParameters)::Tuple{Float64,Float64,Float64,Float64,Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function}
 
         # first, check for values that need to be expanded
 
@@ -264,7 +265,7 @@ include("Utils/NumericalInversion.jl")
 """ComputeAEFromFrequencies(ψ,dψ,d2ψ,d3ψ,a,e[,eps,maxiter,TOLECC,TOLA])
 wrapper to select which type of inversion to compute for (Omega1,Omega2)->(a,e)
 """
-@inline function ComputeAEFromFrequencies(ψ::Function,
+function ComputeAEFromFrequencies(ψ::Function,
                                   dψ::Function,
                                   d2ψ::Function,
                                   d3ψ::Function,
@@ -285,15 +286,14 @@ end
 """ComputeAEFromActions(ψ,dψ,d2ψ,d3ψ,a,e,params)
 wrapper to select which type of inversion to compute for (Omega1,Omega2)->(a,e)
 """
-@inline function ComputeAEFromActions(ψ::Function,
-                                  dψ::Function,
-                                  d2ψ::Function,
-                                  d3ψ::Function,
-                                  d4ψ::Function,
-                                  J::Float64,L::Float64,
-                                  params::OrbitsParameters)::Tuple{Float64,Float64}
+function ComputeAEFromActions(ψ::Function,
+                              dψ::Function,
+                              d2ψ::Function,
+                              d3ψ::Function,
+                              J::Float64,L::Float64,
+                              params::OrbitsParameters)::Tuple{Float64,Float64}
 
-        a, e, _, _ = AEFromJLBrute(J,L,ψ,dψ,d2ψ,d3ψ,d4ψ,params)
+        a, e, _, _ = AEFromJLBrute(J,L,ψ,dψ,d2ψ,d3ψ,params)
 
         return a, e
 end
@@ -343,13 +343,13 @@ end
 
 """
 function JacαβToAE(ψ::Function,
-                          dψ::Function,
-                          d2ψ::Function,
-                          d3ψ::Function,
-                          d4ψ::Function,
-                          a::Float64,
-                          e::Float64,
-                          params::OrbitsParameters)::Float64
+                   dψ::Function,
+                   d2ψ::Function,
+                   d3ψ::Function,
+                   d4ψ::Function,
+                   a::Float64,
+                   e::Float64,
+                   params::OrbitsParameters)::Float64
 
     # calculate the frequency derivatives
     _, _, ∂α∂a, ∂α∂e, ∂β∂a, ∂β∂e = OrbitalElements.DHenonΘFreqRatiosAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,params)

@@ -4,7 +4,7 @@
 
 computing radial action J
 """
-@inline function HenonJFromAE(ψ::Function,
+function HenonJFromAE(ψ::Function,
                         dψ::Function,
                         d2ψ::Function,
                         d3ψ::Function,
@@ -23,14 +23,14 @@ use the defined function Θ(u) to compute frequency integrals
 
 this is the fast version, without action computation, and more parameters specified
 """
-@inline function HenonΘFrequenciesAE(ψ::Function,
-                            dψ::Function,
-                            d2ψ::Function,
-                            d3ψ::Function,
-                            d4ψ::Function,
+function HenonΘFrequenciesAE(ψ::F0,
+                            dψ::F1,
+                            d2ψ::F2,
+                            d3ψ::F3,
+                            d4ψ::F4,
                             a::Float64,
                             e::Float64,
-                            params::OrbitsParameters)::Tuple{Float64,Float64}
+                            params::OrbitsParameters)::Tuple{Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function, F4 <: Function}
 
     if e<params.TOLECC
 
@@ -38,7 +38,7 @@ this is the fast version, without action computation, and more parameters specif
 
         # drop into circular frequency expansion calculations:
         Ω1 = Ω1circular(dψ,d2ψ,d3ψ,d4ψ,a,e)
-        β  = βcircular(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e) # = Ω2/Ω1
+        β  = βcircular(dψ,d2ψ,d3ψ,d4ψ,a,e) # = Ω2/Ω1
         Ω2 = β*Ω1
 
         return Ω1,Ω2
@@ -85,20 +85,20 @@ end
 """
 for use when computing the radial action
 """
-@inline function HenonΘFrequenciesJAE(ψ::Function,
-                                 dψ::Function,
-                                 d2ψ::Function,
-                                 d3ψ::Function,
-                                 d4ψ::Function,
+function HenonΘFrequenciesJAE(ψ::F0,
+                                 dψ::F1,
+                                 d2ψ::F2,
+                                 d3ψ::F3,
+                                 d4ψ::F4,
                                  a::Float64,
                                  e::Float64,
-                                 params::OrbitsParameters)::Tuple{Float64,Float64,Float64}
+                                 params::OrbitsParameters)::Tuple{Float64,Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function, F4 <: Function}
 
     if e<params.TOLECC
 
         # drop into circular frequency expansion calculations:
         Ω1 = Ω1circular(dψ,d2ψ,d3ψ,d4ψ,a,e)
-        β  = βcircular(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e) # = Ω2/Ω1
+        β  = βcircular(dψ,d2ψ,d3ψ,d4ψ,a,e) # = Ω2/Ω1
         Ω2 = β*Ω1
 
         u1func(u::Float64)::Float64 = drdu(u,a,e)*Vrad(ψ,dψ,d2ψ,d3ψ,u,a,e,params)
@@ -147,14 +147,14 @@ end
 use the defined function Θ(u) to compute frequency integrals
 AND DERIVATIVES
 """
-@inline function DHenonΘFrequenciesAE(ψ::Function,
-                              dψ::Function,
-                              d2ψ::Function,
-                              d3ψ::Function,
-                              d4ψ::Function,
+function DHenonΘFrequenciesAE(ψ::F0,
+                              dψ::F1,
+                              d2ψ::F2,
+                              d3ψ::F3,
+                              d4ψ::F4,
                               a::Float64,
                               e::Float64,
-                              params::OrbitsParameters)::Tuple{Float64,Float64,Float64,Float64,Float64,Float64}
+                              params::OrbitsParameters)::Tuple{Float64,Float64,Float64,Float64,Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function, F4 <: Function}
 
     da, de = params.da, params.de
 
@@ -163,7 +163,7 @@ AND DERIVATIVES
 
         # drop into circular frequency expansion calculations:
         Ω1 = Ω1circular(dψ,d2ψ,d3ψ,d4ψ,a,e)
-        β  = βcircular(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e) # = Ω2/Ω1
+        β  = βcircular(dψ,d2ψ,d3ψ,d4ψ,a,e) # = Ω2/Ω1
         Ω2 = β*Ω1
 
         Ω1plusa = Ω1circular(dψ,d2ψ,d3ψ,d4ψ,a+da,e)
@@ -172,8 +172,8 @@ AND DERIVATIVES
         ∂Ω1∂a = (Ω1plusa - Ω1)/da
         ∂Ω1∂e = (Ω1pluse - Ω1)/de
 
-        ∂Ω2∂a = (Ω1plusa*βcircular(ψ,dψ,d2ψ,d3ψ,d4ψ,a+da,e) - Ω2)/da
-        ∂Ω2∂e = (Ω1pluse*βcircular(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e+de) - Ω2)/de
+        ∂Ω2∂a = (Ω1plusa*βcircular(dψ,d2ψ,d3ψ,d4ψ,a+da,e) - Ω2)/da
+        ∂Ω2∂e = (Ω1pluse*βcircular(dψ,d2ψ,d3ψ,d4ψ,a,e+de) - Ω2)/de
 
         return Ω1,Ω2,∂Ω1∂a,∂Ω1∂e,∂Ω2∂a,∂Ω2∂e
 
@@ -245,19 +245,19 @@ end
 """DHenonΘFreqRatiosAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,[da,de,action=false,NINT=32,EDGE=0.03,TOLECC=0.001,Ω₀=1.0])
 returning α,β and derivatives w.r.t. (a,e) using DHenonΘFrequenciesAE
 """
-@inline function DHenonΘFreqRatiosAE(ψ::Function,
-                             dψ::Function,
-                             d2ψ::Function,
-                             d3ψ::Function,
-                             d4ψ::Function,
+function DHenonΘFreqRatiosAE(ψ::F0,
+                             dψ::F1,
+                             d2ψ::F2,
+                             d3ψ::F3,
+                             d4ψ::F4,
                              a::Float64,
                              e::Float64,
-                             params::OrbitsParameters)::Tuple{Float64,Float64,Float64,Float64,Float64,Float64}
+                             params::OrbitsParameters)::Tuple{Float64,Float64,Float64,Float64,Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function, F4 <: Function}
 
     Ω₀ = params.Ω₀
     # Frenquency computatio (with derivatives)
-    # Ω1,Ω2,∂Ω1∂a,∂Ω1∂e,∂Ω2∂a,∂Ω2∂e = DHenonΘFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,params)
-    Ω1,Ω2,∂Ω1∂a,∂Ω1∂e,∂Ω2∂a,∂Ω2∂e = ComputeFrequenciesAEWithDeriv(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,params)
+    Ω1,Ω2,∂Ω1∂a,∂Ω1∂e,∂Ω2∂a,∂Ω2∂e = DHenonΘFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,params)
+    # Ω1,Ω2,∂Ω1∂a,∂Ω1∂e,∂Ω2∂a,∂Ω2∂e = ComputeFrequenciesAEWithDeriv(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,params)
 
     # From (Ω1,Ω2) to (α,β)
     α = Ω1 / Ω₀

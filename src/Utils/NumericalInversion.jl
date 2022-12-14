@@ -28,13 +28,13 @@ end
 basic Newton-Raphson algorithm to find (a,e) from (Ω₁,Ω₂) brute force derivatives.
 
 """
-@inline function AEFromΩ1Ω2Brute(Ω₁::Float64,Ω₂::Float64,
-                         ψ::Function,
-                         dψ::Function,
-                         d2ψ::Function,
-                         d3ψ::Function,
-                         d4ψ::Function,
-                         params::OrbitsParameters)::Tuple{Float64,Float64,Int64,Float64}
+function AEFromΩ1Ω2Brute(Ω₁::Float64,Ω₂::Float64,
+                         ψ::F0,
+                         dψ::F1,
+                         d2ψ::F2,
+                         d3ψ::F3,
+                         d4ψ::F4,
+                         params::OrbitsParameters)::Tuple{Float64,Float64,Int64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function, F4 <: Function}
     """
     @IMPROVE add escape for circular orbits
 
@@ -93,13 +93,12 @@ end
 basic Newton-Raphson algorithm to find (a,e) from (Jᵣ,L) brute force derivatives.
 
 """
-@inline function AEFromJLBrute(J::Float64,L::Float64,
-                         ψ::Function,
-                         dψ::Function,
-                         d2ψ::Function,
-                         d3ψ::Function,
-                         d4ψ::Function,
-                         params::OrbitsParameters)::Tuple{Float64,Float64,Int64,Float64}
+function AEFromJLBrute(J::Float64,L::Float64,
+                         ψ::F0,
+                         dψ::F1,
+                         d2ψ::F2,
+                         d3ψ::F3,
+                         params::OrbitsParameters)::Tuple{Float64,Float64,Int64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function}
 
     # get the circular orbit (maximum radius) for a given angular momentum.
     acirc = RcircFromL(L,dψ,params.rmin,params.rmax)

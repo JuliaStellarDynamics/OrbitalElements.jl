@@ -15,31 +15,31 @@ Specific to Henon mapping.
 
 """the henon anomaly increment
 """
-@inline function henonf(u::Float64)::Float64
+function henonf(u::Float64)::Float64
     return u*(1.5 - 0.5*(u^2))
 end
 
 """the derivative of the henon anomaly increment
 """
-@inline function henondf(u::Float64)::Float64
+function henondf(u::Float64)::Float64
     return 1.5*(1.0 - u^(2))
 end
 
 """the second derivative of the henon anomaly increment
 """
-@inline function henond2f(u::Float64)::Float64
+function henond2f(u::Float64)::Float64
     return -3u
 end
 
 """the third derivative of the henon anomaly increment
 """
-@inline function henond3f(u::Float64)::Float64
+function henond3f(u::Float64)::Float64
     return -3.
 end
 
 """the fourth derivative of the henon anomaly increment
 """
-@inline function henond4f(u::Float64)::Float64
+function henond4f(u::Float64)::Float64
     return 0.
 end
 
@@ -54,7 +54,7 @@ end
 mapping from u->r in Henon variables
 
 """
-@inline function ru(u::Float64,a::Float64,e::Float64)::Float64
+function ru(u::Float64,a::Float64,e::Float64)::Float64
     return a*(1+e*henonf(u))
 end
 
@@ -63,7 +63,7 @@ end
 mapping from u->r in Henon variables
 
 """
-@inline function drdu(u::Float64,a::Float64,e::Float64)::Float64
+function drdu(u::Float64,a::Float64,e::Float64)::Float64
     return a*e*henondf(u)
 end
 
@@ -77,7 +77,7 @@ end
 """
 the effective potential: note the relationship to Q
 """
-@inline function ψeff(ψ::Function,r::Float64,L::Float64)::Float64
+function ψeff(ψ::Function,r::Float64,L::Float64)::Float64
     if L == 0.
         return ψ(r)
     else
@@ -88,7 +88,7 @@ end
 """
 the derivative of the effective potential
 """
-@inline function dψeffdr(dψ::Function,r::Float64,L::Float64)::Float64
+function dψeffdr(dψ::Function,r::Float64,L::Float64)::Float64
     if L == 0.
         return dψ(r)
     else
@@ -99,7 +99,7 @@ end
 """
 the second derivative of the effective potential
 """
-@inline function d2ψeffdr2(d2ψ::Function,r::Float64,L::Float64)::Float64
+function d2ψeffdr2(d2ψ::Function,r::Float64,L::Float64)::Float64
     if L == 0.
         return d2ψ(r)
     else
@@ -121,14 +121,14 @@ end
 equivalent to Θ = (dr/du)(1/Vrad)
 
 """
-@inline function ΘAE(ψ::Function,
-             dψ::Function,
-             d2ψ::Function,
-             d3ψ::Function,
+function ΘAE(ψ::F0,
+             dψ::F1,
+             d2ψ::F2,
+             d3ψ::F3,
              u::Float64,
              a::Float64,
              e::Float64,
-             params::OrbitsParameters)::Float64
+             params::OrbitsParameters)::Float64 where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function}
 
     # use the expanded approximation
     if ((1-abs(u))<params.EDGE)
@@ -143,7 +143,7 @@ equivalent to Θ = (dr/du)(1/Vrad)
         # this can somehow be negative: do we need an extra check?
         denomsq = 2*(E - ψeff(ψ,r,L))
 
-        if denomsq <= 0.0
+        if (denomsq <= 0.0) || isnan(denomsq) || isinf(denomsq)
             # go back to the expansion -- or should we return 0.0?
             return ΘExpansionAE(ψ,dψ,d2ψ,d3ψ,u,a,e,params)
         else 
@@ -165,23 +165,23 @@ BIG ALLOCATIONS here from ELTOLECC not being specified.
 Downside is that this guarantees allocations if TOLECC not specified.
 
 """
-@inline function ΘExpansionAE(ψ::Function,
-                        dψ::Function,
-                        d2ψ::Function,
-                        d3ψ::Function,
+function ΘExpansionAE(ψ::F0,
+                        dψ::F1,
+                        d2ψ::F2,
+                        d3ψ::F3,
                         u::Float64,
                         a::Float64,
                         e::Float64,
-                        params::OrbitsParameters)::Float64
+                        params::OrbitsParameters)::Float64 where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function}
 
     # which boundary are we close to?
-    ul = (u > 0) ? 1.0 : -1.0
+    ul = (u > 0.) ? 1.0 : -1.0
 
     # compute the corresponding radius value
     rl = ru(ul,a,e)
 
     # compute energy and angular momentum from the potential (allow for expansions)
-    E, L = ELFromAE(ψ,dψ,d2ψ,d3ψ,a,e,params)
+    L = LFromAE(ψ,dψ,d2ψ,d3ψ,a,e,params)
 
     # compute the derivatives of the effective potential
     dψeffl, d2ψeffl = dψeffdr(dψ,rl,L), d2ψeffdr2(d2ψ,rl,L)
@@ -207,7 +207,7 @@ Downside is that this guarantees allocations if TOLECC not specified.
 
     zeroorder   = d2fl
     firstorder  = d3fl / 3.0
-    secondorder = (3.0 * (dψeffl * d2fl * d4fl - a * e * d2ψeffl * (d2fl)^(3)) -  dψeffl * (d3fl)^(2)) / (24 * dψeffl * d2fl)
+    secondorder = (3.0 * (dψeffl * d2fl * d4fl - a * e * d2ψeffl * (d2fl)^(3)) -  dψeffl * (d3fl)^(2)) / (24.0 * dψeffl * d2fl)
 
     return pref / denom * ( zeroorder + firstorder * (u - ul) + secondorder * (u - ul)^(2) )
 end
@@ -224,14 +224,14 @@ end
 
 numerical differentiation of Θ w.r.t. semimajor axis and eccentricity
 """
-@inline function ΘAEdade(ψ::Function,
-                     dψ::Function,
-                     d2ψ::Function,
-                     d3ψ::Function,
+function ΘAEdade(ψ::F0,
+                     dψ::F1,
+                     d2ψ::F2,
+                     d3ψ::F3,
                      u::Float64,
                      a::Float64,
                      e::Float64,
-                     params::OrbitsParameters)::Tuple{Float64,Float64}
+                     params::OrbitsParameters)::Tuple{Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function}
 
     da, de = params.da, params.de
 
@@ -247,7 +247,7 @@ numerical differentiation of Θ w.r.t. semimajor axis and eccentricity
     end
 
     thHe = ΘAE(ψ,dψ,d2ψ,d3ψ,u,a,e+de,params)
-    thLe = ΘAE(ψ,dψ,d2ψ,d3ψ,u,a,e   ,params)
+    thLe = thLa
     dΘde = (thHe-thLe)/de
 
     return dΘda,dΘde

@@ -20,13 +20,13 @@ Strategies:
 energy as a function of (a,e) for a given potential ψ (and its derivatives)
 INCLUDING third derivative of the potential
 """
-@inline function EFromAE(ψ::Function,
-                 dψ::Function,
-                 d2ψ::Function,
-                 d3ψ::Function,
+function EFromAE(ψ::F0,
+                 dψ::F1,
+                 d2ψ::F2,
+                 d3ψ::F3,
                  a::Float64,
                  e::Float64,
-                 params::OrbitsParameters)::Float64
+                 params::OrbitsParameters)::Float64 where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function}
 
     if e<params.TOLECC
         # switch to the expanded case
@@ -42,17 +42,17 @@ end
 """
 angular momentum as a function of (a,e) for a given potenial ψ (and its derivatives)
 """
-@inline function LFromAE(ψ::Function,
-                 dψ::Function,
-                 d2ψ::Function,
-                 d3ψ::Function,
+function LFromAE(ψ::F0,
+                 dψ::F1,
+                 d2ψ::F2,
+                 d3ψ::F3,
                  a::Float64,
                  e::Float64,
-                 params::OrbitsParameters)::Float64
+                 params::OrbitsParameters)::Float64 where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function}
 
     if e<params.TOLECC
         # switch to the expanded case
-        return LcircExpansion(ψ,dψ,d2ψ,d3ψ,a,e)
+        return LcircExpansion(dψ,d3ψ,a,e)
     elseif (e == 1.) # up to numerical precision
         return 0.0
     else
@@ -64,13 +64,13 @@ end
 """
 combined energy + angular momentum as a function of (a,e) for a given potenial ψ (and its derivatives)
 """
-@inline function ELFromAE(ψ::Function,
-                  dψ::Function,
-                  d2ψ::Function,
-                  d3ψ::Function,
+function ELFromAE(ψ::F0,
+                  dψ::F1,
+                  d2ψ::F2,
+                  d3ψ::F3,
                   a::Float64,
                   e::Float64,
-                  params::OrbitsParameters)::Tuple{Float64,Float64}
+                  params::OrbitsParameters)::Tuple{Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function}
 
     E = EFromAE(ψ,dψ,d2ψ,d3ψ,a,e,params)
     L = LFromAE(ψ,dψ,d2ψ,d3ψ,a,e,params)
@@ -84,7 +84,7 @@ end
 #
 ########################################################################
 
-@inline function Erad(ψ::Function,
+function Erad(ψ::Function,
               a::Float64)::Float64
 
     return ψ(2*a)
@@ -99,19 +99,17 @@ end
 """
 Circular orbit E value
 """
-@inline function Ecirc(ψ::Function,
-                        dψ::Function,
-                        d2ψ::Function,
-                        d3ψ::Function,
-                        a::Float64)::Float64
+function Ecirc(ψ::Function,
+                dψ::Function,
+                a::Float64)::Float64
 
-    return (0.5*a*dψ(a) + ψ(a)) 
+    return ψ(a) + 0.5*a*dψ(a)
 end
 
 """
 Second-order expansion of energy equation near a circular orbit
 """
-@inline function EcircExpansion(ψ::Function,
+function EcircExpansion(ψ::Function,
                         dψ::Function,
                         d2ψ::Function,
                         d3ψ::Function,
@@ -125,8 +123,8 @@ end
 """
 Circular orbit L value
 """
-@inline function Lcirc(dψ::Function,
-                       a::Float64)::Float64
+function Lcirc(dψ::Function,
+                a::Float64)::Float64
 
     return (sqrt(a))^(3)*sqrt(dψ(a))
 end
@@ -134,28 +132,27 @@ end
 """
 Coefficients of the second-order expansion of angular momentum equation near a circular orbit
 """
-@inline function Lcirc2ndorderExpansionCoefs(ψ::Function,
-                            dψ::Function,
-                            d2ψ::Function,
-                            d3ψ::Function,
-                            a::Float64)::Tuple{Float64,Float64,Float64}
+function Lcirc2ndorderExpansionCoefs(dψ::F1,
+                                    d3ψ::F3,
+                                    a::Float64)::Tuple{Float64,Float64,Float64} where {F1 <: Function, F3 <: Function}
 
-    Lc = Lcirc(dψ,a)
-    return Lc, 0., ((a)^(5)*d3ψ(a)/(12*Lc) - Lc)
+    lc = Lcirc(dψ,a)
+    coef0 = lc
+    coef1 = 0.
+    coef2 = ((a)^(5)*d3ψ(a)/(12*lc) - lc)
+    return coef0, coef1, coef2
 end
 
 """
 Second-order expansion of angular momentum equation near a circular orbit
 """
-@inline function LcircExpansion(ψ::Function,
-                        dψ::Function,
-                        d2ψ::Function,
+function LcircExpansion(dψ::Function,
                         d3ψ::Function,
                         a::Float64,
                         e::Float64)::Float64
 
     # compute the Taylor expansion of L
-    zeroorder, firstorder, secondorder = Lcirc2ndorderExpansionCoefs(ψ,dψ,d2ψ,d3ψ,a)
+    zeroorder, firstorder, secondorder = Lcirc2ndorderExpansionCoefs(dψ,d3ψ,a)
     return zeroorder + firstorder * e + secondorder * (e)^(2)
 end
 
@@ -169,14 +166,14 @@ end
 """
 energy and angular momentum derivatives w.r.t. (a,e)
 """
-function dELFromAE(ψ::Function,
-                   dψ::Function,
-                   d2ψ::Function,
-                   d3ψ::Function,
-                   d4ψ::Function,
+function dELFromAE(ψ::F0,
+                   dψ::F1,
+                   d2ψ::F2,
+                   d3ψ::F3,
+                   d4ψ::F4,
                    a::Float64,
                    e::Float64,
-                   params::OrbitsParameters)::Tuple{Float64,Float64,Float64,Float64,Float64,Float64}
+                   params::OrbitsParameters)::Tuple{Float64,Float64,Float64,Float64,Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function, F4 <: Function}
 
     E, L = ELFromAE(ψ,dψ,d2ψ,d3ψ,a,e,params)
 
@@ -188,16 +185,21 @@ function dELFromAE(ψ::Function,
     else
 
         # the analytic version of the energy and angular momentum derivatives w.r.t. (a,e)
-        rp, ra = RpRafromAE(a,e)
+        rp, ra = RpRaFromAE(a,e)
         ψrp, ψra, dψrp, dψra = ψ(rp), ψ(ra), dψ(rp), dψ(ra)
 
         # Difference between potential at apocenter and pericenter
         ψdiff = ψra - ψrp
 
+        dLdenom = 2*sqrt(2*e*ψdiff)
+
+        if (dLdenom == 0.) || isnan(dLdenom) || isinf(dLdenom)
+            ∂E∂a, ∂E∂e, ∂L∂a, ∂L∂e = dELcircExpansion(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e)
+            return E, L, ∂E∂a, ∂E∂e, ∂L∂a, ∂L∂e
+        end
+
         ∂E∂a = ((1+e)^(3)*dψra - (1-e)^(3)*dψrp) / (4e)
         ∂E∂e = (((e)^(2)-1)*ψdiff + a*e*(1+e)^(2)*dψra + a*e*(1-e)^(2)*dψrp) / (4*(e)^(2))
-
-        dLdenom = 2*sqrt(2*e*ψdiff)
 
         ∂L∂a = (1-(e)^(2)) * (2*ψdiff + ra*dψra - rp*dψrp)  / (dLdenom)
         ∂L∂e = - a * ((1+3*(e)^(2))*ψdiff - a*e*(1-(e)^(2))*(dψra + dψrp)) / (e*dLdenom)
@@ -259,13 +261,13 @@ end
 """
 Second-order of energy and angular momentum derivatives w.r.t. (a,e) near circular orbits.
 """
-@inline function dELcircExpansion(ψ::Function,
-                          dψ::Function,
-                          d2ψ::Function,
-                          d3ψ::Function,
-                          d4ψ::Function,
+function dELcircExpansion(ψ::F0,
+                          dψ::F1,
+                          d2ψ::F2,
+                          d3ψ::F3,
+                          d4ψ::F4,
                           a::Float64,
-                          e::Float64)::Tuple{Float64,Float64,Float64,Float64}
+                          e::Float64)::Tuple{Float64,Float64,Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function, F4 <: Function}
 
     # compute all potential and derivative values
     ψa, dψa, ddψa, dddψa, ddddψa = ψ(a), dψ(a), d2ψ(a), d3ψ(a), d4ψ(a)
@@ -484,10 +486,10 @@ perform backwards mapping from L for a circular orbit to radius
 can tune [rmin,rmax] for extra optimisation (but not needed)
 @WARNING: important assumption Ω1circular is a decreasing function of radius
 """
-@inline function RcircFromL(L::Float64,
-                         dψ::Function,
+function RcircFromL(L::Float64,
+                         dψ::F1,
                          rmin::Float64,rmax::Float64,
-                         tolx::Float64=1000.0*eps(Float64),tolf::Float64=1000.0*eps(Float64))::Float64
+                         tolx::Float64=1000.0*eps(Float64),tolf::Float64=1000.0*eps(Float64))::Float64 where {F1 <: Function}
 
     # check that the input frequency is valid
     if L  < 0.

@@ -25,7 +25,7 @@ end
 ϖ version with ωmin, ωmax
 
 """
-@inline function Getϖ(ω::ComplexF64,
+function Getϖ(ω::ComplexF64,
               ωmin::Float64,ωmax::Float64)::ComplexF64
 
     return (2.0*ω - ωmax - ωmin)/(ωmax - ωmin)
@@ -45,7 +45,7 @@ for a given resonance, find the maximum frequencies
 @ASSUMPTION:
     - Frenquency domain truncated at αmin and αmax
 """
-@inline function Findωminωmax(n1::Int64,n2::Int64,
+function Findωminωmax(n1::Int64,n2::Int64,
                       dψ::Function,
                       d2ψ::Function,
                       params::OrbitsParameters)::Tuple{Float64,Float64}
@@ -99,7 +99,7 @@ for a given resonance, at a specific value of u, find the v coordinate boundarie
 @ASSUMPTION:
     - rmin, rmax are the same used for ωmin, ωmax, αmin and αmax computation
 """
-@inline function FindVminVmax(u::Float64,
+function FindVminVmax(u::Float64,
                       n1::Int64,n2::Int64,
                       dψ::Function,
                       d2ψ::Function,
@@ -207,7 +207,7 @@ end
 return h_n(u) = ω_n(u), a helper quantity
 Fouvry & Prunet B8
 """
-@inline function HUFunc(u::Float64,
+function HUFunc(u::Float64,
                 ωmin::Float64,ωmax::Float64)::Float64
 
     return 0.5*(ωmax+ωmin + u*(ωmax-ωmin))

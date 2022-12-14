@@ -160,7 +160,7 @@ function mestel_Zang_ndDFdJ(n1::Int64,n2::Int64,E::Float64,L::Float64,ndotOmega:
                         V0::Float64=1.,
                         xi::Float64=0.5, C::Float64=1.444e-14,
                         q::IntorFloat=11.44, sigma::Float64=2.835e-1,
-                        nu::Int64=4, mu::Int64=5)
+                        nu::Int64=4, mu::Int64=5)::Float64
 
     if L < 0.
         println("WARNING: L < 0.")
