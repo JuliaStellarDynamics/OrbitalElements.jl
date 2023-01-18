@@ -76,10 +76,6 @@ function nextguess(acur::Float64,ecur::Float64,
         anew, enew = acur + adir, ecur + edir
     end
 
-    if (anew < 0.) || (enew < 0.) || (enew > 1.0) 
-        println("Tu deconnes ...")
-    end
-
     return anew, enew
 end
 
