@@ -9,6 +9,10 @@ VERBOSE rules:
 
 """
 
+
+"""
+    Inverse 2D linear system Ax = y, return (0., 0.) if non inversible
+"""
 function inverse2Dlinear(a::Float64,b::Float64,
                          c::Float64,d::Float64,
                          y1::Float64,y2::Float64)::Tuple{Float64,Float64}
@@ -19,6 +23,64 @@ function inverse2Dlinear(a::Float64,b::Float64,
     else
         return (d*y1 - b*y2)/deta, (a*y2 - c*y1)/deta
     end
+end
+
+
+"""
+    Determine the next guess point in the Newton-Rahpson algorithm
+    given the current point (acur, ecur) and the direction (adir, edir),
+    dealing with boundary crossing
+"""
+function nextguess(acur::Float64,ecur::Float64,
+                   adir::Float64,edir::Float64)
+
+    # If current point at the domain edge
+    # and direction towards out.
+    if ((ecur == 0.) && (edir < 0.)) || ((ecur == 1.) && (edir > 0.))
+        edir = 0.
+    elseif (acur == 0.) && (adir < 0.)
+        adir = 0.
+    end
+
+    # If naive end point (acur + adir, ecur + edir) is outside the domain:
+    # Take the point in the middle of the current point and the border in the increment direction
+    # (Dividing the increment length until being in the domain can lead to unexpected behaviour :
+    # new point immediatly close to the border where inversion can be impossible).
+    # We apply this rule also for (naive end) positions close to the border (1% safety band)
+    asafemin = 0.01
+    esafemin = 0.01
+    esafemax = 0.99
+    if (acur + adir < asafemin) || (ecur + edir < esafemin) || (ecur + edir > esafemax) 
+        
+        # Fraction of the direction to reach the border
+        # acur + afrac * adir = 0.
+        afrac = (adir >= 0.) ? Inf : -acur/adir
+        if edir == 0.
+            efrac = Inf
+        elseif edir > 0.
+            # Boarder to reach: e = 1.
+            # ecur + efrac * edir = 1.
+            efrac = (1.0-ecur)/edir
+        else
+            # Boarder to reach: e = 0.
+            # ecur + efrac * edir = 0.
+            efrac = -ecur/edir
+        end
+
+        # Take the minimal fraction (and not more than 1.0 -> very important !)
+        dirfrac = min(min(afrac,efrac),1.0)
+
+        anew = (dirfrac == Inf) ? acur + adir : acur + 0.5*dirfrac*adir
+        enew = (dirfrac == Inf) ? ecur + edir : ecur + 0.5*dirfrac*edir
+    else
+        anew, enew = acur + adir, ecur + edir
+    end
+
+    if (anew < 0.) || (enew < 0.) || (enew > 1.0) 
+        println("Tu deconnes ...")
+    end
+
+    return anew, enew
 end
 
 
@@ -62,19 +124,10 @@ function AEFromΩ1Ω2Brute(Ω₁::Float64,Ω₂::Float64,
         if (increment1 == 0.) && (increment2 == 0.)
             break
         end
-        
-        # If end point not in the domain ( a >= 0, e in [0,1] )
-        if ((eguess == 0.) && (increment2 < 0.)) || ((eguess == 1.) && (increment2 > 0.))
-            increment2 = 0.
-        end
-        while (aguess + increment1 < 0.) || (eguess + increment2 < 0.) || (eguess + increment2 > 1.) 
-            increment1 /= 2
-            increment2 /= 2
-        end
 
         # Update guesses
-        aguess += increment1
-        eguess += increment2
+        anew, enew = nextguess(aguess,eguess,increment1,increment2)
+        aguess, eguess = anew, enew
 
         f1,f2,df1da,df2da,df1de,df2de = ComputeFrequenciesAEWithDeriv(ψ,dψ,d2ψ,d3ψ,d4ψ,aguess,eguess,params)
 
@@ -124,18 +177,9 @@ function AEFromJLBrute(J::Float64,L::Float64,
             break
         end
         
-        # If end point not in the domain ( a >= 0, e in [0,1] )
-        if ((eguess == 0.) && (increment2 < 0.)) || ((eguess == 1.) && (increment2 > 0.))
-            increment2 = 0.
-        end
-        while (aguess + increment1 < 0.) || (eguess + increment2 < 0.) || (eguess + increment2 > 1.) 
-            increment1 /= 2
-            increment2 /= 2
-        end
-
         # Update guesses
-        aguess += increment1
-        eguess += increment2
+        anew, enew = nextguess(aguess,eguess,increment1,increment2)
+        aguess, eguess = anew, enew
 
         Jguess, Lguess, dJgda, dLgda, dJgde, dLgde = ComputeActionsAEWithDeriv(ψ,dψ,d2ψ,d3ψ,aguess,eguess,params)
 
