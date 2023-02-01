@@ -77,7 +77,8 @@ end
 """
 the effective potential: note the relationship to Q
 """
-function ψeff(ψ::Function,r::Float64,L::Float64)::Float64
+function ψeff(ψ::Function,
+              r::Float64,L::Float64)::Float64
     if L == 0.
         return ψ(r)
     else
@@ -88,7 +89,8 @@ end
 """
 the derivative of the effective potential
 """
-function dψeffdr(dψ::Function,r::Float64,L::Float64)::Float64
+function dψeffdr(dψ::Function,
+                 r::Float64,L::Float64)::Float64
     if L == 0.
         return dψ(r)
     else
@@ -99,7 +101,8 @@ end
 """
 the second derivative of the effective potential
 """
-function d2ψeffdr2(d2ψ::Function,r::Float64,L::Float64)::Float64
+function d2ψeffdr2(d2ψ::Function,
+                   r::Float64,L::Float64)::Float64
     if L == 0.
         return d2ψ(r)
     else
@@ -121,33 +124,28 @@ end
 equivalent to Θ = (dr/du)(1/Vrad)
 
 """
-function ΘAE(ψ::F0,
-             dψ::F1,
-             d2ψ::F2,
-             d3ψ::F3,
-             u::Float64,
-             a::Float64,
-             e::Float64,
+function ΘAE(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,
+             u::Float64,a::Float64,e::Float64,
              params::OrbitsParameters)::Float64 where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function}
 
     # use the expanded approximation
-    if ((1-abs(u))<params.EDGE)
+    # CAUTION: 1-(1-EDGE) < EDGE is true ...
+    # To prevent this → EDGE - eps(Float64)
+    if ((1.0 - abs(u)) < (params.EDGE - eps(Float64)))
         return ΘExpansionAE(ψ,dψ,d2ψ,d3ψ,u,a,e,params)
 
     # if not close to the boundary, can calculate as normal
     else
-        E, L = ELFromAE(ψ,dψ,d2ψ,d3ψ,a,e,params)
-
-        r = ru(u,a,e)
+        dr = drdu(u,a,e)
 
         # this can somehow be negative: do we need an extra check?
-        denomsq = 2*(E - ψeff(ψ,r,L))
+        vr = Vrad(ψ,dψ,d2ψ,d3ψ,u,a,e,params)
 
-        if (denomsq <= 0.0) || isnan(denomsq) || isinf(denomsq)
+        if (vr == 0.0)
             # go back to the expansion -- or should we return 0.0?
-            return ΘExpansionAE(ψ,dψ,d2ψ,d3ψ,u,a,e,params)
+            return 0.0
         else 
-            return a * e * henondf(u) / sqrt(denomsq)
+            return dr / vr
         end
     end
 end
@@ -160,19 +158,10 @@ end
 ΘExpansion, the anomaly for computing orbit averages as a function of (a,e)
 
 Used when u is sufficiently close to +1,-1
-
-BIG ALLOCATIONS here from ELTOLECC not being specified.
-Downside is that this guarantees allocations if TOLECC not specified.
-
 """
-function ΘExpansionAE(ψ::F0,
-                        dψ::F1,
-                        d2ψ::F2,
-                        d3ψ::F3,
-                        u::Float64,
-                        a::Float64,
-                        e::Float64,
-                        params::OrbitsParameters)::Float64 where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function}
+function ΘExpansionAE(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,
+                      u::Float64,a::Float64,e::Float64,
+                      params::OrbitsParameters)::Float64 where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function}
 
     # which boundary are we close to?
     ul = (u > 0.) ? 1.0 : -1.0
@@ -199,7 +188,18 @@ function ΘExpansionAE(ψ::F0,
     # In particular for radial orbits with ψ(r) = - Inf in r = 0
     # combination = - Inf
     if combination <= 0.
-        return 0.0
+        # Switch to
+        # extension of the function close to the border u ~ ul using the
+        # linear interpolation between using the points ul ± tolu and ul ± 2*tolu
+        u1 = ul * (1.0 - params.EDGE)
+        u2 = ul * (1.0 - 2*params.EDGE)
+        u3 = ul * (1.0 - 3*params.EDGE)
+
+        Θ1 = ΘAE(ψ,dψ,d2ψ,d3ψ,u1,a,e,params)
+        Θ2 = ΘAE(ψ,dψ,d2ψ,d3ψ,u2,a,e,params)
+        Θ3 = ΘAE(ψ,dψ,d2ψ,d3ψ,u3,a,e,params)
+
+        return Interpolation2ndOrder(u,u1,Θ1,u2,Θ2,u3,Θ3)
     end
 
     # if >0, sqrt is safe, proceed
@@ -219,36 +219,29 @@ end
 #
 ########################################################################
 
-
-"""ΘAEdade(ψ,dψ,d2ψ,d3ψ,u,a,e[,EDGE,TOLECC,f,df,d2f,d3f,d4f,da,de])
+"""
+    dΘAE(ψ,dψ,d2ψ,d3ψ,u,a,e,params)
 
 numerical differentiation of Θ w.r.t. semimajor axis and eccentricity
 """
-function ΘAEdade(ψ::F0,
-                     dψ::F1,
-                     d2ψ::F2,
-                     d3ψ::F3,
-                     u::Float64,
-                     a::Float64,
-                     e::Float64,
-                     params::OrbitsParameters)::Tuple{Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function}
+function dΘAE(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,
+              u::Float64,a::Float64,e::Float64,
+              params::OrbitsParameters)::Tuple{Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function}
 
-    da, de = params.da, params.de
+    # Numerical derivative points
+    ap, da, ep, de = NumDerivPoints(a,e,params.da,params.de,params.TOLA,params.TOLECC)
 
-    # derivative w.r.t. semimajor axis: always safe
-    thHa = ΘAE(ψ,dψ,d2ψ,d3ψ,u,a+da,e,params)
-    thLa = ΘAE(ψ,dψ,d2ψ,d3ψ,u,a   ,e,params)
-    dΘda = (thHa-thLa)/da
+    # Current point
+    Θloc = ΘAE(ψ,dψ,d2ψ,d3ψ,u,a,e,params)
 
-    # derivative w.r.t. semimajor axis: safe unless too close to e=1
-    # in that case, reverse de
-    if e>(1-de)
-        de *= -1
-    end
+    # For a derivative
+    Θap = ΘAE(ψ,dψ,d2ψ,d3ψ,u,ap,e,params)
+    
+    # For e derivative
+    Θep = ΘAE(ψ,dψ,d2ψ,d3ψ,u,a,ep,params)
 
-    thHe = ΘAE(ψ,dψ,d2ψ,d3ψ,u,a,e+de,params)
-    thLe = thLa
-    dΘde = (thHe-thLe)/de
+    ∂Θ∂a = (Θap-Θloc)/da
+    ∂Θ∂e = (Θep-Θloc)/de
 
-    return dΘda,dΘde
+    return ∂Θ∂a, ∂Θ∂e
 end

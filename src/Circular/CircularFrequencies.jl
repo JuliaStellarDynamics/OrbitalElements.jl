@@ -23,8 +23,7 @@ Strategies:
 radial frequency for circular orbits, from the epicyclic approximation
 a is the semi-major axis (equivalent to r for a circular orbit)
 """
-function Ω1circular(dψ::Function,
-                    d2ψ::Function,
+function Ω1circular(dψ::Function,d2ψ::Function,
                     a::Float64)::Float64
 
     if (a == 0.)
@@ -37,12 +36,8 @@ end
 """Ω1circular(dψ,d2ψ,d3ψ,d4ψ,a,e)
 radial frequency for nearly circular orbits, from Taylor expansion
 """
-function Ω1circular(dψ::Function,
-                    d2ψ::Function,
-                    d3ψ::Function,
-                    d4ψ::Function,
-                    a::Float64,
-                    e::Float64)::Float64
+function Ω1circular(dψ::F1,d2ψ::F2,d3ψ::F3,d4ψ::F4,
+                    a::Float64,e::Float64)::Float64 where {F1 <: Function, F2 <: Function, F3 <: Function, F4 <: Function}
 
     # start with the epicylic approximation
     Ω1c = Ω1circular(dψ,d2ψ,a)
@@ -56,51 +51,37 @@ function Ω1circular(dψ::Function,
 
     # 2nd order Taylor expansion of Omega_1 w.r.t. eccentricity
     zeroorder   = Ω1c
-    secondorder =  (
-                    -36 * (dψa)^(2)
-                    + (a)^3 * (-a * (d3ψa)^(2)
-                                + 3*d2ψa*(4*d3ψa + a*d4ψa))
-                    + 3 * a * dψa * (12 * d2ψa
-                                + a*(20*d3ψa + 3*a*d4ψa))
-                    )
-                    /
-                    (48 * (a)^(2) * (Ω1c)^(3))
+    # WARNING !!
+    # Right operators ar the end of the previous line
+    # Very important ! (otherwise some operations might not be done)
+    secondorder = (-36 * (dψa)^(2) + 
+                    (a)^3 * (-a * (d3ψa)^(2) + 
+                    3*d2ψa*(4*d3ψa + a*d4ψa)) + 
+                    3 * a * dψa * (12 * d2ψa + 
+                    a*(20*d3ψa + 3*a*d4ψa))) / 
+                    (48 * (a^2) * (Ω1c^3))
 
     return zeroorder + secondorder * e^2
-
-end
-
-"""Ω1circular(dψ,d2ψ,d3ψ,a,e)
-radial frequency for nearly circular orbits, from Taylor expansion
-EXCLUDING fourth derivative
-"""
-function Ω1circular(dψ::Function,
-                    d2ψ::Function,
-                    d3ψ::Function,
-                    a::Float64,
-                    e::Float64;
-                    FDIFF::Float64=1.e-8)::Float64
-
-    # define a numerical fourth derivative
-    d4ψ(x::Float64) = (d3ψ(x+FDIFF)-d3ψ(x))/FDIFF
-
-    return Ω1circular(dψ,d2ψ,d3ψ,d4ψ,a,e)
 end
 
 
 """dΩ1circular(dψ,d2ψ,d3ψ,a)
 """
-function dΩ1circular(dψ::Function,
-                     d2ψ::Function,
-                     d3ψ::Function,
+function dΩ1circular(dψ::Function,d2ψ::Function,d3ψ::Function,
                      a::Float64)::Float64
 
     Ω1c = Ω1circular(dψ,d2ψ,a)
 
     return ((d3ψ(a) + (3/a)*d2ψ(a) - (3/(a^2))*dψ(a))/(2Ω1c))
-
 end
 
+
+function αcircular(dψ::Function,d2ψ::Function,d3ψ::Function,d4ψ::Function,
+                   a::Float64,e::Float64,
+                   Ω₀::Float64)::Float64
+
+    return Ω1circular(dψ,d2ψ,d3ψ,d4ψ,a,e)/Ω₀
+end
 
 
 
@@ -112,10 +93,9 @@ end
 
 """Ω2circular(dψ,r)
 azimuthal frequency for circular orbits, from the epicyclic approximation
-
-@IMPROVE: Taylor expansion in a -> 0+ (need 2nd and 4th derivative)
 """
-function Ω2circular(dψ::Function,a::Float64)::Float64
+function Ω2circular(dψ::Function,
+                    a::Float64)::Float64
 
     return sqrt(dψ(a)/a)
 end
@@ -124,7 +104,8 @@ end
 azimuthal frequency for circular orbits, from the epicyclic approximation
 with value at a = 0.
 """
-function Ω2circular(dψ::Function,d2ψ::Function,a::Float64)::Float64
+function Ω2circular(dψ::Function,d2ψ::Function,
+                    a::Float64)::Float64
 
     if (a == 0.)
         return sqrt(abs(d2ψ(0.)))
@@ -136,15 +117,12 @@ end
 
 """dΩ2circular(dψ,d2ψ,d3ψ,a)
 """
-function dΩ2circular(dψ::Function,
-                     d2ψ::Function,
-                     d3ψ::Function,
+function dΩ2circular(dψ::Function,d2ψ::Function,
                      a::Float64)::Float64
 
     Ω2c = Ω2circular(dψ,d2ψ,a)
 
     return ((1/a)*d2ψ(a) - (1/(a^2)))*dψ(a)/(2Ω2c)
-
 end
 
 
@@ -153,11 +131,8 @@ end
 Coefficients of the second-order expansion of β = Ω2/Ω1 near a circular orbit
 
 """
-function βcircular2ndorderExpansionCoefs(dψ::Function,
-                                         d2ψ::Function,
-                                         d3ψ::Function,
-                                         d4ψ::Function,
-                                         a::Float64)::Tuple{Float64,Float64,Float64}
+function βcircular2ndorderExpansionCoefs(dψ::F1,d2ψ::F2,d3ψ::F3,d4ψ::F4,
+                                         a::Float64)::Tuple{Float64,Float64,Float64} where {F1 <: Function, F2 <: Function, F3 <: Function, F4 <: Function}
 
     # 2nd order Taylor expansion of L
     L0, _, L2 = Lcirc2ndorderExpansionCoefs(dψ,d3ψ,a)
@@ -166,58 +141,35 @@ function βcircular2ndorderExpansionCoefs(dψ::Function,
     dψa, d2ψa, d3ψa, d4ψa = dψ(a), d2ψ(a), d3ψ(a), d4ψ(a)
     # 2nd order Taylor expansion of Omega_2/(L * Omega_1)
     βoverL0 = 1 / ((a)^(2) * Ω1c)
-    βoverL2 =   (
-                396 * (dψa)^(2)
+    # WARNING !!
+    # Right parenthesis, division and denominator on the same line
+    # Very important ! (otherwise division is not done)
+    βoverL2 =   (396 * (dψa)^(2)
                 - 3 * a * dψa * (- 100 * d2ψa
                             + 3*a*(4*d3ψa + a*d4ψa))
                 + (a)^(2) * (72 * (d2ψa)^(2)
                             + (a)^(2) * (d3ψa)^(2)
                             - a*d2ψa*(4*d3ψa + 3*a*d4ψa))
-                )
-                /
-                (48 * (a)^(4) * (Ω1c)^(5))
+                )/(48 * (a)^(4) * (Ω1c)^(5))
 
     # WARNING: Assumption L1 = Lfirstorder = 0 and βoverLfirstorder = 0
-    return L0 * βoverL0, 0., L0 * βoverL0 + L2 * βoverL2
+    return L0 * βoverL0, 0., L0 * βoverL2 + L2 * βoverL0
 end
 
 """βcircular(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e)
 Second-order expansion of β = Ω2/Ω1 near a circular orbit
 """
-function βcircular(dψ::Function,
-                   d2ψ::Function,
-                   d3ψ::Function,
-                   d4ψ::Function,
-                   a::Float64,
-                   e::Float64)::Float64
+function βcircular(dψ::Function,d2ψ::Function,d3ψ::Function,d4ψ::Function,
+                   a::Float64,e::Float64)::Float64
 
     # compute the Taylor expansion of L
     zeroorder, firstorder, secondorder = βcircular2ndorderExpansionCoefs(dψ,d2ψ,d3ψ,d4ψ,a)
     return zeroorder + firstorder * e + secondorder * (e)^(2)
 end
 
-"""βcircular(dψ,d2ψ,d3ψ,a,e)
-β = Ω2/Ω1 for nearly circular orbits, from Taylor expansion
-EXCLUDING fourth derivative
-"""
-function βcircular(dψ::Function,
-                   d2ψ::Function,
-                   d3ψ::Function,
-                   a::Float64,
-                   e::Float64;
-                   FDIFF::Float64=1.e-8)::Float64
-
-    # define a numerical fourth derivative
-    d4ψ(x::Float64) = (d3ψ(x+FDIFF)-d3ψ(x))/FDIFF
-
-    return βcircular(dψ,d2ψ,d3ψ,d4ψ,a,e)
-end
-
 
 """βcirc(αcirc, dψ,d2ψ[, Ω₀, rmax])
 return βc(α), the frequency ratio Ω2/Ω1 as a function of α = Ω1/Ω₀ .
-
-@IMPROVE: find Ω₀ adaptively
 """
 function βcirc(αcirc::Float64,
                dψ::Function,d2ψ::Function,

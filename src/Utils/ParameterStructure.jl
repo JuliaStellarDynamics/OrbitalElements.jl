@@ -29,7 +29,7 @@ end
 
 function OrbitsParametersCreate(dψ::Function,d2ψ::Function,Ω₀::Float64;
                                 rmin::Float64=1.e-5,rmax::Float64=1.e5,
-                                EDGE::Float64=0.01,TOLECC::Float64=0.001,TOLA::Float64=1.0e-4,
+                                EDGE::Float64=0.01,TOLECC::Float64=0.001,TOLA::Float64=1.0,
                                 NINT::Int64=32,
                                 FDIFF::Float64=1.0e-8,da::Float64=1.0e-6,de::Float64=1.0e-6,
                                 ITERMAX::Int64=100,invε::Float64=1.0e-10)
