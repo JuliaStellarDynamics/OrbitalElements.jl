@@ -110,12 +110,11 @@ Zang star distribution function.
 """
 function ZangDF(E::Float64,L::Float64,
                 R0::Float64=20., Rin::Float64=1., Rout::Float64=11.5, Rmax::Float64=20.,
-                V0::Float64=1.,
-                ξ::Float64=0.5, C::Float64=1.444e-14,
+                V0::Float64=1.,C::Float64=1.444e-14,
                 q::IntorFloat=11.44, σ::Float64=2.835e-1,
                 μ::Int64=5, ν::Int64=4)::Float64
 
-    return ξ * MestelDF(E,L,C,q,σ) * ZangOuterTaper(L,Rout,V0,μ) * ZangInnerTaper(L,Rin,V0,ν)
+    return MestelDF(E,L,C,q,σ) * ZangOuterTaper(L,Rout,V0,μ) * ZangInnerTaper(L,Rin,V0,ν)
 end
 """
     mestel_Zang_dDFdE(E, L[, R0, Rin, Rout, Rmax, V0, xi, C, q, sigma, nu, mu])
@@ -124,11 +123,11 @@ Zang star DF derivative w.r.t. E.
 function ZangdDFdE(E::Float64,L::Float64,
                     R0::Float64=20., Rin::Float64=1., Rout::Float64=11.5, Rmax::Float64=20.,
                     V0::Float64=1.,
-                    ξ::Float64=0.5, C::Float64=1.444e-14,
+                    C::Float64=1.444e-14,
                     q::IntorFloat=11.44, σ::Float64=2.835e-1,
                     μ::Int64=5, ν::Int64=4)::Float64
 
-    return ξ * MesteldDFdE(E,L,C,q,σ) * ZangOuterTaper(L,Rout,V0,μ) * ZangInnerTaper(L,Rin,V0,ν)
+    return MesteldDFdE(E,L,C,q,σ) * ZangOuterTaper(L,Rout,V0,μ) * ZangInnerTaper(L,Rin,V0,ν)
 end
 """
     mestel_Zang_dDFdL(E, L[, R0, Rin, Rout, Rmax, V0, xi, C, q, sigma, nu, mu])
@@ -136,19 +135,16 @@ Zang star DF derivative w.r.t. L.
 """
 function ZangdDFdL(E::Float64,L::Float64,
                     R0::Float64=20., Rin::Float64=1., Rout::Float64=11.5, Rmax::Float64=20.,
-                    V0::Float64=1.,
-                    ξ::Float64=0.5, C::Float64=1.444e-14,
+                    V0::Float64=1.,C::Float64=1.444e-14,
                     q::IntorFloat=11.44, σ::Float64=2.835e-1,
                     μ::Int64=5, ν::Int64=4)::Float64
 
     mesDF = MestelDF(E,L,C,q,σ)
     intap = ZangInnerTaper(L,Rin,V0,ν)
     outap = ZangOuterTaper(L,Rout,V0,μ)
-    return ξ * (
-        MesteldDFdL(E,L,C,q,σ) * intap * outap
-        + mesDF * ZangInnerTaperdL(L,Rin,V0,ν) * outap
-        + mesDF * intap * ZangOuterTaperdL(L,Rout,V0,μ)
-        )
+    return ( MesteldDFdL(E,L,C,q,σ) * intap * outap + 
+            mesDF * ZangInnerTaperdL(L,Rin,V0,ν) * outap + 
+            mesDF * intap * ZangOuterTaperdL(L,Rout,V0,μ) )
 end
 
 """
@@ -157,8 +153,7 @@ Zang star DF derivative w.r.t. the actions J.
 """
 function ZangndDFdJ(n1::Int64,n2::Int64,E::Float64,L::Float64,ndotOmega::Float64,
                     R0::Float64=20., Rin::Float64=1., Rout::Float64=11.5, Rmax::Float64=20.,
-                    V0::Float64=1.,
-                    ξ::Float64=0.5, C::Float64=1.444e-14,
+                    V0::Float64=1., C::Float64=1.444e-14,
                     q::IntorFloat=11.44, σ::Float64=2.835e-1,
                     μ::Int64=5, ν::Int64=4)::Float64
 
@@ -167,8 +162,8 @@ function ZangndDFdJ(n1::Int64,n2::Int64,E::Float64,L::Float64,ndotOmega::Float64
         return 0.
     end
 
-    dDFdE = ZangdDFdE(E,L,R0,Rin,Rout,Rmax,V0,ξ,C,q,σ,μ,ν)
-    dDFdL = ZangdDFdL(E,L,R0,Rin,Rout,Rmax,V0,ξ,C,q,σ,μ,ν)
+    dDFdE = ZangdDFdE(E,L,R0,Rin,Rout,Rmax,V0,C,q,σ,μ,ν)
+    dDFdL = ZangdDFdL(E,L,R0,Rin,Rout,Rmax,V0,C,q,σ,μ,ν)
     
     return ndotOmega*dDFdE + n2*dDFdL
 end
