@@ -106,8 +106,8 @@ end
 """
 Circular orbit E value
 """
-function Ecirc(ψ::Function,dψ::Function,
-               a::Float64)::Float64
+function Ecirc(ψ::F0,dψ::F1,
+               a::Float64)::Float64 where {F0 <: Function, F1 <: Function}
 
     return ψ(a) + 0.5*a*dψ(a)
 end
@@ -115,8 +115,8 @@ end
 """
 Second-order expansion of energy equation near a circular orbit
 """
-function EcircExpansion(ψ::Function,dψ::Function,d2ψ::Function,d3ψ::Function,
-                        a::Float64,e::Float64)::Float64
+function EcircExpansion(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,
+                        a::Float64,e::Float64)::Float64 where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function}
 
     # compute the Taylor expansion of E
     return (0.5*a*dψ(a) + ψ(a)) + (0.5*a*dψ(a) + 0.5*(a)^(2)*d2ψ(a) + (a)^(3)*d3ψ(a)/12) * (e)^(2)
@@ -147,8 +147,8 @@ end
 """
 Second-order expansion of angular momentum equation near a circular orbit
 """
-function LcircExpansion(dψ::Function,d3ψ::Function,
-                        a::Float64,e::Float64)::Float64
+function LcircExpansion(dψ::F1,d3ψ::F3,
+                        a::Float64,e::Float64)::Float64 where {F1 <: Function, F3 <: Function}
 
     # compute the Taylor expansion of L
     zeroorder, firstorder, secondorder = Lcirc2ndorderExpansionCoefs(dψ,d3ψ,a)

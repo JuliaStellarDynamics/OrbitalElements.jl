@@ -221,9 +221,6 @@ function ComputeActionsAEWithDeriv(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,
                                    a::Float64,e::Float64,
                                    params::OrbitsParameters)::Tuple{Float64,Float64,Float64,Float64,Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function}
 
-        
-        # first, check for values that need to be expanded
-
     # Numerical derivative points
     ap, da, ep, de = NumDerivPoints(a,e,params.da,params.de,params.TOLA,params.TOLECC)
 

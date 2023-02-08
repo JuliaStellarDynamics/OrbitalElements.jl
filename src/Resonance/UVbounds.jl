@@ -13,8 +13,8 @@ Fouvry & Prunet B3
 """
 function Getϖ(ω::ComplexF64,
               n1::Int64,n2::Int64,
-              dψ::Function,d2ψ::Function,
-              params::OrbitsParameters)::ComplexF64
+              dψ::F1,d2ψ::F2,
+              params::OrbitsParameters)::ComplexF64 where {F1 <: Function, F2 <: Function}
 
     ωmin, ωmax = Findωminωmax(n1,n2,dψ,d2ψ,params)
 
@@ -46,24 +46,26 @@ for a given resonance, find the maximum frequencies
     - Frenquency domain truncated at αmin and αmax
 """
 function Findωminωmax(n1::Int64,n2::Int64,
-                      dψ::Function,
-                      d2ψ::Function,
-                      params::OrbitsParameters)::Tuple{Float64,Float64}
+                      dψ::F1,d2ψ::F2,
+                      params::OrbitsParameters)::Tuple{Float64,Float64} where {F1 <: Function, F2 <: Function}
 
 
     rmin, rmax = params.rmin, params.rmax
     Ω₀ = params.Ω₀
     # define the function to extremise
-    ωncirc(x) = n1*Ω1circular(dψ,d2ψ,x)/Ω₀ + n2*Ω2circular(dψ,d2ψ,x)/Ω₀
+    ωncirc(x::Float64)::Float64 = n1*Ω1circular(dψ,d2ψ,x)/Ω₀ + n2*Ω2circular(dψ,d2ψ,x)/Ω₀
 
     # If rmax is infinite, bisection search on a bounded interval
-    xext = (rmax == Inf) ? ExtremiseFunctionNulCure(ωncirc,rmin,1.e8) : ExtremiseFunctionNulCure(ωncirc,rmin,rmax)
+    # @Warning: Allocating ...
+    xext = isinf(rmax) ? ExtremiseFunctionNulCure(ωncirc,rmin,1.e8) : ExtremiseFunctionNulCure(ωncirc,rmin,rmax)
 
     # The extreme values of n.Ω is either :
     #   - on the radial line, at α = αmin or αmax
     #   - along the circular velocity (extreme α included)
-    ωmin,ωmax = extrema([ωncirc(xext), ωncirc(rmin), ωncirc(rmax), (n1+0.5*n2)*params.αmin, (n1+0.5*n2)*params.αmax])
-    return ωmin,ωmax
+    ωmin = min(ωncirc(xext), ωncirc(rmin), ωncirc(rmax), (n1+0.5*n2)*params.αmin, (n1+0.5*n2)*params.αmax)
+    ωmax = max(ωncirc(xext), ωncirc(rmin), ωncirc(rmax), (n1+0.5*n2)*params.αmin, (n1+0.5*n2)*params.αmax)
+
+    return ωmin, ωmax
 end
 
 """αminmax(dψ,d2ψ,rmin,rmax[, Ω₀])
@@ -72,11 +74,9 @@ maximal and minimal considered radial frequencies (rescaled)
 @ASSUMPTION:
     - Ω1circular is a decreasing function of radius
 """
-function αminmax(dψ::Function,
-                 d2ψ::Function,
-                 rmin::Float64,
-                 rmax::Float64,
-                 Ω₀::Float64)
+function αminmax(dψ::F1, d2ψ::F2,
+                 rmin::Float64,rmax::Float64,
+                 Ω₀::Float64)::Tuple{Float64,Float64} where {F1 <: Function, F2 <: Function}
 
     @assert rmin < rmax "rmin >= rmax in αminmax function"
     # Assumption :
@@ -101,11 +101,10 @@ for a given resonance, at a specific value of u, find the v coordinate boundarie
 """
 function FindVminVmax(u::Float64,
                       n1::Int64,n2::Int64,
-                      dψ::Function,
-                      d2ψ::Function,
+                      dψ::F1,d2ψ::F2,
                       ωmin::Float64,ωmax::Float64,
-                      βc::Function,
-                      params::OrbitsParameters)::Tuple{Float64,Float64}
+                      βc::F5,
+                      params::OrbitsParameters)::Tuple{Float64,Float64} where {F1 <: Function, F2 <: Function, F5 <: Function}
 
 
     # ωn(u) : value of the resonance line
@@ -218,11 +217,9 @@ end
 find any valie non- 0 or 1 v value at u=-1 or u=1
 """
 function FindVbound(n1::Int64,n2::Int64,
-                    dψ::Function,
-                    d2ψ::Function,
-                    rmin::Float64,
-                    rmax::Float64,
-                    Ω₀::Float64)::Float64
+                    dψ::F1,d2ψ::F2,
+                    rmin::Float64,rmax::Float64,
+                    Ω₀::Float64)::Float64 where {F1 <: Function, F2 <: Function}
 
     # define the function to extremise
     ωncirc(x) = n1*Ω1circular(dψ,d2ψ,x) + n2*Ω2circular(dψ,d2ψ,x)

@@ -12,6 +12,9 @@ VERBOSE rules:
 
 """
     Inverse 2D linear system Ax = y, return (0., 0.) if non inversible
+
+    A = (a  b)
+        (c  d)
 """
 function inverse2Dlinear(a::Float64,b::Float64,
                          c::Float64,d::Float64,
