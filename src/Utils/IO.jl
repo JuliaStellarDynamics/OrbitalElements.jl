@@ -19,6 +19,14 @@ function WriteParameters(file::HDF5.File,
     group = create_group(file,"OrbitsParameters")
     for i = 1:fieldcount(OrbitsParameters)
         varname = string(fieldname(OrbitsParameters,i))
+        if !isascii(varname)
+            varname = NonAsciiHandle(varname)
+        end
         try write(group,varname,getfield(Parameters,i)) catch; println("Unable to write parameter: "*varname) end
     end
+end
+
+function NonAsciiHandle(x::String)::String
+
+    return replace(x,"Ω"=>"Omega","₀"=>"0","α"=>"alpha","ε"=>"eps",!isascii=>"")
 end
