@@ -32,6 +32,21 @@ function Getϖ(ω::ComplexF64,
 end
 
 
+"""αminmax(dψ,d2ψ,rmin,rmax[, Ω₀])
+maximal and minimal considered radial frequencies (rescaled)
+
+@ASSUMPTION:
+    - Ω1circular is a decreasing function of radius
+"""
+function αminmax(dψ::F1, d2ψ::F2,
+                 rmin::Float64,rmax::Float64,
+                 Ω₀::Float64)::Tuple{Float64,Float64} where {F1 <: Function, F2 <: Function}
+
+    @assert rmin < rmax "rmin >= rmax in αminmax function"
+    # Assumption :
+    # Ω1circular is a decreasing function of radius
+    return Ω1circular(dψ,d2ψ,rmax)/Ω₀, Ω1circular(dψ,d2ψ,rmin)/Ω₀
+end
 
 ########################################################################
 #
@@ -49,9 +64,10 @@ function Findωminωmax(n1::Int64,n2::Int64,
                       dψ::F1,d2ψ::F2,
                       params::OrbitsParameters)::Tuple{Float64,Float64} where {F1 <: Function, F2 <: Function}
 
-
-    rmin, rmax = params.rmin, params.rmax
     Ω₀ = params.Ω₀
+    rmin, rmax = params.rmin, params.rmax
+    αmin, αmax = αminmax(dψ,d2ψ,rmin,rmax,Ω₀)
+    
     # define the function to extremise
     ωncirc(x::Float64)::Float64 = n1*Ω1circular(dψ,d2ψ,x)/Ω₀ + n2*Ω2circular(dψ,d2ψ,x)/Ω₀
 
@@ -62,28 +78,11 @@ function Findωminωmax(n1::Int64,n2::Int64,
     # The extreme values of n.Ω is either :
     #   - on the radial line, at α = αmin or αmax
     #   - along the circular velocity (extreme α included)
-    ωmin = min(ωncirc(xext), ωncirc(rmin), ωncirc(rmax), (n1+0.5*n2)*params.αmin, (n1+0.5*n2)*params.αmax)
-    ωmax = max(ωncirc(xext), ωncirc(rmin), ωncirc(rmax), (n1+0.5*n2)*params.αmin, (n1+0.5*n2)*params.αmax)
+    ωmin = min(ωncirc(xext), ωncirc(rmin), ωncirc(rmax), (n1+0.5*n2)*αmin, (n1+0.5*n2)*αmax)
+    ωmax = max(ωncirc(xext), ωncirc(rmin), ωncirc(rmax), (n1+0.5*n2)*αmin, (n1+0.5*n2)*αmax)
 
     return ωmin, ωmax
 end
-
-"""αminmax(dψ,d2ψ,rmin,rmax[, Ω₀])
-maximal and minimal considered radial frequencies (rescaled)
-
-@ASSUMPTION:
-    - Ω1circular is a decreasing function of radius
-"""
-function αminmax(dψ::F1, d2ψ::F2,
-                 rmin::Float64,rmax::Float64,
-                 Ω₀::Float64)::Tuple{Float64,Float64} where {F1 <: Function, F2 <: Function}
-
-    @assert rmin < rmax "rmin >= rmax in αminmax function"
-    # Assumption :
-    # Ω1circular is a decreasing function of radius
-    return Ω1circular(dψ,d2ψ,rmax)/Ω₀, Ω1circular(dψ,d2ψ,rmin)/Ω₀
-end
-
 
 
 ########################################################################
@@ -110,9 +109,9 @@ function FindVminVmax(u::Float64,
     # ωn(u) : value of the resonance line
     hval = HUFunc(u,ωmin,ωmax)
 
-    rmin, rmax = params.rmin, params.rmax
-    αmin, αmax = params.αmin, params.αmax
     Ω₀ = params.Ω₀
+    rmin, rmax = params.rmin, params.rmax
+    αmin, αmax = αminmax(dψ,d2ψ,rmin,rmax,Ω₀)
 
     if (n2==0)
         #####
@@ -153,7 +152,7 @@ function FindVminVmax(u::Float64,
             branch = 1
         else
             # First look for vbound in the asked boundary
-            vbound = FindVbound(n1,n2,dψ,d2ψ,rmin,rmax,params.Ω₀)
+            vbound = FindVbound(n1,n2,dψ,d2ψ,rmin,rmax,Ω₀)
 
             # Extreme boundary to look for vbound
             # @WARNING arbitrary fixed constant

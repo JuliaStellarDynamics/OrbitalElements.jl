@@ -276,9 +276,9 @@ end
 ########################################################################
 
 """
-the Jacobian to convert between variables that are functions of (E,L) and (a,e)
+Jacobian of the (a,e) ↦ (E,L) mapping, i.e. |∂(E,L)/∂(a,e)|
 """
-function JacELToAE(ψ::Function,dψ::Function,d2ψ::Function,d3ψ::Function,d4ψ::Function,
+function JacAEToEL(ψ::Function,dψ::Function,d2ψ::Function,d3ψ::Function,d4ψ::Function,
                    a::Float64,e::Float64,
                    params::OrbitsParameters)::Float64
 
@@ -289,25 +289,25 @@ end
 
 
 """
-the Jacobian to convert between variables that are functions of (E,L) and (a,e)
+Jacobian of the (a,e) ↦ (E,L) mapping, i.e. |∂(E,L)/∂(a,e)|
 EXCLUDING fourth derivative
 """
-function JacELToAE(ψ::Function,dψ::Function,d2ψ::Function,d3ψ::Function,
+function JacAEToEL(ψ::Function,dψ::Function,d2ψ::Function,d3ψ::Function,
                    a::Float64,e::Float64,
                    params::OrbitsParameters)::Float64
 
     FDIFF = params.FDIFF
     d4ψ(r::Float64)::Float64 = (d3ψ(r+FDIFF)-d3ψ(r))/FDIFF
 
-    return JacELToAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,params)
+    return JacAEToEL(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,params)
 end
 
 
 """
-the Jacobian to convert between variables that are functions of (E,L) and (a,e)
+Jacobian of the (a,e) ↦ (E,L) mapping, i.e. |∂(E,L)/∂(a,e)|
 EXCLUDING third derivative (fourth derivative is zer0)
 """
-function JacELToAE(ψ::Function,dψ::Function,d2ψ::Function,
+function JacAEToEL(ψ::Function,dψ::Function,d2ψ::Function,
                    a::Float64,e::Float64,
                    params::OrbitsParameters)::Float64
 
@@ -315,7 +315,7 @@ function JacELToAE(ψ::Function,dψ::Function,d2ψ::Function,
     d3ψ(r::Float64)::Float64 = (d2ψ(r+FDIFF)-d2ψ(r))/FDIFF
     d4ψ(r::Float64)::Float64 = 0.
 
-    return JacELToAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,params)
+    return JacAEToEL(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,params)
 end
 
 
