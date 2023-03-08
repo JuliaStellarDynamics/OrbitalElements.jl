@@ -290,37 +290,35 @@ end
 ########################################################################
 
 """
-compute the jacobian J = |d(E,L)/d(α,β)| = |d(E,L)/d(a,e)|/|d(α,β)/d(a,e)|
+Jacobian of the (α,β) ↦ (E,L) mapping, i.e. |∂(E,L)/∂(α,β)| = |∂(E,L)/∂(a,e)| / |∂(α,β)/∂(a,e)|
 """
-function JacELToαβAE(ψ::Function,dψ::Function,d2ψ::Function,d3ψ::Function,d4ψ::Function,
+function JacαβToELAE(ψ::Function,dψ::Function,d2ψ::Function,d3ψ::Function,d4ψ::Function,
                      a::Float64,e::Float64,
                      params::OrbitsParameters)::Float64
 
 
-    # the (E,L) -> (a,e) Jacobian (in Utils/ComputeEL.jl)
-    Jac_EL_AE = JacELToAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,params)
+    # the (a,e) -> (E,L) Jacobian (in Utils/ComputeEL.jl)
+    Jac_AE_To_EL = JacAEToEL(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,params)
 
     # the (α,β) -> (a,e) Jacobian (below)
-    Jac_AB_AE = JacαβToAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,params)
+    Jac_AE_To_αβ = JacAEToαβ(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,params)
 
     # compute the Jacobian
-    Jac = Jac_EL_AE/Jac_AB_AE
+    Jac_αβ_To_EL = Jac_AE_To_EL/Jac_AE_To_αβ
 
     # do some cursory checks for quality
-    if (Jac < 0.0) || isinf(Jac) || isnan(Jac)
-        Jac = 0.0
+    if (Jac_αβ_To_EL < 0.0) || isinf(Jac_αβ_To_EL) || isnan(Jac_αβ_To_EL)
+        Jac_αβ_To_EL = 0.0
     end
 
-    return Jac
+    return Jac_αβ_To_EL
 end
 
 """
-
+Jacobian of the (a,e) ↦ (α,β) mapping, i.e. |∂(α,β)/∂(a,e)|
 @ATTENTION can use the isochrone-specific if you are using an isochrone. Otherwise this is a bit costly.
-
-
 """
-function JacαβToAE(ψ::Function,dψ::Function,d2ψ::Function,d3ψ::Function,d4ψ::Function,
+function JacAEToαβ(ψ::Function,dψ::Function,d2ψ::Function,d3ψ::Function,d4ψ::Function,
                    a::Float64,e::Float64,
                    params::OrbitsParameters)::Float64
 
