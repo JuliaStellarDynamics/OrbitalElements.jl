@@ -5,10 +5,11 @@ examples/run_jacobians.jl
 
 # Example output files
 examples/figures
-examples/mapping_tests/*.hf5
-examples/*.txt
+examples/**/*.hf5
 examples/*.hf5
+examples/**/*.h5
 examples/*.h5
+examples/*.txt
 examples/*.pdf
 
 
