@@ -13,7 +13,7 @@ Useful functions for numerical derivation or interpolations
 ########################################################################
 
 """
-    NumDerivPoints(a,e,da,de,tola,tole)
+    NumericalDerivativePoints(a,e,da,de,tola,tole)
     
 Points to use for numerical derivative w.r.t a and e 
 depending on the location (switch close to border and close to cut off)
@@ -26,8 +26,6 @@ Points are structured as follow:
 (a , e) → (a ,ep)
            [+de]
 
-Not ±dx/2 close to the border but same structure with -dx
-
 Output order :
 semimajor axis derivative info followed by eccentricity
   da      de   
@@ -35,12 +33,12 @@ ap, da, ep, de
 (da and de could be switched to negative values)
 
 @WARNING: Important assumption here 
-    → switch are made with exclusive lower or greater boundary conditions
+    → tolerances switch are made with exclusive lower or greater boundary conditions
     i.e. switch points are part of the standard case (not the border ones)
 """
-function NumDerivPoints(a::Float64,e::Float64,
-                        da::Float64,de::Float64,
-                        tola::Float64,tole::Float64)::Tuple{Float64,Float64,Float64,Float64}
+function NumericalDerivativePoints(a::Float64,e::Float64,
+                                    da::Float64,de::Float64,
+                                    tola::Float64,tole::Float64)::Tuple{Float64,Float64,Float64,Float64}
 
     # Usual points
     ap = a + da
@@ -54,7 +52,7 @@ function NumDerivPoints(a::Float64,e::Float64,
             da *= -1.0
         end
     end
-    if (e <= tole) && (ep > tole)
+    if (e < tole) && (ep >= tole)
         if e - de < 0.
             println("WARNING: Too low tolerance on eccentricity compared to the numerical derivative step.")
         else

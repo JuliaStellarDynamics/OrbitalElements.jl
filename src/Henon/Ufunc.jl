@@ -137,15 +137,15 @@ end
 ########################################################################
 
 """
-    Vrad(ψ,dψ,d2ψ,d3ψ,u,a,e,params)
+    Vrad(ψ,dψ,d2ψ,u,a,e,params)
 
 radial velocity as a function of the orbital constants (a,e) and the anomaly u
 """
-function Vrad(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,
+function Vrad(ψ::F0,dψ::F1,d2ψ::F2,
               u::Float64,a::Float64,e::Float64,
-              params::OrbitalParameters=OrbitalParameters())::Float64 where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function}
+              params::OrbitalParameters=OrbitalParameters())::Float64 where {F0 <: Function, F1 <: Function, F2 <: Function}
 
-    E, L = ELFromAE(ψ,dψ,d2ψ,d3ψ,a,e,params)
+    E, L = ELFromAE(ψ,dψ,a,e,params)
 
     r = ru(u,a,e)
 
@@ -166,27 +166,27 @@ end
 ########################################################################
 
 """
-    ΘAE(ψ,dψ,d2ψ,d3ψ,u,a,e,params)
+    ΘAE(ψ,dψ,d2ψ,u,a,e,params)
 
 Θ, the anomaly for computing orbit averages as a function of (a,e)
 equivalent to Θ = (dr/du)(1/Vrad)
 """
-function ΘAE(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,
+function ΘAE(ψ::F0,dψ::F1,d2ψ::F2,
              u::Float64,a::Float64,e::Float64,
-             params::OrbitalParameters=OrbitalParameters())::Float64 where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function}
+             params::OrbitalParameters=OrbitalParameters())::Float64 where {F0 <: Function, F1 <: Function, F2 <: Function}
 
     # use the expanded approximation
     # CAUTION: 1-(1-EDGE) < EDGE is true ...
     # To prevent this → EDGE - eps(Float64)
     if ((1.0 - abs(u)) < (params.EDGE - eps(Float64)))
-        return ΘExpansionAE(ψ,dψ,d2ψ,d3ψ,u,a,e,params)
+        return ΘExpansionAE(ψ,dψ,d2ψ,u,a,e,params)
 
     # if not close to the boundary, can calculate as normal
     else
         dr = drdu(u,a,e)
 
         # this can somehow be negative: do we need an extra check?
-        vr = Vrad(ψ,dψ,d2ψ,d3ψ,u,a,e,params)
+        vr = Vrad(ψ,dψ,d2ψ,u,a,e,params)
 
         if (vr == 0.0)
             # go back to the expansion -- or should we return 0.0?
@@ -201,15 +201,15 @@ end
 
 
 """
-    ΘExpansionAE(ψ,dψ,d2ψ,d3ψ,u,a,e,params)
+    ΘExpansionAE(ψ,dψ,d2ψ,u,a,e,params)
 
 ΘExpansion, the anomaly for computing orbit averages as a function of (a,e)
 
 Used when u is sufficiently close to +1,-1
 """
-function ΘExpansionAE(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,
+function ΘExpansionAE(ψ::F0,dψ::F1,d2ψ::F2,
                       u::Float64,a::Float64,e::Float64,
-                      params::OrbitalParameters=OrbitalParameters())::Float64 where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function}
+                      params::OrbitalParameters=OrbitalParameters())::Float64 where {F0 <: Function, F1 <: Function, F2 <: Function}
 
     # which boundary are we close to?
     ul = (u > 0.) ? 1.0 : -1.0
@@ -218,7 +218,7 @@ function ΘExpansionAE(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,
     rl = ru(ul,a,e)
 
     # compute energy and angular momentum from the potential (allow for expansions)
-    L = LFromAE(ψ,dψ,d2ψ,d3ψ,a,e,params)
+    L = LFromAE(ψ,dψ,a,e,params)
 
     # compute the derivatives of the effective potential
     dψeffl, d2ψeffl = dψeffdr(dψ,rl,L), d2ψeffdr2(d2ψ,rl,L)
@@ -243,9 +243,9 @@ function ΘExpansionAE(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,
         u2 = ul * (1.0 - 2*params.EDGE)
         u3 = ul * (1.0 - 3*params.EDGE)
 
-        Θ1 = ΘAE(ψ,dψ,d2ψ,d3ψ,u1,a,e,params)
-        Θ2 = ΘAE(ψ,dψ,d2ψ,d3ψ,u2,a,e,params)
-        Θ3 = ΘAE(ψ,dψ,d2ψ,d3ψ,u3,a,e,params)
+        Θ1 = ΘAE(ψ,dψ,d2ψ,u1,a,e,params)
+        Θ2 = ΘAE(ψ,dψ,d2ψ,u2,a,e,params)
+        Θ3 = ΘAE(ψ,dψ,d2ψ,u3,a,e,params)
 
         return Interpolation2ndOrder(u,u1,Θ1,u2,Θ2,u3,Θ3)
     end
@@ -268,25 +268,25 @@ end
 ########################################################################
 
 """
-    dΘAE(ψ,dψ,d2ψ,d3ψ,u,a,e,params)
+    dΘAE(ψ,dψ,d2ψ,u,a,e,params)
 
 numerical differentiation of Θ w.r.t. semimajor axis and eccentricity
 """
-function dΘAE(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,
+function dΘAE(ψ::F0,dψ::F1,d2ψ::F2,
               u::Float64,a::Float64,e::Float64,
-              params::OrbitalParameters=OrbitalParameters())::Tuple{Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function}
+              params::OrbitalParameters=OrbitalParameters())::Tuple{Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function}
 
     # Numerical derivative points
-    ap, da, ep, de = NumDerivPoints(a,e,params.da,params.de,params.TOLA,params.TOLECC)
+    ap, da, ep, de = NumericalDerivativePoints(a,e,params.da,params.de,params.TOLA,params.TOLECC)
 
     # Current point
-    Θloc = ΘAE(ψ,dψ,d2ψ,d3ψ,u,a,e,params)
+    Θloc = ΘAE(ψ,dψ,d2ψ,u,a,e,params)
 
     # For a derivative
-    Θap = ΘAE(ψ,dψ,d2ψ,d3ψ,u,ap,e,params)
+    Θap = ΘAE(ψ,dψ,d2ψ,u,ap,e,params)
     
     # For e derivative
-    Θep = ΘAE(ψ,dψ,d2ψ,d3ψ,u,a,ep,params)
+    Θep = ΘAE(ψ,dψ,d2ψ,u,a,ep,params)
 
     ∂Θ∂a = (Θap-Θloc)/da
     ∂Θ∂e = (Θep-Θloc)/de

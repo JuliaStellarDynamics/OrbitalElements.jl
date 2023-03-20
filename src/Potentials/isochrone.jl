@@ -39,51 +39,6 @@ function d2ψIsochrone(r::Float64,bc::Float64=1.,M::Float64=1.,astronomicalG::Fl
                           + (sqrt(rbc)*(sqrt(rbc)+bc)^2)^(-1))
 end
 
-"""d3ψIsochrone(r[,bc,M,G])
-
-the isochrone potential third derivative
-"""
-function d3ψIsochrone(r::Float64,bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
-    #=
-    =#
-    r2      = r^2
-    r3      = r^3
-    rbc     = r2 + bc^2
-    sqrbc   = sqrt(rbc)
-    bcsqrbc = bc+sqrbc
-    return -astronomicalG*M*(-(6r3)/((rbc^(3/2))*(bcsqrbc^4))
-                             -(6r3)/((rbc^2)*(bcsqrbc^3))
-                             +(6r)/(rbc*(bcsqrbc^3))
-                             -(3r3)/((rbc^(5/2))*(bcsqrbc^2))
-                             +(3r)/((rbc^(3/2))*bcsqrbc^2))
-end
-
-"""d4ψIsochrone(r[,bc,M,G])
-
-the isochrone potential fourth derivative
-"""
-function d4ψIsochrone(r::Float64,bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
-    #=
-    =#
-    r2      = r^2
-    r3      = r^3
-    r4      = r^4
-    rbc     = r2 + bc^2
-    sqrbc   = sqrt(rbc)
-    bcsqrbc = bc+sqrbc
-    return -astronomicalG*M*(+(24r4)/((rbc^2)*(bcsqrbc^5))
-                             +(36r4)/((rbc^(5/2))*(bcsqrbc^4))
-                             -(36r2)/((rbc^(3/2))*(bcsqrbc^4))
-                             +(30r4)/((rbc^(3))*(bcsqrbc^3))
-                             -(36r2)/((rbc^(2))*(bcsqrbc^3))
-                             +(6)/((rbc)*(bcsqrbc^3))
-                             +(15r4)/((rbc^(7/2))*(bcsqrbc^2))
-                             -(18r2)/((rbc^(5/2))*(bcsqrbc^2))
-                             +(3)/((rbc^(3/2))*(bcsqrbc^2)))
-end
-
-
-
 """
 isochrone frequency scale, from Fouvry 21 (appendix G)
 """

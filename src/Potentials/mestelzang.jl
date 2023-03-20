@@ -42,26 +42,6 @@ function d2ψMestel(r::Float64,R0::Float64=1.,V0::Float64=1.)
     x = r/R0
     return  - ((V0)^(2) / (R0)^(2)) / (x^2)
 end
-"""
-    d3ψMestel(r[, R0, V0, epsilon])
-
-the Mestel potential third derivative.
-"""
-function d3ψMestel(r::Float64,R0::Float64=1.,V0::Float64=1.)
-
-    x = r/R0
-    return  2.0 * ((V0)^(2) / (R0)^(3)) / (x^3)
-end
-"""
-    d4ψMestel(r[, R0, V0, epsilon])
-
-the Mestel potential fourth derivative.
-"""
-function d4ψMestel(r::Float64,R0::Float64=1.,V0::Float64=1.)
-
-    x = r/R0
-    return  - 6.0 * ((V0)^(2) / (R0)^(4)) / (x^4)
-end
 
 """
     Ω₀Mestel([R0, V0, epsilon])
@@ -109,26 +89,6 @@ function d2ψMestelTrunc(r::Float64,R0::Float64=1.,V0::Float64=1.,eps::Float64=0
 
     x = r/R0
     return  ((V0)^(2) / (R0)^(2)) * ((eps)^(2) - (x)^(2)) / ((eps)^(2) + (x)^(2))^(2)
-end
-"""
-    d3ψMestelTrunc(r[, R0, V0, epsilon])
-
-the truncated Mestel potential third derivative.
-"""
-function d3ψMestelTrunc(r::Float64,R0::Float64=1.,V0::Float64=1.,eps::Float64=0.01)
-
-    x = r/R0
-    return  ((V0)^(2) / (R0)^(3)) * 2 * x * ((x)^2 - 3*(eps)^(2)) / ((eps)^(2) + (x)^(2))^(3)
-end
-"""
-    d4ψMestelTrunc(r[, R0, V0, epsilon])
-
-the truncated Mestel potential fourth derivative.
-"""
-function d4ψMestelTrunc(r::Float64,R0::Float64=1.,V0::Float64=1.,eps::Float64=0.01)
-
-    x = r/R0
-    return  - 6 * ((V0)^(2) / (R0)^(4)) * ((x)^(4) - 6*(x)^(2)*(eps)^(2) + (eps)^(4)) / ((eps)^(2) + (x)^(2))^(4)
 end
 
 """

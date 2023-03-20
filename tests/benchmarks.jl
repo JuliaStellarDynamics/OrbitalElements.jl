@@ -16,8 +16,6 @@ const bc, M, G = 1.,1. ,1.
 const ψ(r::Float64)    = OrbitalElements.ψIsochrone(r,bc,M,G)
 const dψ(r::Float64)   = OrbitalElements.dψIsochrone(r,bc,M,G)
 const d2ψ(r::Float64)  = OrbitalElements.d2ψIsochrone(r,bc,M,G)
-const d3ψ(r::Float64)  = OrbitalElements.d3ψIsochrone(r,bc,M,G)
-const d4ψ(r::Float64)  = OrbitalElements.d4ψIsochrone(r,bc,M,G)
 const Ω₀ = OrbitalElements.Ω₀Isochrone(bc,M,G)
 
 const params = OrbitalElements.OrbitalParameters()
@@ -32,34 +30,36 @@ const params = OrbitalElements.OrbitalParameters()
 n1, n2 = -1, 2
 a, e = 1.0, 0.05
 u = 0.4
-Ω1, Ω2 = OrbitalElements.ComputeFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,params)
-E = OrbitalElements.EFromAE(ψ,dψ,d2ψ,d3ψ,a,e,params)
-J, L  = OrbitalElements.ComputeActionsAE(ψ,dψ,d2ψ,d3ψ,a,e,params)
+Ω1, Ω2 = OrbitalElements.ComputeFrequenciesAE(ψ,dψ,d2ψ,a,e,params)
+E = OrbitalElements.EFromAE(ψ,dψ,a,e,params)
+J, L  = OrbitalElements.ComputeActionsAE(ψ,dψ,d2ψ,a,e,params)
 rp, ra = OrbitalElements.RpRaFromAE(a,e)
 r = OrbitalElements.ru(u,a,e)
 
 println("UNDEFINED PARAMETER STRUCTURE BENCHMARKS:")
 println("Frequencies integrand computation Benchmark")
-@btime OrbitalElements.ΘAE(ψ,dψ,d2ψ,d3ψ,u,a,e)
+@btime OrbitalElements.ΘAE(ψ,dψ,d2ψ,u,a,e)
 
 println("Frequencies computation Benchmark")
-@btime OrbitalElements.ComputeFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e)
+@btime OrbitalElements.ComputeFrequenciesAE(ψ,dψ,d2ψ,a,e)
 
 println("Frequencies inversion Benchmark")
-@btime OrbitalElements.ComputeAEFromFrequencies(ψ,dψ,d2ψ,d3ψ,d4ψ,Ω1,Ω2)
+@btime OrbitalElements.ComputeAEFromFrequencies(ψ,dψ,d2ψ,Ω1,Ω2)
 
 #####
 # Defined parameter structure
 #####
 println("DEFINED PARAMETER STRUCTURE BENCHMARKS:")
 println("Frequencies integrand computation Benchmark")
-@btime OrbitalElements.ΘAE(ψ,dψ,d2ψ,d3ψ,u,a,e,params)
+@btime OrbitalElements.ΘAE(ψ,dψ,d2ψ,u,a,e,params)
 
 println("Frequencies computation Benchmark")
-@btime OrbitalElements.ComputeFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,params)
+@btime OrbitalElements.ComputeFrequenciesAE(ψ,dψ,d2ψ,a,e,params)
 
 println("Frequencies inversion Benchmark")
-@btime OrbitalElements.ComputeAEFromFrequencies(ψ,dψ,d2ψ,d3ψ,d4ψ,Ω1,Ω2,params)
+@btime OrbitalElements.ComputeAEFromFrequencies(ψ,dψ,d2ψ,Ω1,Ω2,params)
+
+
 ######################################################################
 #
 # Benchmarks (in REPL)

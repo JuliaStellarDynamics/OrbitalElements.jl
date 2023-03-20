@@ -48,31 +48,6 @@ function d2ψPlummer(r::Float64,bc::Float64=1.,M::Float64=1.,G::Float64=1.)
 end
 
 """
-the plummer potential third derivative
-"""
-function d3ψPlummer(r::Float64,bc::Float64=1.0,M::Float64=1.0,G::Float64=1.0)::Float64
-    rbc = r^2 + bc^2
-    term1 = 15*(r^3)/(rbc^(7/2))
-    term2 = 9r/(rbc^(5/2))
-    return -G*M*(-term1 + term2)
-end
-
-"""
-the plummer potential fourth derivative
-"""
-function d4ψPlummer(r::Float64,
-                               bc::Float64=1.0,
-                               M::Float64=1.0,
-                               G::Float64=1.0)::Float64
-    rbc = r^2 + bc^2
-    term1 = 105*(r^4)/(rbc^(9/2))
-    term2 = 90*(r^2)/(rbc^(7/2))
-    term3 = 9/(rbc^(5/2))
-    return -G*M*(term1 - term2 + term3)
-end
-
-
-"""
 the central frequency for the Plummer potential
 """
 function Ω₀Plummer(bc::Float64=1.,M::Float64=1.,G::Float64=1.)

@@ -90,13 +90,13 @@ end
 
 
 """
-    AEFromΩ1Ω2Brute(Ω₁,Ω₂,ψ,dψ,d2ψ,d3ψ,d4ψ,params)
+    AEFromΩ1Ω2Brute(Ω₁,Ω₂,ψ,dψ,d2ψ,params)
 
 basic Newton-Raphson algorithm to find (a,e) from (Ω₁,Ω₂) brute force derivatives.
 """
 function AEFromΩ1Ω2Brute(Ω₁::Float64,Ω₂::Float64,
-                         ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,d4ψ::F4,
-                         params::OrbitalParameters=OrbitalParameters())::Tuple{Float64,Float64,Int64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function, F4 <: Function}
+                         ψ::F0,dψ::F1,d2ψ::F2,
+                         params::OrbitalParameters=OrbitalParameters())::Tuple{Float64,Float64,Int64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function}
 
     # get the circular orbit (maximum radius) for a given Ω₁,Ω₂. use the stronger constraint.
     acirc = RcircFromΩ1circ(Ω₁,dψ,d2ψ,params.rmin,params.rmax)
@@ -105,7 +105,7 @@ function AEFromΩ1Ω2Brute(Ω₁::Float64,Ω₂::Float64,
     aguess = acirc
     eguess = 0.5
 
-    f1,f2,df1da,df2da,df1de,df2de = ComputeFrequenciesAEWithDeriv(ψ,dψ,d2ψ,d3ψ,d4ψ,aguess,eguess,params)
+    f1,f2,df1da,df2da,df1de,df2de = ComputeFrequenciesAEWithDeriv(ψ,dψ,d2ψ,aguess,eguess,params)
 
     tol = (Ω₁ - f1)^2 + (Ω₂ - f2)^2
     if (tol < (params.invε)^2)
@@ -126,7 +126,7 @@ function AEFromΩ1Ω2Brute(Ω₁::Float64,Ω₂::Float64,
         anew, enew = NextGuessAE(aguess,eguess,increment1,increment2,params)
         aguess, eguess = anew, enew
 
-        f1,f2,df1da,df2da,df1de,df2de = ComputeFrequenciesAEWithDeriv(ψ,dψ,d2ψ,d3ψ,d4ψ,aguess,eguess,params)
+        f1,f2,df1da,df2da,df1de,df2de = ComputeFrequenciesAEWithDeriv(ψ,dψ,d2ψ,aguess,eguess,params)
 
         tol = (Ω₁ - f1)^2 + (Ω₂ - f2)^2
         if (tol < (params.invε)^2)
@@ -139,13 +139,13 @@ end
 
 
 """
-    AEFromJLBrute(J,L,ψ,dψ,d2ψ,d3ψ,params)
+    AEFromJLBrute(J,L,ψ,dψ,d2ψ,params)
 
 basic Newton-Raphson algorithm to find (a,e) from (Jᵣ,L) brute force derivatives.
 """
 function AEFromJLBrute(J::Float64,L::Float64,
-                       ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,
-                       params::OrbitalParameters=OrbitalParameters())::Tuple{Float64,Float64,Int64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function}
+                       ψ::F0,dψ::F1,d2ψ::F2,
+                       params::OrbitalParameters=OrbitalParameters())::Tuple{Float64,Float64,Int64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function}
 
     # get the circular orbit (maximum radius) for a given angular momentum.
     acirc = RcircFromL(L,dψ,params.rmin,params.rmax)
@@ -154,7 +154,7 @@ function AEFromJLBrute(J::Float64,L::Float64,
     aguess = acirc
     eguess = 0.5
 
-    Jguess, Lguess, dJgda, dLgda, dJgde, dLgde = ComputeActionsAEWithDeriv(ψ,dψ,d2ψ,d3ψ,aguess,eguess,params)
+    Jguess, Lguess, dJgda, dLgda, dJgde, dLgde = ComputeActionsAEWithDeriv(ψ,dψ,d2ψ,aguess,eguess,params)
 
     tol = (Jguess - J)^2 + (Lguess - L)^2
     if (tol < (params.invε)^2)
@@ -175,7 +175,7 @@ function AEFromJLBrute(J::Float64,L::Float64,
         anew, enew = NextGuessAE(aguess,eguess,increment1,increment2,params)
         aguess, eguess = anew, enew
 
-        Jguess, Lguess, dJgda, dLgda, dJgde, dLgde = ComputeActionsAEWithDeriv(ψ,dψ,d2ψ,d3ψ,aguess,eguess,params)
+        Jguess, Lguess, dJgda, dLgda, dJgde, dLgde = ComputeActionsAEWithDeriv(ψ,dψ,d2ψ,aguess,eguess,params)
 
         tol = (Jguess - J)^2 + (Lguess - L)^2
         if (tol < (params.invε)^2)

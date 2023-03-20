@@ -62,23 +62,23 @@ end
 #
 ########################################################################
 """
-    αβFromAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,params)
+    αβFromAE(ψ,dψ,d2ψ,a,e,params)
 """
-function αβFromAE(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,d4ψ::F4,
+function αβFromAE(ψ::F0,dψ::F1,d2ψ::F2,
                   a::Float64,e::Float64,
-                  params::OrbitalParameters=OrbitalParameters())::Tuple{Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function, F4 <: Function}
+                  params::OrbitalParameters=OrbitalParameters())::Tuple{Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function}
 
-    return αβHenonΘAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,params)
+    return αβHenonΘAE(ψ,dψ,d2ψ,a,e,params)
 end
 
 """
-    ComputeFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,params)
+    ComputeFrequenciesAE(ψ,dψ,d2ψ,a,e,params)
 """
-function ComputeFrequenciesAE(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,d4ψ::F4,
+function ComputeFrequenciesAE(ψ::F0,dψ::F1,d2ψ::F2,
                               a::Float64,e::Float64,
-                              params::OrbitalParameters=OrbitalParameters())::Tuple{Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function, F4 <: Function}
+                              params::OrbitalParameters=OrbitalParameters())::Tuple{Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function}
 
-    α, β = αβFromAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,params)
+    α, β = αβFromAE(ψ,dψ,d2ψ,a,e,params)
     return FrequenciesFromαβ(α,β,params.Ω₀)
 end
 
@@ -86,14 +86,14 @@ end
 
 
 """
-    ComputeFrequenciesJAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,params)
+    ComputeFrequenciesJAE(ψ,dψ,d2ψ,a,e,params)
 """
-function ComputeFrequenciesJAE(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,d4ψ::F4,
+function ComputeFrequenciesJAE(ψ::F0,dψ::F1,d2ψ::F2,
                                a::Float64,e::Float64,
-                               params::OrbitalParameters=OrbitalParameters())::Tuple{Float64,Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function, F4 <: Function}
+                               params::OrbitalParameters=OrbitalParameters())::Tuple{Float64,Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function}
 
-    Ω1, Ω2 = ComputeFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,params)
-    J = HenonJFromAE(ψ,dψ,d2ψ,d3ψ,a,e,params)
+    Ω1, Ω2 = ComputeFrequenciesAE(ψ,dψ,d2ψ,a,e,params)
+    J = HenonJFromAE(ψ,dψ,d2ψ,a,e,params)
 
     return Ω1, Ω2, J
 end
@@ -105,23 +105,24 @@ end
 ########################################################################
 
 """
-    ComputeαβWithDerivAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,params)
+    ComputeαβWithDerivAE(ψ,dψ,d2ψ,a,e,params)
 """
-function ComputeαβWithDerivAE(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,d4ψ::F4,
+function ComputeαβWithDerivAE(ψ::F0,dψ::F1,d2ψ::F2,
                               a::Float64,e::Float64,
-                              params::OrbitalParameters=OrbitalParameters())::Tuple{Float64,Float64,Float64,Float64,Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function, F4 <: Function}
+                              params::OrbitalParameters=OrbitalParameters())::Tuple{Float64,Float64,Float64,Float64,Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function}
 
     # Numerical derivative points
-    ap, da, ep, de = NumDerivPoints(a,e,params.da,params.de,params.TOLA,params.TOLECC)
+    tole = EccentricityTolerance(a,params.TOLA,params.TOLECC)
+    ap, da, ep, de = NumericalDerivativePoints(a,e,params.da,params.de,params.TOLA,tole)
 
     # Derivation outside the integral
-    α, β = αβFromAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,params)
+    α, β = αβFromAE(ψ,dψ,d2ψ,a,e,params)
 
     # For a derivatives
-    αap, βap = αβFromAE(ψ,dψ,d2ψ,d3ψ,d4ψ,ap,e,params)
+    αap, βap = αβFromAE(ψ,dψ,d2ψ,ap,e,params)
     
     # For e derivatives
-    αep, βep = αβFromAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,ep,params)
+    αep, βep = αβFromAE(ψ,dψ,d2ψ,a,ep,params)
 
     ∂α∂a = (αap-α)/da
     ∂β∂a = (βap-β)/da
@@ -133,14 +134,14 @@ function ComputeαβWithDerivAE(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,d4ψ::F4,
 end
 
 """
-    ComputeFrequenciesAEWithDeriv(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,params)
+    ComputeFrequenciesAEWithDeriv(ψ,dψ,d2ψ,a,e,params)
 """
-function ComputeFrequenciesAEWithDeriv(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,d4ψ::F4,
+function ComputeFrequenciesAEWithDeriv(ψ::F0,dψ::F1,d2ψ::F2,
                                        a::Float64,e::Float64,
-                                       params::OrbitalParameters=OrbitalParameters())::Tuple{Float64,Float64,Float64,Float64,Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function, F4 <: Function}
+                                       params::OrbitalParameters=OrbitalParameters())::Tuple{Float64,Float64,Float64,Float64,Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function}
     
     Ω₀ = params.Ω₀
-    α, β, ∂α∂a, ∂β∂a, ∂α∂e, ∂β∂e = ComputeαβWithDerivAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,params)
+    α, β, ∂α∂a, ∂β∂a, ∂α∂e, ∂β∂e = ComputeαβWithDerivAE(ψ,dψ,d2ψ,a,e,params)
 
     Ω1, Ω2          = FrequenciesFromαβ(α,β,Ω₀)
     ∂Ω1∂a, ∂Ω2∂a    = FrequenciesDerivsFromαβDerivs(α,β,∂α∂a,∂β∂a,Ω₀)
@@ -157,14 +158,14 @@ end
 ########################################################################
 
 """
-    ComputeActionsAE(ψ,dψ,d2ψ,d3ψ,a,e,params)
+    ComputeActionsAE(ψ,dψ,d2ψ,a,e,params)
 """
-function ComputeActionsAE(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,
+function ComputeActionsAE(ψ::F0,dψ::F1,d2ψ::F2,
                           a::Float64,e::Float64,
-                          params::OrbitalParameters=OrbitalParameters())::Tuple{Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function}
+                          params::OrbitalParameters=OrbitalParameters())::Tuple{Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function}
 
-    J = HenonJFromAE(ψ,dψ,d2ψ,d3ψ,a,e,params)
-    L = LFromAE(ψ,dψ,d2ψ,d3ψ,a,e,params)
+    J = HenonJFromAE(ψ,dψ,d2ψ,a,e,params)
+    L = LFromAE(ψ,dψ,a,e,params)
     return J, L
 end
 
@@ -175,23 +176,24 @@ end
 ########################################################################
 
 """
-    ComputeActionsAEWithDeriv(ψ,dψ,d2ψ,d3ψ,a,e,params)
+    ComputeActionsAEWithDeriv(ψ,dψ,d2ψ,a,e,params)
 """
-function ComputeActionsAEWithDeriv(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,
+function ComputeActionsAEWithDeriv(ψ::F0,dψ::F1,d2ψ::F2,
                                    a::Float64,e::Float64,
-                                   params::OrbitalParameters=OrbitalParameters())::Tuple{Float64,Float64,Float64,Float64,Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function}
+                                   params::OrbitalParameters=OrbitalParameters())::Tuple{Float64,Float64,Float64,Float64,Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function}
 
     # Numerical derivative points
-    ap, da, ep, de = NumDerivPoints(a,e,params.da,params.de,params.TOLA,params.TOLECC)
+    tole = EccentricityTolerance(a,params.TOLA,params.TOLECC)
+    ap, da, ep, de = NumericalDerivativePoints(a,e,params.da,params.de,params.TOLA,tole)
 
     # Derivation outside the integral
-    J, L = ComputeActionsAE(ψ,dψ,d2ψ,d3ψ,a,e,params)
+    J, L = ComputeActionsAE(ψ,dψ,d2ψ,a,e,params)
 
     # For a derivatives
-    Jap, Lap = ComputeActionsAE(ψ,dψ,d2ψ,d3ψ,ap,e,params)
+    Jap, Lap = ComputeActionsAE(ψ,dψ,d2ψ,ap,e,params)
     
     # For e derivatives
-    Jep, Lep = ComputeActionsAE(ψ,dψ,d2ψ,d3ψ,a,ep,params)
+    Jep, Lep = ComputeActionsAE(ψ,dψ,d2ψ,a,ep,params)
 
     ∂J∂a = (Jap-J)/da
     ∂L∂a = (Lap-L)/da
@@ -210,26 +212,26 @@ end
 ########################################################################
 
 """
-    ComputeAEFromFrequencies(ψ,dψ,d2ψ,d3ψ,d4ψ,Ω1,Ω2,params)
+    ComputeAEFromFrequencies(ψ,dψ,d2ψ,Ω1,Ω2,params)
 """
-function ComputeAEFromFrequencies(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,d4ψ::F4,
+function ComputeAEFromFrequencies(ψ::F0,dψ::F1,d2ψ::F2,
                                   Ω1::Float64,Ω2::Float64,
-                                  params::OrbitalParameters=OrbitalParameters())::Tuple{Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function, F4 <: Function}
+                                  params::OrbitalParameters=OrbitalParameters())::Tuple{Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function}
 
-        a, e, _, _ = AEFromΩ1Ω2Brute(Ω1,Ω2,ψ,dψ,d2ψ,d3ψ,d4ψ,params)
+        a, e, _, _ = AEFromΩ1Ω2Brute(Ω1,Ω2,ψ,dψ,d2ψ,params)
 
         return a, e
 end
 
 
 """
-    ComputeAEFromActions(ψ,dψ,d2ψ,d3ψ,J,L,params)
+    ComputeAEFromActions(ψ,dψ,d2ψ,J,L,params)
 """
-function ComputeAEFromActions(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,
+function ComputeAEFromActions(ψ::F0,dψ::F1,d2ψ::F2,
                               J::Float64,L::Float64,
-                              params::OrbitalParameters=OrbitalParameters())::Tuple{Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function}
+                              params::OrbitalParameters=OrbitalParameters())::Tuple{Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function}
 
-        a, e, _, _ = AEFromJLBrute(J,L,ψ,dψ,d2ψ,d3ψ,params)
+        a, e, _, _ = AEFromJLBrute(J,L,ψ,dψ,d2ψ,params)
 
         return a, e
 end
@@ -243,20 +245,20 @@ end
 ########################################################################
 
 """
-    JacELToαβAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,da,de,TOLA,TOLECC,NINT,EDGE,Ω₀)
+    JacELToαβAE(ψ,dψ,d2ψ,a,e,da,de,params)
 
 Jacobian of the (α,β) ↦ (E,L) mapping, i.e. |∂(E,L)/∂(α,β)| = |∂(E,L)/∂(a,e)| / |∂(α,β)/∂(a,e)|
 """
-function JacαβToELAE(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,d4ψ::F4,
+function JacαβToELAE(ψ::F0,dψ::F1,d2ψ::F2,
                      a::Float64,e::Float64,
-                     params::OrbitalParameters=OrbitalParameters())::Float64 where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function, F4 <: Function}
+                     params::OrbitalParameters=OrbitalParameters())::Float64 where {F0 <: Function, F1 <: Function, F2 <: Function}
 
 
     # the (a,e) -> (E,L) Jacobian (in Utils/ComputeEL.jl)
-    Jac_AE_To_EL = JacAEToEL(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,params)
+    Jac_AE_To_EL = JacAEToEL(ψ,dψ,d2ψ,a,e,params)
 
     # the (a,e) -> (α,β) Jacobian (below)
-    Jac_AE_To_αβ = JacAEToαβ(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,params)
+    Jac_AE_To_αβ = JacAEToαβ(ψ,dψ,d2ψ,a,e,params)
 
     # compute the Jacobian
     Jac_αβ_To_EL = Jac_AE_To_EL/Jac_AE_To_αβ
@@ -270,15 +272,15 @@ function JacαβToELAE(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,d4ψ::F4,
 end
 
 """
-    JacαβToAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,params)
+    JacαβToAE(ψ,dψ,d2ψ,a,e,params)
 Jacobian of the (a,e) ↦ (α,β) mapping, i.e. |∂(α,β)/∂(a,e)|
 """
-function JacAEToαβ(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,d4ψ::F4,
+function JacAEToαβ(ψ::F0,dψ::F1,d2ψ::F2,
                    a::Float64,e::Float64,
-                   params::OrbitalParameters=OrbitalParameters())::Float64 where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function, F4 <: Function}
+                   params::OrbitalParameters=OrbitalParameters())::Float64 where {F0 <: Function, F1 <: Function, F2 <: Function}
 
     # calculate the frequency derivatives
-    _, _, ∂α∂a, ∂β∂a, ∂α∂e, ∂β∂e = ComputeαβWithDerivAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,params)
+    _, _, ∂α∂a, ∂β∂a, ∂α∂e, ∂β∂e = ComputeαβWithDerivAE(ψ,dψ,d2ψ,a,e,params)
 
     # return the Jacobian
     return abs(∂α∂a*∂β∂e - ∂β∂a*∂α∂e)
