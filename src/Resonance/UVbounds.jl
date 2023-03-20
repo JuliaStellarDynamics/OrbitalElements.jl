@@ -2,8 +2,10 @@
 
 """
 
-"""Getϖ(ω₀,n₁,n₂,dψ/dr,d²ψ/dr²[,Ω₀,rmin,rmax])
-translate a complex frequency into a rescale frequency.
+"""
+    Getϖ(ω,n1,n2,dψ,d2ψ,params)
+
+translate a complex frequency into a rescaled frequency.
 maps ``\\omega \\to [-1,1]``
 
 Fouvry & Prunet B3
@@ -14,7 +16,7 @@ Fouvry & Prunet B3
 function Getϖ(ω::ComplexF64,
               n1::Int64,n2::Int64,
               dψ::F1,d2ψ::F2,
-              params::OrbitsParameters)::ComplexF64 where {F1 <: Function, F2 <: Function}
+              params::OrbitalParameters=OrbitalParameters())::ComplexF64 where {F1 <: Function, F2 <: Function}
 
     ωmin, ωmax = Findωminωmax(n1,n2,dψ,d2ψ,params)
 
@@ -22,6 +24,8 @@ function Getϖ(ω::ComplexF64,
 end
 
 """
+    Getϖ(ω,ωmin,ωmax)
+
 ϖ version with ωmin, ωmax
 
 """
@@ -32,29 +36,14 @@ function Getϖ(ω::ComplexF64,
 end
 
 
-"""αminmax(dψ,d2ψ,rmin,rmax[, Ω₀])
-maximal and minimal considered radial frequencies (rescaled)
-
-@ASSUMPTION:
-    - Ω1circular is a decreasing function of radius
-"""
-function αminmax(dψ::F1, d2ψ::F2,
-                 rmin::Float64,rmax::Float64,
-                 Ω₀::Float64)::Tuple{Float64,Float64} where {F1 <: Function, F2 <: Function}
-
-    @assert rmin < rmax "rmin >= rmax in αminmax function"
-    # Assumption :
-    # Ω1circular is a decreasing function of radius
-    return Ω1circular(dψ,d2ψ,rmax)/Ω₀, Ω1circular(dψ,d2ψ,rmin)/Ω₀
-end
-
 ########################################################################
 #
 # (u,v) mapping : ω boundaries (at given n1, n2)
 #
 ########################################################################
 
-"""Findωminωmax(n₁,n₂,dψ,d2ψ[,rmax,Ω₀])
+"""
+    Findωminωmax(n1,n2,dψ,d2ψ,params)
 for a given resonance, find the maximum frequencies
 
 @ASSUMPTION:
@@ -62,7 +51,7 @@ for a given resonance, find the maximum frequencies
 """
 function Findωminωmax(n1::Int64,n2::Int64,
                       dψ::F1,d2ψ::F2,
-                      params::OrbitsParameters)::Tuple{Float64,Float64} where {F1 <: Function, F2 <: Function}
+                      params::OrbitalParameters)::Tuple{Float64,Float64} where {F1 <: Function, F2 <: Function}
 
     Ω₀ = params.Ω₀
     rmin, rmax = params.rmin, params.rmax
@@ -84,6 +73,25 @@ function Findωminωmax(n1::Int64,n2::Int64,
     return ωmin, ωmax
 end
 
+"""
+    αminmax(dψ,d2ψ,rmin,rmax,Ω₀)
+
+maximal and minimal considered radial frequencies (rescaled)
+
+@ASSUMPTION:
+    - Ω1circular is a decreasing function of radius
+"""
+function αminmax(dψ::F1, d2ψ::F2,
+                 rmin::Float64,rmax::Float64,
+                 Ω₀::Float64)::Tuple{Float64,Float64} where {F1 <: Function, F2 <: Function}
+
+    @assert rmin < rmax "rmin >= rmax in αminmax function"
+    # Assumption :
+    # Ω1circular is a decreasing function of radius
+    return Ω1circular(dψ,d2ψ,rmax)/Ω₀, Ω1circular(dψ,d2ψ,rmin)/Ω₀
+end
+
+
 
 ########################################################################
 #
@@ -91,7 +99,9 @@ end
 #
 ########################################################################
 
-"""FindVminVmax(u,ωmin,ωmax,n₁,n₂,vbound,βc)
+"""
+    FindVminVmax(u,n1,n2,dψ,d2ψ,ωmin,ωmax,βc,params)
+
 for a given resonance, at a specific value of u, find the v coordinate boundaries.
 
 @IMPROVE, put in guards for the edges in βC
@@ -103,7 +113,7 @@ function FindVminVmax(u::Float64,
                       dψ::F1,d2ψ::F2,
                       ωmin::Float64,ωmax::Float64,
                       βc::F5,
-                      params::OrbitsParameters)::Tuple{Float64,Float64} where {F1 <: Function, F2 <: Function, F5 <: Function}
+                      params::OrbitalParameters=OrbitalParameters())::Tuple{Float64,Float64} where {F1 <: Function, F2 <: Function, F5 <: Function}
 
 
     # ωn(u) : value of the resonance line
@@ -152,7 +162,7 @@ function FindVminVmax(u::Float64,
             branch = 1
         else
             # First look for vbound in the asked boundary
-            vbound = FindVbound(n1,n2,dψ,d2ψ,rmin,rmax,Ω₀)
+            vbound = FindVbound(n1,n2,dψ,d2ψ,Ω₀,rmin,rmax)
 
             # Extreme boundary to look for vbound
             # @WARNING arbitrary fixed constant
@@ -164,7 +174,7 @@ function FindVminVmax(u::Float64,
                 # If vboung not in the asked boundary
                 # verify that it should indeed not exist
                 locrmin, locrmax = min(rmin,locrmin), max(rmax,locrmax)
-                vbound = FindVbound(n1,n2,dψ,d2ψ,locrmin,locrmax,Ω₀)
+                vbound = FindVbound(n1,n2,dψ,d2ψ,Ω₀,locrmin,locrmax)
 
                 branch = ((vbound != Ω1circular(dψ,d2ψ,locrmin)/Ω₀) && (vbound != Ω1circular(dψ,d2ψ,locrmin)/Ω₀)) ? 2 : 1
             else
@@ -201,24 +211,28 @@ function FindVminVmax(u::Float64,
     return vmin, vmax
 end
 
-"""HUFunc(u,ωmin,ωmax)
+
+"""
+    HUFunc(u,ωmin,ωmax)
+
 return h_n(u) = ω_n(u), a helper quantity
 Fouvry & Prunet B8
 """
-function HUFunc(u::Float64,
-                ωmin::Float64,ωmax::Float64)::Float64
+function HUFunc(u::Float64,ωmin::Float64,ωmax::Float64)::Float64
 
     return 0.5*(ωmax+ωmin + u*(ωmax-ωmin))
 end
 
 
-"""FindVbound(n₁,n₂,dψ,d2ψ[,rmax,Ω₀])
-find any valie non- 0 or 1 v value at u=-1 or u=1
+"""
+    FindVbound(n1,n2,dψ,d2ψ,Ω₀,rmin,rmax)
+
+find any valid non- 0 or 1 v value at u=-1 or u=1
 """
 function FindVbound(n1::Int64,n2::Int64,
                     dψ::F1,d2ψ::F2,
-                    rmin::Float64,rmax::Float64,
-                    Ω₀::Float64)::Float64 where {F1 <: Function, F2 <: Function}
+                    Ω₀::Float64,
+                    rmin::Float64,rmax::Float64)::Float64 where {F1 <: Function, F2 <: Function}
 
     # define the function to extremise
     ωncirc(x) = n1*Ω1circular(dψ,d2ψ,x) + n2*Ω2circular(dψ,d2ψ,x)

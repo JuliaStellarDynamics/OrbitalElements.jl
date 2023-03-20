@@ -1,10 +1,9 @@
 """
-TODO:
-1. what to do with default basis and FHT?
+    Parameter structure for orbital computations
 
 """
 
-struct OrbitsParameters
+struct OrbitalParameters
 
     Ω₀::Float64
     rmin::Float64
@@ -15,7 +14,6 @@ struct OrbitsParameters
     TOLA::Float64
 
     NINT::Int64
-    FDIFF::Float64
 
     da::Float64
     de::Float64
@@ -24,13 +22,17 @@ struct OrbitsParameters
     invε::Float64
 end
 
+"""
+    OrbitalParameters([,Ω₀,rmin,rmax,EDGE,TOLECC,TOLA,NINT,FDIFF,da,de,ITERMAX,invε])
 
-function OrbitsParametersCreate(;Ω₀::Float64=1.0,
+creates an OrbitalParameters structure with the defined values (which all have a default value)
+"""
+function OrbitalParameters(;Ω₀::Float64=1.0,
                                 rmin::Float64=1.e-5,rmax::Float64=1.e5,
                                 EDGE::Float64=0.01,TOLECC::Float64=0.01,TOLA::Float64=1.0,
                                 NINT::Int64=32,
-                                FDIFF::Float64=1.0e-8,da::Float64=1.0e-6,de::Float64=1.0e-6,
+                                da::Float64=1.0e-6,de::Float64=1.0e-6,
                                 ITERMAX::Int64=100,invε::Float64=1.0e-10)
 
-    return OrbitsParameters(Ω₀,rmin,rmax,EDGE,TOLECC,TOLA,NINT,FDIFF,da,de,ITERMAX,invε)
+    return OrbitalParameters(Ω₀,rmin,rmax,EDGE,TOLECC,TOLA,NINT,da,de,ITERMAX,invε)
 end

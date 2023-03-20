@@ -11,10 +11,12 @@ VERBOSE rules:
 
 
 """
-    Inverse 2D linear system Ax = y, return (0., 0.) if non inversible
+    inverse2Dlinear(a,b,c,d,y1,y2)
 
-    A = (a  b)
-        (c  d)
+Inverse 2D linear system Ax = y, return (0., 0.) if non inversible
+
+A = (a  b)
+    (c  d)
 """
 function inverse2Dlinear(a::Float64,b::Float64,
                          c::Float64,d::Float64,
@@ -30,12 +32,15 @@ end
 
 
 """
-    Determine the next guess point in the Newton-Rahpson algorithm
-    given the current point (acur, ecur) and the direction (adir, edir),
-    dealing with boundary crossing
+    NextGuessAE(acur,ecur,adir,edir)
+
+Determine the next guess point in the Newton-Rahpson algorithm
+given the current point (acur, ecur) and the direction (adir, edir),
+dealing with boundary crossing
 """
-function nextguess(acur::Float64,ecur::Float64,
-                   adir::Float64,edir::Float64)
+function NextGuessAE(acur::Float64,ecur::Float64,
+                     adir::Float64,edir::Float64,
+                     params::OrbitalParameters=OrbitalParameters())
 
     # If current point at the domain edge
     # and direction towards out.
@@ -45,15 +50,15 @@ function nextguess(acur::Float64,ecur::Float64,
         adir = 0.
     end
 
-    # If naive end point (acur + adir, ecur + edir) is outside the domain:
+    # If naive end point (acur + adir, ecur + edir) is outside the safe domain (in the expansion zone):
     # Take the point in the middle of the current point and the border in the increment direction
     # (Dividing the increment length until being in the domain can lead to unexpected behaviour :
-    # new point immediatly close to the border where inversion can be impossible).
-    # We apply this rule also for (naive end) positions close to the border (1% safety band)
+    # new point too close to the border where inversion can be impossible).
+    tola, tole = params.TOLA, EccentricityTolerance(acur,params.TOLA,params.TOLECC)
     asafemin = 0.01
     esafemin = 0.01
     esafemax = 0.99
-    if (acur + adir < asafemin) || (ecur + edir < esafemin) || (ecur + edir > esafemax) 
+    if (acur + adir < tola) || (ecur + edir < tole) || (ecur + edir > 1.0-tole) 
         
         # Fraction of the direction to reach the border
         # acur + afrac * adir = 0.
@@ -73,8 +78,8 @@ function nextguess(acur::Float64,ecur::Float64,
         # Take the minimal fraction (and not more than 1.0 -> very important !)
         dirfrac = min(min(afrac,efrac),1.0)
 
-        anew = (dirfrac == Inf) ? acur + adir : acur + 0.5*dirfrac*adir
-        enew = (dirfrac == Inf) ? ecur + edir : ecur + 0.5*dirfrac*edir
+        anew = acur + 0.5*dirfrac*adir
+        enew = ecur + 0.5*dirfrac*edir
     else
         anew, enew = acur + adir, ecur + edir
     end
@@ -84,22 +89,15 @@ end
 
 
 
-"""AEFromΩ1Ω2Brute(Ω₁,Ω₂,ψ,dψ,d2ψ,d3ψ[,eps,maxiter,TOLECC,TOLA,da,de,VERBOSE])
+"""
+    AEFromΩ1Ω2Brute(Ω₁,Ω₂,ψ,dψ,d2ψ,d3ψ,d4ψ,params)
 
 basic Newton-Raphson algorithm to find (a,e) from (Ω₁,Ω₂) brute force derivatives.
-
 """
 function AEFromΩ1Ω2Brute(Ω₁::Float64,Ω₂::Float64,
-                         ψ::F0,
-                         dψ::F1,
-                         d2ψ::F2,
-                         d3ψ::F3,
-                         d4ψ::F4,
-                         params::OrbitsParameters)::Tuple{Float64,Float64,Int64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function, F4 <: Function}
-    """
-    @IMPROVE add escape for circular orbits
+                         ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,d4ψ::F4,
+                         params::OrbitalParameters=OrbitalParameters())::Tuple{Float64,Float64,Int64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function, F4 <: Function}
 
-    """
     # get the circular orbit (maximum radius) for a given Ω₁,Ω₂. use the stronger constraint.
     acirc = RcircFromΩ1circ(Ω₁,dψ,d2ψ,params.rmin,params.rmax)
 
@@ -119,13 +117,13 @@ function AEFromΩ1Ω2Brute(Ω₁::Float64,Ω₂::Float64,
 
         increment1, increment2 = inverse2Dlinear(df1da,df1de,df2da,df2de,Ω₁-f1,Ω₂-f2) 
 
-        # If non inversible 
+        # If non invertible 
         if (increment1 == 0.) && (increment2 == 0.)
             break
         end
 
         # Update guesses
-        anew, enew = nextguess(aguess,eguess,increment1,increment2)
+        anew, enew = NextGuessAE(aguess,eguess,increment1,increment2,params)
         aguess, eguess = anew, enew
 
         f1,f2,df1da,df2da,df1de,df2de = ComputeFrequenciesAEWithDeriv(ψ,dψ,d2ψ,d3ψ,d4ψ,aguess,eguess,params)
@@ -140,17 +138,14 @@ function AEFromΩ1Ω2Brute(Ω₁::Float64,Ω₂::Float64,
 end
 
 
-"""AEFromJLBrute(Ω₁,Ω₂,ψ,dψ,d2ψ,d3ψ[,eps,maxiter,TOLECC,TOLA,da,de,VERBOSE])
+"""
+    AEFromJLBrute(J,L,ψ,dψ,d2ψ,d3ψ,params)
 
 basic Newton-Raphson algorithm to find (a,e) from (Jᵣ,L) brute force derivatives.
-
 """
 function AEFromJLBrute(J::Float64,L::Float64,
-                         ψ::F0,
-                         dψ::F1,
-                         d2ψ::F2,
-                         d3ψ::F3,
-                         params::OrbitsParameters)::Tuple{Float64,Float64,Int64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function}
+                       ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,
+                       params::OrbitalParameters=OrbitalParameters())::Tuple{Float64,Float64,Int64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function}
 
     # get the circular orbit (maximum radius) for a given angular momentum.
     acirc = RcircFromL(L,dψ,params.rmin,params.rmax)
@@ -177,7 +172,7 @@ function AEFromJLBrute(J::Float64,L::Float64,
         end
         
         # Update guesses
-        anew, enew = nextguess(aguess,eguess,increment1,increment2)
+        anew, enew = NextGuess(aguess,eguess,increment1,increment2,params)
         aguess, eguess = anew, enew
 
         Jguess, Lguess, dJgda, dLgda, dJgde, dLgde = ComputeActionsAEWithDeriv(ψ,dψ,d2ψ,d3ψ,aguess,eguess,params)

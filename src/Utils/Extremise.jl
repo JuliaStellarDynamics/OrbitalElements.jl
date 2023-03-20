@@ -4,14 +4,14 @@ helper routines for extremising functions (finding zeros)
 
 """
 
-"""bisection(fun, xl, xu [, tolx, tolf])
+"""
+    bisection(fun,xl,xu[,tolx,tolf,VERBOSE])
 
 A simple bisection algorithm, but it makes no allocations and is sufficiently fast: find the zero of a monotonic function.
-
 """
 function bisection(fun::Function,
                    xl::Float64,
-                   xu::Float64,
+                   xu::Float64;
                    tolx::Float64=1000.0*eps(Float64),
                    tolf::Float64=1000.0*eps(Float64),
                    VERBOSE::Int64=0)
@@ -39,7 +39,7 @@ function bisection(fun::Function,
     @assert fl*fu < 0.0 "bisection: NOT A BRACKET"
     #####
     # Maximal number of steps to get to the tolerance in x
-    nitermax = convert(Int64,ceil(log2(abs(xl-xu)/tolx)))
+    nitermax = ceil(Int64,log2(abs(xl-xu)/tolx))
     for k = 1:nitermax # Bisection loop
         #####
         xm = (xl+xu)*0.5 # Middle value
@@ -71,12 +71,14 @@ function bisection(fun::Function,
 end
 
 
-"""ExtremiseFunction(fun, xl, xu [,dx, tolf,VERBOSE])
+"""
+    ExtremiseFunction(fun,xl,xu[,dx,tolf,VERBOSE])
+
 Find the single extremum of a function (with monotonic derivative) between xl and xu
 """
 function ExtremiseFunction(fun::Function,
                            xl::Float64=0.,
-                           xu::Float64=1.,
+                           xu::Float64=1.;
                            dx::Float64=1.e-9,
                            tolf::Float64=1000.0*eps(Float64),
                            VERBOSE::Int64=0)
@@ -85,17 +87,19 @@ function ExtremiseFunction(fun::Function,
     dfun = x -> (fun(x+dx)-fun(x))/dx
     # Searching for derivative cancellation
     # Precision on x cannot be better than dx
-    xm = try bisection(dfun,xl,xu,dx,tolf,VERBOSE) catch; (abs(fun(xu)) < abs(fun(xl))) ? xl : xu end
+    xm = try bisection(dfun,xl,xu;tolx=dx,tolf=tolf,VERBOSE=VERBOSE) catch; (abs(fun(xu)) < abs(fun(xl))) ? xl : xu end
     return xm
 end
 
-"""ExtremiseFunctionNulCure(fun, xl, xu [, VERBOSE])
+"""
+    ExtremiseFunctionNulCure(fun,xl,xu[,tolx,VERBOSE])
+
 Find the extremum of a function between xl and xu.
 Cure the possible nul (finite difference) derivative in xl or xu
 """
 function ExtremiseFunctionNulCure(fun::Function,
                                   xl::Float64=0.,
-                                  xu::Float64=1.,
+                                  xu::Float64=1.;
                                   tolx::Float64=1000.0*eps(Float64),
                                   VERBOSE::Int64=0)
 
@@ -107,12 +111,12 @@ function ExtremiseFunctionNulCure(fun::Function,
         dfxl, dfxu = (fun(xl+dx)-fun(xl)), (fun(xl+dx)-fun(xl))
     end
 
-    xm = ExtremiseFunction(fun,xl,xu,dx,0.,VERBOSE)
+    xm = ExtremiseFunction(fun,xl,xu,dx=dx,tolf=0.,VERBOSE=VERBOSE)
 
     if (xm == xl) || (xm == xu)
         return xm
     else
-        xm = ExtremiseFunction(fun,xm-dx,xm+dx,tolx,0.,VERBOSE)
+        xm = ExtremiseFunction(fun,xm-dx,xm+dx,dx=tolx,tolf=0.,VERBOSE=VERBOSE)
         return xm
     end
 end

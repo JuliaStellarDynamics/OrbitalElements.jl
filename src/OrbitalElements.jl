@@ -1,11 +1,5 @@
 module OrbitalElements
 
-# for zero-finding
-using Optim
-using Roots
-
-# for interpolations
-using Interpolations
 
 # structure to hold all parameters
 include("Utils/ParameterStructure.jl")
@@ -31,7 +25,6 @@ include("DistributionFunctions/miyamoto.jl")
 include("DistributionFunctions/isochrone_discs.jl")
 
 # enable energy and angular momentum computation (including expansions)
-# first, set the radius where we switch to expansions
 include("Utils/ComputeEL.jl")
 
 # bring in the circular orbit frequencies
@@ -42,7 +35,6 @@ include("Resonance/UVbounds.jl")
 include("Resonance/ABtoUV.jl")
 
 # the main wrapper for frequency and action calculations
-# first, set the u (\in[-1,1]) integration limit to switch to expansions
 include("Frequencies.jl")
 
 end # module

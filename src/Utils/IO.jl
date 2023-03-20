@@ -2,30 +2,38 @@ using HDF5 # To have access to .hf5 formats
 
 
 """
+    WriteParameters(filename,params,mode)
+    WriteParameters(file,params)
+
 write all the parameters to a file
 """
 function WriteParameters(filename::String,
-                         Parameters::OrbitsParameters,
+                         params::OrbitalParameters=OrbitalParameters(),
                          mode::String="r+")
 
     h5open(filename, mode) do file
-        WriteParameters(file,Parameters)
+        WriteParameters(file,params)
     end
 end
 
 function WriteParameters(file::HDF5.File,
-                         Parameters::OrbitsParameters)
+                         params::OrbitalParameters=OrbitalParameters())
 
-    group = create_group(file,"OrbitsParameters")
-    for i = 1:fieldcount(OrbitsParameters)
-        varname = string(fieldname(OrbitsParameters,i))
+    group = create_group(file,"OrbitalParameters")
+    for i = 1:fieldcount(OrbitalParameters)
+        varname = string(fieldname(OrbitalParameters,i))
         if !isascii(varname)
             varname = NonAsciiHandle(varname)
         end
-        try write(group,varname,getfield(Parameters,i)) catch; println("Unable to write parameter: "*varname) end
+        try write(group,varname,getfield(params,i)) catch; println("Unable to write parameter: "*varname) end
     end
 end
 
+"""
+    NonAsciiHandle(x)
+
+convert some extra unicode characters to ascii
+"""
 function NonAsciiHandle(x::String)::String
 
     return replace(x,"Ω"=>"Omega","₀"=>"0","α"=>"alpha","ε"=>"eps",!isascii=>"")

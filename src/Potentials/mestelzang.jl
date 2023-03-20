@@ -16,12 +16,9 @@
 
 the Mestel potential (flat rotation curve).
 """
-function ψMestel(r::Float64,R0::Float64=1.,V0::Float64=1.)::Float64
-    if r >= 0.
-        return (V0)^(2) * log(r/R0)
-    else 
-        return 0.
-    end
+function ψMestel(r::Float64,R0::Float64=1.,V0::Float64=1.)
+
+    return (V0)^(2) * log(r/R0)
 end
 
 """
@@ -31,12 +28,8 @@ the Mestel potential derivative.
 """
 function dψMestel(r::Float64,R0::Float64=1.,V0::Float64=1.)
 
-    if r >= 0.
-        x = r/R0
-        return ((V0)^(2) / R0) / x
-    else 
-        return 0.
-    end
+    x = r/R0
+    return ((V0)^(2) / R0) / x
 end
 
 """
@@ -46,12 +39,8 @@ the Mestel potential second derivative.
 """
 function d2ψMestel(r::Float64,R0::Float64=1.,V0::Float64=1.)
 
-    if r >= 0.
-        x = r/R0
-        return  - ((V0)^(2) / (R0)^(2)) / (x^2)
-    else 
-        return 0.
-    end
+    x = r/R0
+    return  - ((V0)^(2) / (R0)^(2)) / (x^2)
 end
 """
     d3ψMestel(r[, R0, V0, epsilon])
@@ -60,12 +49,8 @@ the Mestel potential third derivative.
 """
 function d3ψMestel(r::Float64,R0::Float64=1.,V0::Float64=1.)
 
-    if r >= 0.
-        x = r/R0
-        return  2.0 * ((V0)^(2) / (R0)^(3)) / (x^3)
-    else 
-        return 0.
-    end
+    x = r/R0
+    return  2.0 * ((V0)^(2) / (R0)^(3)) / (x^3)
 end
 """
     d4ψMestel(r[, R0, V0, epsilon])
@@ -74,12 +59,8 @@ the Mestel potential fourth derivative.
 """
 function d4ψMestel(r::Float64,R0::Float64=1.,V0::Float64=1.)
 
-    if r >= 0.
-        x = r/R0
-        return  return  - 6.0 * ((V0)^(2) / (R0)^(4)) / (x^4)
-    else 
-        return 0.
-    end
+    x = r/R0
+    return  - 6.0 * ((V0)^(2) / (R0)^(4)) / (x^4)
 end
 
 """
@@ -89,7 +70,7 @@ the truncated Mestel frequency scale.
 """
 function Ω₀Mestel(R0::Float64=1.,V0::Float64=1.)
 
-    return V0 / R0
+    return 2.0 * V0 / R0
 end
 
 #####

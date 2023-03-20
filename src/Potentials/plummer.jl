@@ -259,7 +259,7 @@ function PlummerOmega12FromRpRa(rp::Float64,ra::Float64,bc::Float64=1.,M::Float6
 
     end
 
-    accum = UnitarySimpsonIntegration(u3func,K=NINT)
+    accum = UnitarySimpsonIntegration(u3func,NINT)
 
     #return the values
     Ω1inv     = (1/pi)*accum[1]

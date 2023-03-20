@@ -13,31 +13,46 @@ Specific to Henon mapping.
 #
 ########################################################################
 
-"""the henon anomaly increment
+"""
+    henonf(u)
+
+the henon anomaly increment
 """
 function henonf(u::Float64)::Float64
     return u*(1.5 - 0.5*(u^2))
 end
 
-"""the derivative of the henon anomaly increment
+"""
+    henondf(u)
+
+the derivative of the henon anomaly increment
 """
 function henondf(u::Float64)::Float64
     return 1.5*(1.0 - u^(2))
 end
 
-"""the second derivative of the henon anomaly increment
+"""
+    henond2f(u)
+    
+the second derivative of the henon anomaly increment
 """
 function henond2f(u::Float64)::Float64
     return -3u
 end
 
-"""the third derivative of the henon anomaly increment
+"""
+    henond3f(u)
+
+the third derivative of the henon anomaly increment
 """
 function henond3f(u::Float64)::Float64
     return -3.
 end
 
-"""the fourth derivative of the henon anomaly increment
+"""
+    henond4f(u)
+
+the fourth derivative of the henon anomaly increment
 """
 function henond4f(u::Float64)::Float64
     return 0.
@@ -50,18 +65,20 @@ end
 #
 ########################################################################
 
-"""ru(u,a,e)
-mapping from u->r in Henon variables
+"""
+    ru(u,a,e)
 
+mapping from u->r in Henon variables
 """
 function ru(u::Float64,a::Float64,e::Float64)::Float64
     return a*(1+e*henonf(u))
 end
 
 
-"""drdu(u,a,e)
-mapping from u->r in Henon variables
+"""
+    drdu(u,a,e)
 
+mapping from u->r in Henon variables
 """
 function drdu(u::Float64,a::Float64,e::Float64)::Float64
     return a*e*henondf(u)
@@ -75,10 +92,11 @@ end
 ########################################################################
 
 """
+    ψeff(ψ,r,L)
+
 the effective potential: note the relationship to Q
 """
-function ψeff(ψ::Function,
-              r::Float64,L::Float64)::Float64
+function ψeff(ψ::Function,r::Float64,L::Float64)::Float64
     if L == 0.
         return ψ(r)
     else
@@ -87,10 +105,11 @@ function ψeff(ψ::Function,
 end
 
 """
+    dψeffdr(dψ,r,L)
+
 the derivative of the effective potential
 """
-function dψeffdr(dψ::Function,
-                 r::Float64,L::Float64)::Float64
+function dψeffdr(dψ::Function,r::Float64,L::Float64)::Float64
     if L == 0.
         return dψ(r)
     else
@@ -99,14 +118,43 @@ function dψeffdr(dψ::Function,
 end
 
 """
+    d2ψeffdr2(d2ψ,r,L)
+
 the second derivative of the effective potential
 """
-function d2ψeffdr2(d2ψ::Function,
-                   r::Float64,L::Float64)::Float64
+function d2ψeffdr2(d2ψ::Function,r::Float64,L::Float64)::Float64
     if L == 0.
         return d2ψ(r)
     else
         return d2ψ(r) + 3 * (L)^(2) / (r^4)
+    end
+end
+
+########################################################################
+#
+# Radial velocity
+#
+########################################################################
+
+"""
+    Vrad(ψ,dψ,d2ψ,d3ψ,u,a,e,params)
+
+radial velocity as a function of the orbital constants (a,e) and the anomaly u
+"""
+function Vrad(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,
+              u::Float64,a::Float64,e::Float64,
+              params::OrbitalParameters=OrbitalParameters())::Float64 where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function}
+
+    E, L = ELFromAE(ψ,dψ,d2ψ,d3ψ,a,e,params)
+
+    r = ru(u,a,e)
+
+    vrSQ = 2*(E - ψeff(ψ,r,L))
+
+    if (vrSQ < 0.0) || isnan(vrSQ) || isinf(vrSQ)
+        return 0.0
+    else
+        return sqrt(vrSQ)
     end
 end
 
@@ -117,16 +165,15 @@ end
 #
 ########################################################################
 
-"""ΘAE(ψ,dψ,d2ψ,d3ψ,u,a,e[,EDGE,TOLECC,f,df,d2f,d3f,d4f])
+"""
+    ΘAE(ψ,dψ,d2ψ,d3ψ,u,a,e,params)
 
 Θ, the anomaly for computing orbit averages as a function of (a,e)
-
 equivalent to Θ = (dr/du)(1/Vrad)
-
 """
 function ΘAE(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,
              u::Float64,a::Float64,e::Float64,
-             params::OrbitsParameters)::Float64 where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function}
+             params::OrbitalParameters=OrbitalParameters())::Float64 where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function}
 
     # use the expanded approximation
     # CAUTION: 1-(1-EDGE) < EDGE is true ...
@@ -153,7 +200,8 @@ end
 
 
 
-"""ΘExpansionAE(ψ,dψ,d2ψ,d3ψ,u,a,e[,EDGE,TOLECC,f,df,d2f,d3f,d4f])
+"""
+    ΘExpansionAE(ψ,dψ,d2ψ,d3ψ,u,a,e,params)
 
 ΘExpansion, the anomaly for computing orbit averages as a function of (a,e)
 
@@ -161,7 +209,7 @@ Used when u is sufficiently close to +1,-1
 """
 function ΘExpansionAE(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,
                       u::Float64,a::Float64,e::Float64,
-                      params::OrbitsParameters)::Float64 where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function}
+                      params::OrbitalParameters=OrbitalParameters())::Float64 where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function}
 
     # which boundary are we close to?
     ul = (u > 0.) ? 1.0 : -1.0
@@ -226,7 +274,7 @@ numerical differentiation of Θ w.r.t. semimajor axis and eccentricity
 """
 function dΘAE(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,
               u::Float64,a::Float64,e::Float64,
-              params::OrbitsParameters)::Tuple{Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function}
+              params::OrbitalParameters=OrbitalParameters())::Tuple{Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function}
 
     # Numerical derivative points
     ap, da, ep, de = NumDerivPoints(a,e,params.da,params.de,params.TOLA,params.TOLECC)

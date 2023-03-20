@@ -13,6 +13,8 @@ Useful functions for numerical derivation or interpolations
 ########################################################################
 
 """
+    NumDerivPoints(a,e,da,de,tola,tole)
+    
 Points to use for numerical derivative w.r.t a and e 
 depending on the location (switch close to border and close to cut off)
 default mode being 1st order right derivative [x,x+dx].

@@ -103,10 +103,8 @@ end
 #####
 
 """
-    mestel_Zang_DF(E, L[, R0, Rin, Rout, Rmax, V0, xi, C, q, sigma, nu, mu])
+    ZangDF(E, L[, R0, Rin, Rout, Rmax, V0, C, q, σ, μ, ν])
 Zang star distribution function.
-
-@ WARNING : Cut off at large radius to add !
 """
 function ZangDF(E::Float64,L::Float64,
                 R0::Float64=20., Rin::Float64=1., Rout::Float64=11.5, Rmax::Float64=20.,
@@ -117,7 +115,7 @@ function ZangDF(E::Float64,L::Float64,
     return MestelDF(E,L,C,q,σ) * ZangOuterTaper(L,Rout,V0,μ) * ZangInnerTaper(L,Rin,V0,ν)
 end
 """
-    mestel_Zang_dDFdE(E, L[, R0, Rin, Rout, Rmax, V0, xi, C, q, sigma, nu, mu])
+    ZangdDFdE(E, L[, R0, Rin, Rout, Rmax, V0, C, q, σ, μ, ν])
 Zang star DF derivative w.r.t. E.
 """
 function ZangdDFdE(E::Float64,L::Float64,
@@ -130,7 +128,7 @@ function ZangdDFdE(E::Float64,L::Float64,
     return MesteldDFdE(E,L,C,q,σ) * ZangOuterTaper(L,Rout,V0,μ) * ZangInnerTaper(L,Rin,V0,ν)
 end
 """
-    mestel_Zang_dDFdL(E, L[, R0, Rin, Rout, Rmax, V0, xi, C, q, sigma, nu, mu])
+    ZangdDFdL(E, L[, R0, Rin, Rout, Rmax, V0, C, q, σ, μ, ν])
 Zang star DF derivative w.r.t. L.
 """
 function ZangdDFdL(E::Float64,L::Float64,
@@ -148,7 +146,7 @@ function ZangdDFdL(E::Float64,L::Float64,
 end
 
 """
-    ZangndDFdJ(n1, n2, E, L, ndotOmega[, R0, Rin, Rout, Rmax, V0, xi, C, q, sigma, nu, mu])
+    ZangndDFdJ(n1, n2, E, L, ndotOmega[, R0, Rin, Rout, Rmax, V0, C, q, σ, μ, ν])
 Zang star DF derivative w.r.t. the actions J.
 """
 function ZangndDFdJ(n1::Int64,n2::Int64,E::Float64,L::Float64,ndotOmega::Float64,
@@ -166,4 +164,28 @@ function ZangndDFdJ(n1::Int64,n2::Int64,E::Float64,L::Float64,ndotOmega::Float64
     dDFdL = ZangdDFdL(E,L,R0,Rin,Rout,Rmax,V0,C,q,σ,μ,ν)
     
     return ndotOmega*dDFdE + n2*dDFdL
+end
+
+
+#####
+# Truncated full tapered DF and derivatives
+#
+# Adding the truncation: no particles beyond Rmax
+#####
+
+"""
+    TruncatedZangDF(E, L[, R0, Rin, Rout, Rmax, V0, C, q, σ, μ, ν])
+
+Zang star distribution function enforcing ra <= Rmax.
+"""
+function TruncatedZangDF(E::Float64,L::Float64,
+                         R0::Float64=20., Rin::Float64=1., Rout::Float64=11.5, Rmax::Float64=20.,
+                         V0::Float64=1.,C::Float64=1.444e-14,
+                         q::IntorFloat=11.44, σ::Float64=2.835e-1,
+                         μ::Int64=5, ν::Int64=4)::Float64
+
+    if (L <= 0.) || (L > Rmax*V0) || (E < (V0^2)/2 + ψMestel(L/V0,R0,V0)) || (E > L^2/(2*Rmax^2))
+        return 0.
+    end
+    return MestelDF(E,L,C,q,σ) * ZangOuterTaper(L,Rout,V0,μ) * ZangInnerTaper(L,Rin,V0,ν)
 end

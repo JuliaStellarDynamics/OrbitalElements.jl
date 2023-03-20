@@ -1,20 +1,8 @@
 
-#examples/run_plummer.jl
-examples/run_mestel.jl
-examples/run_jacobians.jl
 
-# Example output files
-examples/figures
-examples/**/*.hf5
-examples/*.hf5
-examples/**/*.h5
-examples/*.h5
-examples/*.txt
-examples/*.pdf
+# IJulia notebook checkpoints
+**/.ipynb_checkpoints/*
 
-
-src/Utils/GridInversion.jl
-src/Utils/ComputeEL_mp.jl
-
-# very annoying OSX hidden files
+# OSX hidden files
 *.DS_Store
+**/*.DS_Store

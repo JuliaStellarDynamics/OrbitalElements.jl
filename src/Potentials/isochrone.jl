@@ -128,6 +128,20 @@ function IsochroneJrRpRa(rp::Float64,ra::Float64,
     return (astronomicalG*M/sqrt(-2E)) - 0.5 * (L + sqrt(L*L + 4*astronomicalG*M*bc))
 end
 
+
+function IsochroneActionsFromAE(a::Float64,ecc::Float64,bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
+    rp,ra = a*(1-ecc),a*(1+ecc)
+    xp          = rp/bc
+    xa          = ra/bc
+    L0          = isochroneL0(bc,M,astronomicalG)
+    scaleEnergy = isochroneE0(bc,M,astronomicalG)
+    sp,sa       = IsochroneSpSaFromRpRa(rp,ra,bc)
+    Jval = IsochroneJrRpRa(rp,ra,bc,M,astronomicalG)
+    return Jval,sqrt(2)*L0*xp*xa/sqrt((1+sp)*(1+sa)*(sp+sa))
+end
+
+
+
 """
 compute the dimensionless function for Omega1
 (Fouvry 21 eq. G5)

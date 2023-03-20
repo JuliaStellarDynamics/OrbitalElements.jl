@@ -1,11 +1,13 @@
 
 
 """
-computing radial action J
+HenonJFromAE(ψ,dψ,d2ψ,d3ψ,a,e,params)
+
+compute the radial action alone
 """
-function HenonJFromAE(ψ::Function,dψ::Function,d2ψ::Function,d3ψ::Function,
+function HenonJFromAE(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,
                       a::Float64,e::Float64,
-                      params::OrbitsParameters)::Float64
+                      params::OrbitalParameters=OrbitalParameters())::Float64 where {F0  <: Function, F1 <: Function, F2 <: Function, F3 <: Function}
 
     u1func(u::Float64)::Float64 = drdu(u,a,e)*Vrad(ψ,dψ,d2ψ,d3ψ,u,a,e,params)
 
@@ -19,11 +21,11 @@ use the defined function Θ(u) to compute frequency ratios integrals.
 """
 function αβHenonΘAE(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,d4ψ::F4,
                     a::Float64,e::Float64,
-                    params::OrbitsParameters)::Tuple{Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function, F4 <: Function}
+                    params::OrbitalParameters=OrbitalParameters())::Tuple{Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function, F4 <: Function}
 
     Ω₀ = params.Ω₀
     tole = EccentricityTolerance(a,params.TOLA,params.TOLECC)
-    if e <= tole
+    if (e <= tole)
         # drop into circular frequency expansion calculations:
         α = αcircular(dψ,d2ψ,d3ψ,d4ψ,a,e,Ω₀)
         β = βcircular(dψ,d2ψ,d3ψ,d4ψ,a,e) # = Ω2/Ω1
@@ -86,7 +88,7 @@ AND DERIVATIVES
 """
 function DαβHenonΘAE(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,d4ψ::F4,
                      a::Float64,e::Float64,
-                     params::OrbitsParameters)::Tuple{Float64,Float64,Float64,Float64,Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function, F4 <: Function}
+                     params::OrbitalParameters=OrbitalParameters())::Tuple{Float64,Float64,Float64,Float64,Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function, F4 <: Function}
 
     Ω₀ = params.Ω₀
     tole = EccentricityTolerance(a,params.TOLA,params.TOLECC)
@@ -185,14 +187,14 @@ function DαβHenonΘAE(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,d4ψ::F4,
 end
 
 """
-DFrequenciesHenonΘAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,params)
+    DFrequenciesHenonΘAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,params)
 
 use the defined function Θ(u) to compute frequency integrals
 AND DERIVATIVES
 """
 function DFrequenciesHenonΘAE(ψ::F0,dψ::F1,d2ψ::F2,d3ψ::F3,d4ψ::F4,
                               a::Float64,e::Float64,
-                              params::OrbitsParameters)::Tuple{Float64,Float64,Float64,Float64,Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function, F4 <: Function}
+                              params::OrbitalParameters=OrbitalParameters())::Tuple{Float64,Float64,Float64,Float64,Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function, F3 <: Function, F4 <: Function}
 
     Ω₀ = params.Ω₀
     α, β, ∂α∂a, ∂β∂a, ∂α∂e, ∂β∂e = DαβHenonΘAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e,params)

@@ -1,8 +1,11 @@
 
 
 """
-function to perform a Simpson's 1/3 composite integration between -1<u<1
-@ATTENTION, the number of steps K must be even
+    UnitarySimpsonIntegration(fun,K)
+
+perform a Simpson's 1/3 composite integration between -1<u<1
+@ATTENTION, the number of steps K must be even (why ?)
+
 fun is a function that takes u as an argument and returns the value of some function at that point
 this function can also take a function that passes an array and push them all forward at once.
 """
