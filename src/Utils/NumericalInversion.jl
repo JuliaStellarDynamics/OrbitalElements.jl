@@ -172,7 +172,7 @@ function AEFromJLBrute(J::Float64,L::Float64,
         end
         
         # Update guesses
-        anew, enew = NextGuess(aguess,eguess,increment1,increment2,params)
+        anew, enew = NextGuessAE(aguess,eguess,increment1,increment2,params)
         aguess, eguess = anew, enew
 
         Jguess, Lguess, dJgda, dLgda, dJgde, dLgde = ComputeActionsAEWithDeriv(ψ,dψ,d2ψ,d3ψ,aguess,eguess,params)
