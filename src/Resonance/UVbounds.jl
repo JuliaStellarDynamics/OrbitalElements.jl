@@ -112,16 +112,18 @@ function FindVminVmax(u::Float64,
                       n1::Int64,n2::Int64,
                       dψ::F1,d2ψ::F2,
                       ωmin::Float64,ωmax::Float64,
-                      βc::F5,
-                      params::OrbitalParameters=OrbitalParameters())::Tuple{Float64,Float64} where {F1 <: Function, F2 <: Function, F5 <: Function}
+                      params::OrbitalParameters=OrbitalParameters())::Tuple{Float64,Float64} where {F1 <: Function, F2 <: Function}
 
-
-    # ωn(u) : value of the resonance line
-    hval = HUFunc(u,ωmin,ωmax)
 
     Ω₀ = params.Ω₀
     rmin, rmax = params.rmin, params.rmax
     αmin, αmax = αminmax(dψ,d2ψ,rmin,rmax,Ω₀)
+
+    # ωn(u) : value of the resonance line
+    hval = HUFunc(u,ωmin,ωmax)
+
+    # βcircular as a function of αcircular
+    βc(αc::Float64)::Float64 = βcirc(αc,dψ,d2ψ,params)
 
     if (n2==0)
         #####
