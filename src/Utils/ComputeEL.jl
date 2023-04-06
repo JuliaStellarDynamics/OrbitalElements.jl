@@ -342,7 +342,7 @@ function dELrad(ψ::F0,dψ::F1,
     ∂E∂a = 2.0*dψ2a
     ∂E∂e = a*dψ2a
     ∂L∂a = 0.
-    ∂L∂e = sqrt(2.0) * a * sqrt(ψ(2.0*a)-ψ(0.0))
+    ∂L∂e = - sqrt(2.0) * a * sqrt(ψ(2.0*a)-ψ(0.0))
 
     return ∂E∂a, ∂L∂a, ∂E∂e, ∂L∂e
 end
