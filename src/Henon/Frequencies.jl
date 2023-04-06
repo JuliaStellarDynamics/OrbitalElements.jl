@@ -30,39 +30,33 @@ function αβHenonΘAE(ψ::F0,dψ::F1,d2ψ::F2,
 
         return αβFromFrequencies(Ω1,Ω2,Ω₀)
     elseif (0. < e < tole)
-        # 2nd order interpolation
-        # between circular (e=0) and value at e=tole and e=2*tole
+        # 1st order interpolation
+        # between circular (e=0) and value at e=tole
         # Circular:
         ecirc = 0.
         αcirc, βcirc = αβHenonΘAE(ψ,dψ,d2ψ,a,ecirc,params)
         # e=tole:
         etole = tole
         αtole, βtole = αβHenonΘAE(ψ,dψ,d2ψ,a,etole,params)
-        # e=2*tole:
-        e2tole = 2*tole
-        α2tole, β2tole = αβHenonΘAE(ψ,dψ,d2ψ,a,e2tole,params)
 
         # Interpolation
-        α = Interpolation2ndOrder(e,ecirc,αcirc,etole,αtole,e2tole,α2tole)
-        β = Interpolation2ndOrder(e,ecirc,βcirc,etole,βtole,e2tole,β2tole)
+        α = Interpolation1stOrder(e,ecirc,αcirc,etole,αtole)
+        β = Interpolation1stOrder(e,ecirc,βcirc,etole,βtole)
 
         return α, β
     elseif ((1.0-tole) < e < 1.)
-        # 2nd order interpolation
-        # between radial (e=1.) and value at e=1-tole and e=1-2*tole
+        # 1st order interpolation
+        # between radial (e=1.) and value at e=1-tole
         # Radial:
         erad = 1.
         αrad, βrad = αβHenonΘAE(ψ,dψ,d2ψ,a,erad,params)
         # e=1-tole:
         etole = 1.0-tole
         αtole, βtole = αβHenonΘAE(ψ,dψ,d2ψ,a,etole,params)
-        # e=1-2*tole:
-        e2tole = 1.0-2*tole
-        α2tole, β2tole = αβHenonΘAE(ψ,dψ,d2ψ,a,e2tole,params)
 
         # Interpolation
-        α = Interpolation2ndOrder(e,e2tole,α2tole,etole,αtole,erad,αrad)
-        β = Interpolation2ndOrder(e,e2tole,β2tole,etole,βtole,erad,βrad)
+        α = Interpolation1stOrder(e,etole,αtole,erad,αrad)
+        β = Interpolation1stOrder(e,etole,βtole,erad,βrad)
 
         return α, β
     else
