@@ -1,7 +1,5 @@
 module OrbitalElements
 
-# Float64 precision
-const εF64 = eps(Float64)
 
 # structure to hold all parameters
 include("Utils/ParameterStructure.jl")

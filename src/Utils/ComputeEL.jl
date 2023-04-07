@@ -50,30 +50,36 @@ function EFromAE(ψ::F0,dψ::F1,
     elseif (e == 1.)
         return Erad(ψ,a)
     elseif (0. < e < tole)
-        # 1st order interpolation
-        # between circular (e=0) and value at e=tole
+        # 2nd order interpolation
+        # between circular (e=0) and value at e=tole and e=2*tole
         # Circular:
         ecirc = 0.
         Ec = EFromAE(ψ,dψ,a,ecirc,params)
         # e=tole:
         etole = tole
         Etole = EFromAE(ψ,dψ,a,etole,params)
+        # e=2*tole:
+        e2tole = 2*tole
+        E2tole = EFromAE(ψ,dψ,a,e2tole,params)
 
         # Interpolation
-        return Interpolation1stOrder(e,ecirc,Ec,etole,Etole)
+        return Interpolation2ndOrder(e,ecirc,Ec,etole,Etole,e2tole,E2tole)
 
     elseif ((1.0-tole) < e < 1.)
-        # 1st order interpolation
-        # between radial (e=1.) and value at e=1-tole
+        # 2nd order interpolation
+        # between radial (e=1.) and value at e=1-tole and e=1-2*tole
         # Radial:
         erad = 1.
         Er = EFromAE(ψ,dψ,a,erad,params)
         # e=1-tole:
         etole = 1.0-tole
         Etole = EFromAE(ψ,dψ,a,etole,params)
+        # e=1-2*tole:
+        e2tole = 1.0-2*tole
+        E2tole = EFromAE(ψ,dψ,a,e2tole,params)
 
         # Interpolation
-        return Interpolation1stOrder(e,etole,Etole,erad,Er)
+        return Interpolation2ndOrder(e,e2tole,E2tole,etole,Etole,erad,Er)
     else
         # the analytic version of the energy
         return ((1+e)^(2)*ψ(a*(1+e)) - (1-e)^(2)*ψ(a*(1-e))) / (4e)
@@ -95,30 +101,36 @@ function LFromAE(ψ::F0,dψ::F1,
     elseif (e == 1.)
         return 0.
     elseif (0. < e < tole)
-        # 1st order interpolation
-        # between circular (e=0) and value at e=tole
+        # 2nd order interpolation
+        # between circular (e=0) and value at e=tole and e=2*tole
         # Circular:
         ecirc = 0.
         Lc = LFromAE(ψ,dψ,a,ecirc,params)
         # e=tole:
         etole = tole
         Ltole = LFromAE(ψ,dψ,a,etole,params)
+        # e=2*tole:
+        e2tole = 2*tole
+        L2tole = LFromAE(ψ,dψ,a,e2tole,params)
 
         # Interpolation
-        return Interpolation1stOrder(e,ecirc,Lc,etole,Ltole)
+        return Interpolation2ndOrder(e,ecirc,Lc,etole,Ltole,e2tole,L2tole)
 
     elseif ((1.0-tole) < e < 1.)
-        # 1st order interpolation
-        # between radial (e=1.) and value at e=1-tole
+        # 2nd order interpolation
+        # between radial (e=1.) and value at e=1-tole and e=1-2*tole
         # Radial:
         erad = 1.
         Lr = LFromAE(ψ,dψ,a,erad,params)
         # e=1-tole:
         etole = 1.0-tole
         Ltole = LFromAE(ψ,dψ,a,etole,params)
+        # e=1-2*tole:
+        e2tole = 1.0-2*tole
+        L2tole = LFromAE(ψ,dψ,a,e2tole,params)
 
         # Interpolation
-        return Interpolation1stOrder(e,etole,Ltole,erad,Lr)
+        return Interpolation2ndOrder(e,e2tole,L2tole,etole,Ltole,erad,Lr)
     else
         # the analytic version of the energy
         return a * (1-(e)^(2)) * sqrt( (ψ(a*(1+e)) - ψ(a*(1-e))) / (2e) )
@@ -217,38 +229,44 @@ function dELFromAE(ψ::F0,dψ::F1,d2ψ::F2,
         return E, L, ∂E∂a, ∂L∂a, ∂E∂e, ∂L∂e
 
     elseif (0. < e < tole)
-        # 1st order interpolation
-        # between circular (e=0) and value at e=tole
+        # 2nd order interpolation
+        # between circular (e=0) and value at e=tole and e=2*tole
         # Circular:
         ecirc = 0.
         ∂E∂acirc, ∂L∂acirc, ∂E∂ecirc, ∂L∂ecirc = dELcirc(dψ,d2ψ,a)
         # e=tole:
         etole = tole
         _, _, ∂E∂atole, ∂L∂atole, ∂E∂etole, ∂L∂etole = dELFromAE(ψ,dψ,d2ψ,a,etole,params)
+        # e=2*tole:
+        e2tole = 2*tole
+        _, _, ∂E∂a2tole, ∂L∂a2tole, ∂E∂e2tole, ∂L∂e2tole = dELFromAE(ψ,dψ,d2ψ,a,e2tole,params)
 
         # Interpolation
-        ∂E∂a = Interpolation1stOrder(e,ecirc,∂E∂acirc,etole,∂E∂atole)
-        ∂L∂a = Interpolation1stOrder(e,ecirc,∂L∂acirc,etole,∂L∂atole)
-        ∂E∂e = Interpolation1stOrder(e,ecirc,∂E∂ecirc,etole,∂E∂etole)
-        ∂L∂e = Interpolation1stOrder(e,ecirc,∂L∂ecirc,etole,∂L∂etole)
+        ∂E∂a = Interpolation2ndOrder(e,ecirc,∂E∂acirc,etole,∂E∂atole,e2tole,∂E∂a2tole)
+        ∂L∂a = Interpolation2ndOrder(e,ecirc,∂L∂acirc,etole,∂L∂atole,e2tole,∂L∂a2tole)
+        ∂E∂e = Interpolation2ndOrder(e,ecirc,∂E∂ecirc,etole,∂E∂etole,e2tole,∂E∂e2tole)
+        ∂L∂e = Interpolation2ndOrder(e,ecirc,∂L∂ecirc,etole,∂L∂etole,e2tole,∂L∂e2tole)
         
         return E, L, ∂E∂a, ∂L∂a, ∂E∂e, ∂L∂e
 
     elseif ((1.0-tole) < e < 1.)
-        # 1st order interpolation
-        # between radial (e=1.) and value at e=1-tole
+        # 2nd order interpolation
+        # between radial (e=1.) and value at e=1-tole and e=1-2*tole
         # Radial:
         erad = 1.
         ∂E∂arad, ∂L∂arad, ∂E∂erad, ∂L∂erad = dELrad(ψ,dψ,a)
         # e=1-tole:
         etole = 1.0-tole
         _, _, ∂E∂atole, ∂L∂atole, ∂E∂etole, ∂L∂etole = dELFromAE(ψ,dψ,d2ψ,a,etole,params)
+        # e=1-2*tole:
+        e2tole = 1.0-2*tole
+        _, _, ∂E∂a2tole, ∂L∂a2tole, ∂E∂e2tole, ∂L∂e2tole = dELFromAE(ψ,dψ,d2ψ,a,e2tole,params)
 
         # Interpolation
-        ∂E∂a = Interpolation1stOrder(e,etole,∂E∂atole,erad,∂E∂arad)
-        ∂L∂a = Interpolation1stOrder(e,etole,∂L∂atole,erad,∂L∂arad)
-        ∂E∂e = Interpolation1stOrder(e,etole,∂E∂etole,erad,∂E∂erad)
-        ∂L∂e = Interpolation1stOrder(e,etole,∂L∂etole,erad,∂L∂erad)
+        ∂E∂a = Interpolation2ndOrder(e,e2tole,∂E∂a2tole,etole,∂E∂atole,erad,∂E∂arad)
+        ∂L∂a = Interpolation2ndOrder(e,e2tole,∂L∂a2tole,etole,∂L∂atole,erad,∂L∂arad)
+        ∂E∂e = Interpolation2ndOrder(e,e2tole,∂E∂e2tole,etole,∂E∂etole,erad,∂E∂erad)
+        ∂L∂e = Interpolation2ndOrder(e,e2tole,∂L∂e2tole,etole,∂L∂etole,erad,∂L∂erad)
 
         # Interpolation
         return E, L, ∂E∂a, ∂L∂a, ∂E∂e, ∂L∂e
