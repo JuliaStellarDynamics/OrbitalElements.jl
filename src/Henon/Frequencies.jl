@@ -24,8 +24,26 @@ function αβHenonΘAE(ψ::F0,dψ::F1,d2ψ::F2,
                     params::OrbitalParameters=OrbitalParameters())::Tuple{Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function}
 
     Ω₀ = params.Ω₀
-    tole = EccentricityTolerance(a,params.TOLA,params.TOLECC)
-    if (e == 0.)
+    tola, tole = params.TOLA, EccentricityTolerance(a,params.rc,params.TOLECC)
+    if (a < tola)
+        # 2nd order interpolation
+        # between center (a=0) and value at a=tola and a=2*tola
+        # Center:
+        a0 = 0.
+        α0, β0 = Ω1circular(dψ,d2ψ,a0), 0.5
+        # e=tole:
+        atola = tola
+        αtola, βtola = αβHenonΘAE(ψ,dψ,d2ψ,atola,e,params)
+        # e=2*tole:
+        a2tola = 2*tola
+        α2tola, β2tola = αβHenonΘAE(ψ,dψ,d2ψ,a2tola,e,params)
+
+        # Interpolation
+        α = Interpolation2ndOrder(a,a0,α0,atola,αtola,a2tola,α2tola)
+        β = Interpolation2ndOrder(a,a0,β0,atola,βtola,a2tola,β2tola)
+
+        return α, β
+    elseif (e == 0.)
         Ω1, Ω2 = Ω1circular(dψ,d2ψ,a), Ω2circular(dψ,d2ψ,a)
 
         return αβFromFrequencies(Ω1,Ω2,Ω₀)
@@ -103,11 +121,11 @@ function DαβHenonΘAE(ψ::F0,dψ::F1,d2ψ::F2,
                      params::OrbitalParameters=OrbitalParameters())::Tuple{Float64,Float64,Float64,Float64,Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function}
 
     Ω₀ = params.Ω₀
-    tole = EccentricityTolerance(a,params.TOLA,params.TOLECC)
+    tola, tole = params.TOLA, EccentricityTolerance(a,params.rc,params.TOLECC)
     # Numerical derivative points
-    ap, da, ep, de = NumDerivPoints(a,e,params.da,params.de,params.TOLA,tole)
+    ap, da, ep, de = NumDerivPoints(a,e,params.da,params.de,tola,tole)
     
-    if (e < tole) || (e > 1.0-tole)
+    if (a < tola) || (e < tole) || (e > 1.0-tole)
         # For edge cases: Derivation outside the integral
         # Current point
         α, β = αβHenonΘAE(ψ,dψ,d2ψ,a,e,params)
@@ -156,7 +174,7 @@ function DαβHenonΘAE(ψ::F0,dψ::F1,d2ψ::F2,
 
         accum1,accum2,accum3,accum4,accum5,accum6 = UnitarySimpsonIntegration(u6func,params.NINT)
 
-        _, Lval, _, ∂L∂a, _, ∂L∂e = dELFromAE(ψ,dψ,d2ψ,a,e,params)
+        _, Lval, _, ∂L∂a, _, ∂L∂e = dELFromAE(ψ,dψ,a,e,params)
 
         # α
         invα = (Ω₀/pi)*accum1

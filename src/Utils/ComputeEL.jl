@@ -15,18 +15,19 @@ Strategies:
 #
 ########################################################################
 """
-    EccentricityTolerance(a,TOLA,TOLECC)
+    EccentricityTolerance(a,rc,TOLECC)
 
 tweak eccentricity tolerance to semi-major axis
 """
-function EccentricityTolerance(a::Float64,TOLA::Float64,TOLECC::Float64)::Float64
+function EccentricityTolerance(a::Float64,rc::Float64,TOLECC::Float64)::Float64
 
     # We effectively want to switch at
-    # a*e > TOLA * TOLECC
-    # i.e. tole = TOLA * TOLECC / a
-    # + constraint eccentricity tolerance to be in [TOLECC,1/2]
-    return min(0.5, max(TOLECC, TOLA*TOLECC/a))
-    # return TOLECC
+    # a*e > rc * TOLECC
+    # i.e. tole = rc * TOLECC / a
+    # where rc is the characteristic size of the system.
+    # + constraint eccentricity tolerance to be in [TOLECC,1/3]
+    # Important : 1/3 to prevent infinite recursive loop (leading to StackOverflow Errors)
+    return min(1/3, max(TOLECC, TOLECC*rc/a))
 end
 
 ########################################################################
@@ -44,8 +45,23 @@ function EFromAE(ψ::F0,dψ::F1,
                  a::Float64,e::Float64,
                  params::OrbitalParameters=OrbitalParameters())::Float64 where {F0 <: Function, F1 <: Function}
 
-    tole = EccentricityTolerance(a,params.TOLA,params.TOLECC)
-    if (e == 0.)
+    tola, tole = params.TOLA, EccentricityTolerance(a,params.rc,params.TOLECC)
+    if (a < tola)
+        # 2nd order interpolation
+        # between center (a=0) and value at a=tola and a=2*tola
+        # Center:
+        a0 = 0.
+        E0 = ψ(0.)
+        # a=tola:
+        atola = tola
+        Etola = EFromAE(ψ,dψ,atola,e,params)
+        # a=2*tola:
+        a2tola = 2*tola
+        E2tola = EFromAE(ψ,dψ,a2tola,e,params)
+
+        # Interpolation
+        return Interpolation2ndOrder(a,a0,E0,atola,Etola,a2tola,E2tola)
+    elseif (e == 0.)
         return Ecirc(ψ,dψ,a)
     elseif (e == 1.)
         return Erad(ψ,a)
@@ -54,7 +70,7 @@ function EFromAE(ψ::F0,dψ::F1,
         # between circular (e=0) and value at e=tole and e=2*tole
         # Circular:
         ecirc = 0.
-        Ec = EFromAE(ψ,dψ,a,ecirc,params)
+        Ec = Ecirc(ψ,dψ,a)
         # e=tole:
         etole = tole
         Etole = EFromAE(ψ,dψ,a,etole,params)
@@ -70,7 +86,7 @@ function EFromAE(ψ::F0,dψ::F1,
         # between radial (e=1.) and value at e=1-tole and e=1-2*tole
         # Radial:
         erad = 1.
-        Er = EFromAE(ψ,dψ,a,erad,params)
+        Er = Erad(ψ,a)
         # e=1-tole:
         etole = 1.0-tole
         Etole = EFromAE(ψ,dψ,a,etole,params)
@@ -95,8 +111,24 @@ function LFromAE(ψ::F0,dψ::F1,
                  a::Float64,e::Float64,
                  params::OrbitalParameters=OrbitalParameters())::Float64 where {F0 <: Function, F1 <: Function}
 
-    tole = EccentricityTolerance(a,params.TOLA,params.TOLECC)
-    if (e == 0.)
+    tola, tole = params.TOLA, EccentricityTolerance(a,params.rc,params.TOLECC)
+    if (a < tola)
+        # 2nd order interpolation
+        # between center (a=0) and value at a=tola and a=2*tola
+        # Center:
+        a0 = 0.
+        L0 = 0.
+        # a=tola:
+        atola = tola
+        Ltola = LFromAE(ψ,dψ,atola,e,params)
+        # a=2*tola:
+        a2tola = 2*tola
+        L2tola = LFromAE(ψ,dψ,a2tola,e,params)
+
+        # Interpolation
+        return Interpolation2ndOrder(a,a0,L0,atola,Ltola,a2tola,L2tola)
+
+    elseif (e == 0.)
         return Lcirc(dψ,a)
     elseif (e == 1.)
         return 0.
@@ -105,7 +137,7 @@ function LFromAE(ψ::F0,dψ::F1,
         # between circular (e=0) and value at e=tole and e=2*tole
         # Circular:
         ecirc = 0.
-        Lc = LFromAE(ψ,dψ,a,ecirc,params)
+        Lc = Lcirc(dψ,a)
         # e=tole:
         etole = tole
         Ltole = LFromAE(ψ,dψ,a,etole,params)
@@ -121,7 +153,7 @@ function LFromAE(ψ::F0,dψ::F1,
         # between radial (e=1.) and value at e=1-tole and e=1-2*tole
         # Radial:
         erad = 1.
-        Lr = LFromAE(ψ,dψ,a,erad,params)
+        Lr = 0.
         # e=1-tole:
         etole = 1.0-tole
         Ltole = LFromAE(ψ,dψ,a,etole,params)
@@ -214,11 +246,29 @@ function dELFromAE(ψ::F0,dψ::F1,d2ψ::F2,
 
     E, L = ELFromAE(ψ,dψ,a,e,params)
 
-    tole = EccentricityTolerance(a,params.TOLA,params.TOLECC)
+    tola, tole = params.TOLA, EccentricityTolerance(a,params.rc,params.TOLECC)
+    if (a < tola)
+        # 2nd order interpolation
+        # between center (a=0) and value at a=tola and a=2*tola
+        # Center:
+        a0 = 0.
+        ∂E∂a0, ∂L∂a0, ∂E∂e0, ∂L∂e0 = 0., 0., 0., 0.
+        # a=tola:
+        atola = tola
+        _, _, ∂E∂atola, ∂L∂atola, ∂E∂etola, ∂L∂etola = dELFromAE(ψ,dψ,d2ψ,atola,e,params)
+        # a=2*tola:
+        a2tola = 2*tola
+        _, _, ∂E∂a2tola, ∂L∂a2tola, ∂E∂e2tola, ∂L∂e2tola = dELFromAE(ψ,dψ,d2ψ,a2tola,e,params)
 
+        # Interpolation
+        ∂E∂a = Interpolation2ndOrder(a,a0,∂E∂a0,atola,∂E∂atola,a2tola,∂E∂a2tola)
+        ∂L∂a = Interpolation2ndOrder(a,a0,∂L∂a0,atola,∂L∂atola,a2tola,∂L∂a2tola)
+        ∂E∂e = Interpolation2ndOrder(a,a0,∂E∂e0,atola,∂E∂etola,a2tola,∂E∂e2tola)
+        ∂L∂e = Interpolation2ndOrder(a,a0,∂L∂e0,atola,∂L∂etola,a2tola,∂L∂e2tola)
 
-    tole = EccentricityTolerance(a,params.TOLA,params.TOLECC)
-    if (e == 0.)
+        return E, L, ∂E∂a, ∂L∂a, ∂E∂e, ∂L∂e
+
+    elseif (e == 0.)
 
         ∂E∂a, ∂L∂a, ∂E∂e, ∂L∂e = dELcirc(dψ,d2ψ,a)
         return E, L, ∂E∂a, ∂L∂a, ∂E∂e, ∂L∂e
@@ -227,7 +277,7 @@ function dELFromAE(ψ::F0,dψ::F1,d2ψ::F2,
 
         ∂E∂a, ∂L∂a, ∂E∂e, ∂L∂e = dELrad(ψ,dψ,a)
         return E, L, ∂E∂a, ∂L∂a, ∂E∂e, ∂L∂e
-
+        
     elseif (0. < e < tole)
         # 2nd order interpolation
         # between circular (e=0) and value at e=tole and e=2*tole
@@ -304,7 +354,7 @@ end
 ########################################################################
 
 """
-    dELcirc(ψ,dψ,d2ψ,a)
+    dELcirc(dψ,d2ψ,a)
 
 energy and angular momentum derivatives w.r.t. (a,e) for an exactly circular orbit.
 """
@@ -322,7 +372,6 @@ function dELcirc(dψ::F1,d2ψ::F2,
     return ∂E∂a, ∂L∂a, ∂E∂e, ∂L∂e
 end
 
-
 ########################################################################
 #
 # (a,e) -> (E,L) mapping : derivatives, radial
@@ -330,7 +379,7 @@ end
 ########################################################################
 
 """
-    dELrad(ψ,dψ,d2ψ,a)
+    dELrad(ψ,dψ,a)
 
 energy and angular momentum derivatives w.r.t. (a,e) for an exactly radial orbit.
 """

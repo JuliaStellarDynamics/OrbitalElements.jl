@@ -112,8 +112,8 @@ function ComputeαβWithDerivAE(ψ::F0,dψ::F1,d2ψ::F2,
                               params::OrbitalParameters=OrbitalParameters())::Tuple{Float64,Float64,Float64,Float64,Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function}
 
     # Numerical derivative points
-    tole = EccentricityTolerance(a,params.TOLA,params.TOLECC)
-    ap, da, ep, de = NumericalDerivativePoints(a,e,params.da,params.de,params.TOLA,tole)
+    tola, tole = params.TOLA, EccentricityTolerance(a,params.rc,params.TOLECC)
+    ap, da, ep, de = NumericalDerivativePoints(a,e,params.da,params.de,tola,tole)
 
     # Derivation outside the integral
     α, β = αβFromAE(ψ,dψ,d2ψ,a,e,params)
@@ -183,8 +183,8 @@ function ComputeActionsAEWithDeriv(ψ::F0,dψ::F1,d2ψ::F2,
                                    params::OrbitalParameters=OrbitalParameters())::Tuple{Float64,Float64,Float64,Float64,Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function}
 
     # Numerical derivative points
-    tole = EccentricityTolerance(a,params.TOLA,params.TOLECC)
-    ap, da, ep, de = NumericalDerivativePoints(a,e,params.da,params.de,params.TOLA,tole)
+    tola, tole = params.TOLA, EccentricityTolerance(a,params.rc,params.TOLECC)
+    ap, da, ep, de = NumericalDerivativePoints(a,e,params.da,params.de,tola,tole)
 
     # Derivation outside the integral
     J, L = ComputeActionsAE(ψ,dψ,d2ψ,a,e,params)

@@ -42,7 +42,7 @@ end
 ########################################################################
 
 """
-    Ω2circular(dψ,d2ψ,r)
+    Ω2circular(dψ,d2ψ,a)
 
 azimuthal frequency for circular orbits, from the epicyclic approximation
 with value at a = 0.
