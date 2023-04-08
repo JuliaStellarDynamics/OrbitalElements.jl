@@ -54,10 +54,7 @@ function NextGuessAE(acur::Float64,ecur::Float64,
     # Take the point in the middle of the current point and the border in the increment direction
     # (Dividing the increment length until being in the domain can lead to unexpected behaviour :
     # new point too close to the border where inversion can be impossible).
-    tola, tole = params.TOLA, EccentricityTolerance(acur,params.TOLA,params.TOLECC)
-    asafemin = 0.01
-    esafemin = 0.01
-    esafemax = 0.99
+    tola, tole = params.TOLA, EccentricityTolerance(acur,params.rc,params.TOLECC)
     if (acur + adir < tola) || (ecur + edir < tole) || (ecur + edir > 1.0-tole) 
         
         # Fraction of the direction to reach the border
