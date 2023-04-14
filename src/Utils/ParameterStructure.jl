@@ -25,16 +25,16 @@ struct OrbitalParameters
 end
 
 """
-    OrbitalParameters([,Ω₀,rmin,rmax,EDGE,TOLECC,TOLA,NINT,FDIFF,da,de,ITERMAX,invε])
+    OrbitalParameters([,Ω₀,rmin,rmax,EDGE,TOLECC,TOLA,NINT,da,de,ITERMAX,invε])
 
 creates an OrbitalParameters structure with the defined values (which all have a default value)
 """
-function OrbitalParameters(;Ω₀::Float64=1.0,
-                                rmin::Float64=0.,rmax::Float64=1.e5,rc::Float64=1.,
-                                EDGE::Float64=0.01,TOLECC::Float64=0.01,TOLA::Float64=0.1,
-                                NINT::Int64=32,
-                                da::Float64=1.0e-6,de::Float64=1.0e-6,
-                                ITERMAX::Int64=100,invε::Float64=1.0e-10)
+function OrbitalParameters(;Ω₀::Float64=DEFAULT_Ω0,
+                            rmin::Float64=DEFAULT_RMIN,rmax::Float64=DEFAULT_RMAX,rc::Float64=1.,
+                            EDGE::Float64=DEFAULT_EDGE,TOLECC::Float64=DEFAULT_TOLECC,TOLA::Float64=DEFAULT_TOLA,
+                            NINT::Int64=DEFAULT_NINT,
+                            da::Float64=DEFAULT_DA,de::Float64=DEFAULT_DE,
+                            ITERMAX::Int64=DEFAULT_ITERMAX,invε::Float64=DEFAULT_TOL)
 
     return OrbitalParameters(Ω₀,rmin,rmax,rc,EDGE,TOLECC,TOLA,NINT,da,de,ITERMAX,invε)
 end

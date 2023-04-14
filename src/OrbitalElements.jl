@@ -1,6 +1,22 @@
 module OrbitalElements
 
 
+# recommendations for various default parameters:
+#   you can call these externally
+const DEFAULT_TOLECC = 0.001
+const DEFAULT_TOLA   = 0.001
+const DEFAULT_EDGE   = 0.01
+const DEFAULT_NINT   = 32
+const DEFAULT_RMIN   = 1.e-6
+const DEFAULT_RMAX   = 1.e6
+const DEFAULT_TOL    = 1.e-12
+const DEFAULT_AMIN   = 0.0
+const DEFAULT_AMAX   = 1.0
+const DEFAULT_DA     = 1.e-4
+const DEFAULT_DE     = 1.e-4
+const DEFAULT_ITERMAX= 100
+const DEFAULT_Ω0     = 1.0
+
 # structure to hold all parameters
 include("Utils/ParameterStructure.jl")
 
