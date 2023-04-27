@@ -137,13 +137,13 @@ end
 ########################################################################
 
 """
-    Vrad(ψ,dψ,d2ψ,u,a,e,params)
+    Vrad(ψ,dψ,u,a,e,params)
 
 radial velocity as a function of the orbital constants (a,e) and the anomaly u
 """
-function Vrad(ψ::F0,dψ::F1,d2ψ::F2,
+function Vrad(ψ::F0,dψ::F1,
               u::Float64,a::Float64,e::Float64,
-              params::OrbitalParameters=OrbitalParameters())::Float64 where {F0 <: Function, F1 <: Function, F2 <: Function}
+              params::OrbitalParameters=OrbitalParameters())::Float64 where {F0 <: Function, F1 <: Function}
 
     E, L = ELFromAE(ψ,dψ,a,e,params)
 
@@ -186,7 +186,7 @@ function ΘAE(ψ::F0,dψ::F1,d2ψ::F2,
         dr = drdu(u,a,e)
 
         # this can somehow be negative: do we need an extra check?
-        vr = Vrad(ψ,dψ,d2ψ,u,a,e,params)
+        vr = Vrad(ψ,dψ,u,a,e,params)
 
         if (vr == 0.0)
             # go back to the expansion -- or should we return 0.0?

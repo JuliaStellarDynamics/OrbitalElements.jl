@@ -23,10 +23,15 @@ function inverse2Dlinear(a::Float64,b::Float64,
                          y1::Float64,y2::Float64)::Tuple{Float64,Float64}
 
     deta = a*d - b*c
-    if deta == 0.
+    if (deta == 0.) || isnan(deta)
         return 0., 0.
     else
-        return (d*y1 - b*y2)/deta, (a*y2 - c*y1)/deta
+        inc1, inc2 = (d*y1 - b*y2)/deta, (a*y2 - c*y1)/deta
+        if isnan(inc1) || isinf(inc1) || isnan(inc2) || isinf(inc2)
+            return 0., 0.
+        else
+            return inc1, inc2
+        end
     end
 end
 
@@ -141,8 +146,8 @@ end
 basic Newton-Raphson algorithm to find (a,e) from (Jᵣ,L) brute force derivatives.
 """
 function AEFromJLBrute(J::Float64,L::Float64,
-                       ψ::F0,dψ::F1,d2ψ::F2,
-                       params::OrbitalParameters=OrbitalParameters())::Tuple{Float64,Float64,Int64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function}
+                       ψ::F0,dψ::F1,
+                       params::OrbitalParameters=OrbitalParameters())::Tuple{Float64,Float64,Int64,Float64} where {F0 <: Function, F1 <: Function}
 
     # get the circular orbit (maximum radius) for a given angular momentum.
     acirc = RcircFromL(L,dψ,params.rmin,params.rmax)
@@ -151,7 +156,7 @@ function AEFromJLBrute(J::Float64,L::Float64,
     aguess = acirc
     eguess = 0.5
 
-    Jguess, Lguess, dJgda, dLgda, dJgde, dLgde = ComputeActionsAEWithDeriv(ψ,dψ,d2ψ,aguess,eguess,params)
+    Jguess, Lguess, dJgda, dLgda, dJgde, dLgde = ComputeActionsAEWithDeriv(ψ,dψ,aguess,eguess,params)
 
     tol = (Jguess - J)^2 + (Lguess - L)^2
     if (tol < (params.invε)^2)
@@ -172,7 +177,7 @@ function AEFromJLBrute(J::Float64,L::Float64,
         anew, enew = NextGuessAE(aguess,eguess,increment1,increment2,params)
         aguess, eguess = anew, enew
 
-        Jguess, Lguess, dJgda, dLgda, dJgde, dLgde = ComputeActionsAEWithDeriv(ψ,dψ,d2ψ,aguess,eguess,params)
+        Jguess, Lguess, dJgda, dLgda, dJgde, dLgde = ComputeActionsAEWithDeriv(ψ,dψ,aguess,eguess,params)
 
         tol = (Jguess - J)^2 + (Lguess - L)^2
         if (tol < (params.invε)^2)

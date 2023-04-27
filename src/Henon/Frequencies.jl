@@ -1,15 +1,15 @@
 
 
 """
-HenonJFromAE(ψ,dψ,d2ψ,a,e,params)
+HenonJFromAE(ψ,dψ,a,e,params)
 
 compute the radial action alone
 """
-function HenonJFromAE(ψ::F0,dψ::F1,d2ψ::F2,
+function HenonJFromAE(ψ::F0,dψ::F1,
                       a::Float64,e::Float64,
-                      params::OrbitalParameters=OrbitalParameters())::Float64 where {F0  <: Function, F1 <: Function, F2 <: Function}
+                      params::OrbitalParameters=OrbitalParameters())::Float64 where {F0  <: Function, F1 <: Function}
 
-    u1func(u::Float64)::Float64 = drdu(u,a,e)*Vrad(ψ,dψ,d2ψ,u,a,e,params)
+    u1func(u::Float64)::Float64 = drdu(u,a,e)*Vrad(ψ,dψ,u,a,e,params)
 
     return (1/pi)*UnitarySimpsonIntegration(u1func,params.NINT)
 end

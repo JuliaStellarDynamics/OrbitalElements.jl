@@ -93,7 +93,7 @@ function ComputeFrequenciesJAE(ψ::F0,dψ::F1,d2ψ::F2,
                                params::OrbitalParameters=OrbitalParameters())::Tuple{Float64,Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function}
 
     Ω1, Ω2 = ComputeFrequenciesAE(ψ,dψ,d2ψ,a,e,params)
-    J = HenonJFromAE(ψ,dψ,d2ψ,a,e,params)
+    J = HenonJFromAE(ψ,dψ,a,e,params)
 
     return Ω1, Ω2, J
 end
@@ -158,13 +158,13 @@ end
 ########################################################################
 
 """
-    ComputeActionsAE(ψ,dψ,d2ψ,a,e,params)
+    ComputeActionsAE(ψ,dψ,a,e,params)
 """
-function ComputeActionsAE(ψ::F0,dψ::F1,d2ψ::F2,
+function ComputeActionsAE(ψ::F0,dψ::F1,
                           a::Float64,e::Float64,
-                          params::OrbitalParameters=OrbitalParameters())::Tuple{Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function}
+                          params::OrbitalParameters=OrbitalParameters())::Tuple{Float64,Float64} where {F0 <: Function, F1 <: Function}
 
-    J = HenonJFromAE(ψ,dψ,d2ψ,a,e,params)
+    J = HenonJFromAE(ψ,dψ,a,e,params)
     L = LFromAE(ψ,dψ,a,e,params)
     return J, L
 end
@@ -176,24 +176,24 @@ end
 ########################################################################
 
 """
-    ComputeActionsAEWithDeriv(ψ,dψ,d2ψ,a,e,params)
+    ComputeActionsAEWithDeriv(ψ,dψ,a,e,params)
 """
-function ComputeActionsAEWithDeriv(ψ::F0,dψ::F1,d2ψ::F2,
+function ComputeActionsAEWithDeriv(ψ::F0,dψ::F1,
                                    a::Float64,e::Float64,
-                                   params::OrbitalParameters=OrbitalParameters())::Tuple{Float64,Float64,Float64,Float64,Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function}
+                                   params::OrbitalParameters=OrbitalParameters())::Tuple{Float64,Float64,Float64,Float64,Float64,Float64} where {F0 <: Function, F1 <: Function}
 
     # Numerical derivative points
     tola, tole = params.TOLA, EccentricityTolerance(a,params.rc,params.TOLECC)
     ap, da, ep, de = NumericalDerivativePoints(a,e,params.da,params.de,tola,tole)
 
     # Derivation outside the integral
-    J, L = ComputeActionsAE(ψ,dψ,d2ψ,a,e,params)
+    J, L = ComputeActionsAE(ψ,dψ,a,e,params)
 
     # For a derivatives
-    Jap, Lap = ComputeActionsAE(ψ,dψ,d2ψ,ap,e,params)
+    Jap, Lap = ComputeActionsAE(ψ,dψ,ap,e,params)
     
     # For e derivatives
-    Jep, Lep = ComputeActionsAE(ψ,dψ,d2ψ,a,ep,params)
+    Jep, Lep = ComputeActionsAE(ψ,dψ,a,ep,params)
 
     ∂J∂a = (Jap-J)/da
     ∂L∂a = (Lap-L)/da
@@ -227,11 +227,11 @@ end
 """
     ComputeAEFromActions(ψ,dψ,d2ψ,J,L,params)
 """
-function ComputeAEFromActions(ψ::F0,dψ::F1,d2ψ::F2,
+function ComputeAEFromActions(ψ::F0,dψ::F1,
                               J::Float64,L::Float64,
-                              params::OrbitalParameters=OrbitalParameters())::Tuple{Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function}
+                              params::OrbitalParameters=OrbitalParameters())::Tuple{Float64,Float64} where {F0 <: Function, F1 <: Function}
 
-        a, e, _, _ = AEFromJLBrute(J,L,ψ,dψ,d2ψ,params)
+        a, e, _, _ = AEFromJLBrute(J,L,ψ,dψ,params)
 
         return a, e
 end

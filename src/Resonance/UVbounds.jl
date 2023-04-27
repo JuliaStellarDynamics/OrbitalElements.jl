@@ -13,10 +13,10 @@ Fouvry & Prunet B3
 @ASSUMPTION:
     - ω is dimensionless, that is, rescaled by Ω₀ already.
 """
-function Getϖ(ω::ComplexF64,
+function Getϖ(ω::Number,
               n1::Int64,n2::Int64,
               dψ::F1,d2ψ::F2,
-              params::OrbitalParameters=OrbitalParameters())::ComplexF64 where {F1 <: Function, F2 <: Function}
+              params::OrbitalParameters=OrbitalParameters()) where {F1 <: Function, F2 <: Function}
 
     ωmin, ωmax = Findωminωmax(n1,n2,dψ,d2ψ,params)
 
@@ -29,8 +29,8 @@ end
 ϖ version with ωmin, ωmax
 
 """
-function Getϖ(ω::ComplexF64,
-              ωmin::Float64,ωmax::Float64)::ComplexF64
+function Getϖ(ω::Number,
+              ωmin::Float64,ωmax::Float64)
 
     return (2.0*ω - ωmax - ωmin)/(ωmax - ωmin)
 end

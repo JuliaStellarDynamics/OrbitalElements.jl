@@ -3,8 +3,8 @@ module OrbitalElements
 
 # recommendations for various default parameters:
 #   you can call these externally
-const DEFAULT_TOLECC = 0.001
-const DEFAULT_TOLA   = 0.001
+const DEFAULT_TOLECC = 0.01
+const DEFAULT_TOLA   = 0.01
 const DEFAULT_EDGE   = 0.01
 const DEFAULT_NINT   = 32
 const DEFAULT_RMIN   = 1.e-6
@@ -48,6 +48,7 @@ include("Circular/CircularFrequencies.jl")
 
 # bring in the resonance mappings
 include("Resonance/UVbounds.jl")
+include("Resonance/ResonanceLines.jl")
 include("Resonance/ABtoUV.jl")
 
 # the main wrapper for frequency and action calculations
