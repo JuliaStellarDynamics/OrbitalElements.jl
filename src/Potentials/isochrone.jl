@@ -13,8 +13,8 @@ the isochrone potential
 """
 function ψIsochrone(r::Float64,bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
 
-    rbc = r^2 + bc^2
-    return -astronomicalG*M*(bc+sqrt(rbc))^(-1)
+    x = r/bc
+    return -astronomicalG*M*(bc^(-1))*(1.0+sqrt(1.0+x^2))^(-1)
 end
 
 """dψIsochrone(r[,bc,M,G])
@@ -22,8 +22,9 @@ end
 the isochrone potential derivative
 """
 function dψIsochrone(r::Float64,bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
-    rbc = r^2 + bc^2
-    return astronomicalG*M*r*(sqrt(rbc)*(sqrt(rbc)+bc)^2)^(-1)
+    
+    x = r/bc
+    return astronomicalG*M*(bc^(-2))*(sqrt(1.0+x^(-2))*(1.0+sqrt(1.0+x^2))^2)^(-1)
 end
 
 """d2ψIsochrone(r[,bc,M,G])
@@ -31,12 +32,14 @@ end
 the isochrone potential second derivative
 """
 function d2ψIsochrone(r::Float64,bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
-    #=
-    =#
-    rbc = r^2 + bc^2
-    return astronomicalG*M*(- r^(2)*((rbc^(3/2))*(sqrt(rbc)+bc)^2)^(-1)
-                          - 2*r^(2)*(rbc*(sqrt(rbc)+bc)^3)^(-1)
-                          + (sqrt(rbc)*(sqrt(rbc)+bc)^2)^(-1))
+
+    x = r/bc
+    sqxp = 1.0 + x^2
+    invx = x^(-1)
+    invsqxp = 1.0 + invx^2
+    return astronomicalG*M*(bc^(-3))*(- ((sqxp^(3/2))*(invx+sqrt(invsqxp))^2)^(-1)
+                                      - 2*(invsqxp*(1.0+sqrt(sqxp))^3)^(-1)
+                                      + (sqrt(sqxp)*(1.0+sqrt(sqxp))^2)^(-1))
 end
 
 """

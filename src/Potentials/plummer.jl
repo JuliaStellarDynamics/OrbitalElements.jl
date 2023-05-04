@@ -15,36 +15,36 @@ include("PlummerUtils/Inversion.jl")
 the plummer potential
 """
 function ψPlummer(r::Float64,bc::Float64=1.,M::Float64=1.,G::Float64=1.)
-    #=ψPlummer
 
-    the plummer potential
-    =#
-    rbc = r^2 + bc^2
-    return -G*M*(sqrt(rbc))^(-1)
+    x = r/bc
+    return -(G*M/bc) / sqrt(1.0+x^2)
 end
 
 """
 the plummer potential derivative
 """
 function dψPlummer(r::Float64,bc::Float64=1.,M::Float64=1.,G::Float64=1.)
-    #=dψPlummer
 
-    the plummer potential derivative
-    =#
-    rbc = r^2 + bc^2
-    return G*M*r*((rbc)^(-3/2))
+    x = r/bc
+    # Stable version at infinity (not stable in 0.)
+    if x > 1.e5
+        return (G*M/(bc^2)) / (x^2 * (sqrt(1.0+x^(-2)))^3)
+    end
+
+    return (G*M/(bc^2)) * x / (sqrt(1.0+x^2))^3
 end
 
 """
 the plummer potential second derivative
 """
 function d2ψPlummer(r::Float64,bc::Float64=1.,M::Float64=1.,G::Float64=1.)
-    #=d2ψPlummer
+    x = r/bc
+    # Stable version at infinity (not stable in 0.)
+    if x > 1.e5
+        return (G*M/(bc^3)) * ( 1.0 / (sqrt(1.0 + x^2))^3 - 3.0 / (x^3 * (sqrt(1.0 + x^(-2)))^5))
+    end
 
-    the plummer potential second derivative
-    =#
-    rbc = r^2 + bc^2
-    return G*M*(bc^2 - 2(r^2))*((rbc)^(-5/2))
+    return (G*M/(bc^3)) * (1.0 - 2.0*(x^2)) / (sqrt(1.0 + x^2))^5
 end
 
 """

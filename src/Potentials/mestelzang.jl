@@ -77,6 +77,11 @@ the truncated Mestel potential derivative.
 function dψMestelTrunc(r::Float64,R0::Float64=1.,V0::Float64=1.,eps::Float64=0.01)
 
     x = r/R0
+    # Stable version at infinity (not stable in 0.)
+    if x > 1.e5
+        return ((V0)^(2) / R0) / (x * (1.0 + (eps/x)^(2)))
+    end
+
     return ((V0)^(2) / R0) * x / ((eps)^(2) + (x)^(2))
 end
 
@@ -88,6 +93,11 @@ the truncated Mestel potential second derivative.
 function d2ψMestelTrunc(r::Float64,R0::Float64=1.,V0::Float64=1.,eps::Float64=0.01)
 
     x = r/R0
+    # Stable version at infinity (not stable in 0.)
+    if x > 1.e5
+        return ((V0)^(2) / (R0)^(2)) * ((eps/x)^(2) - 1.0) / (x * (1.0 + (eps/x)^(2)))^2
+    end
+
     return  ((V0)^(2) / (R0)^(2)) * ((eps)^(2) - (x)^(2)) / ((eps)^(2) + (x)^(2))^(2)
 end
 
