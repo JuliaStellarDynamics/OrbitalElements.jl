@@ -99,9 +99,9 @@ the effective potential: note the relationship to Q
 function ψeff(ψ::Function,r::Float64,L::Float64)::Float64
     if L == 0.
         return ψ(r)
-    else
-        return ψ(r) + 0.5 * (L/r)^(2)
     end
+        
+    return ψ(r) + 0.5 * (L/r)^(2)
 end
 
 """
@@ -112,9 +112,9 @@ the derivative of the effective potential
 function dψeffdr(dψ::Function,r::Float64,L::Float64)::Float64
     if L == 0.
         return dψ(r)
-    else
-        return dψ(r) - (L)^(2) / (r^3)
     end
+        
+    return dψ(r) - (L)^(2) / (r^3)
 end
 
 """
@@ -125,9 +125,9 @@ the second derivative of the effective potential
 function d2ψeffdr2(d2ψ::Function,r::Float64,L::Float64)::Float64
     if L == 0.
         return d2ψ(r)
-    else
-        return d2ψ(r) + 3 * (L)^(2) / (r^4)
     end
+        
+    return d2ψ(r) + 3 * (L)^(2) / (r^4)
 end
 
 ########################################################################
@@ -153,9 +153,9 @@ function Vrad(ψ::F0,dψ::F1,
 
     if (vrSQ < 0.0) || isnan(vrSQ) || isinf(vrSQ)
         return 0.0
-    else
-        return sqrt(vrSQ)
     end
+        
+    return sqrt(vrSQ)
 end
 
 
@@ -180,21 +180,19 @@ function ΘAE(ψ::F0,dψ::F1,d2ψ::F2,
     # To prevent this → EDGE - eps(Float64)
     if ((1.0 - abs(u)) < (params.EDGE - eps(Float64)))
         return ΘExpansionAE(ψ,dψ,d2ψ,u,a,e,params)
-
-    # if not close to the boundary, can calculate as normal
-    else
-        dr = drdu(u,a,e)
-
-        # this can somehow be negative: do we need an extra check?
-        vr = Vrad(ψ,dψ,u,a,e,params)
-
-        if (vr == 0.0)
-            # go back to the expansion -- or should we return 0.0?
-            return 0.0
-        else 
-            return dr / vr
-        end
     end
+
+    dr = drdu(u,a,e)
+
+    # this can somehow be negative: do we need an extra check?
+    vr = Vrad(ψ,dψ,u,a,e,params)
+
+    if (vr == 0.0)
+        # go back to the expansion -- or should we return 0.0?
+        return 0.0
+    end 
+        
+    return dr / vr
 end
 
 
@@ -276,20 +274,10 @@ function dΘAE(ψ::F0,dψ::F1,d2ψ::F2,
               u::Float64,a::Float64,e::Float64,
               params::OrbitalParameters=OrbitalParameters())::Tuple{Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function}
 
-    # Numerical derivative points
-    ap, da, ep, de = NumericalDerivativePoints(a,e,params.da,params.de,params.TOLA,params.TOLECC)
-
-    # Current point
-    Θloc = ΘAE(ψ,dψ,d2ψ,u,a,e,params)
-
-    # For a derivative
-    Θap = ΘAE(ψ,dψ,d2ψ,u,ap,e,params)
-    
-    # For e derivative
-    Θep = ΘAE(ψ,dψ,d2ψ,u,a,ep,params)
-
-    ∂Θ∂a = (Θap-Θloc)/da
-    ∂Θ∂e = (Θep-Θloc)/de
+    # Function to differentiate
+    fun(atemp::Float64,etemp::Float64) = ΘAE(ψ,dψ,d2ψ,u,atemp,etemp,params)
+    # Perform differentiation
+    _, ∂Θ∂a, ∂Θ∂e = NumericalDerivativeAE(fun,a,e,params)
 
     return ∂Θ∂a, ∂Θ∂e
 end

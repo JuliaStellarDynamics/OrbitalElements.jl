@@ -32,7 +32,7 @@ a, e = 1.0, 0.05
 u = 0.4
 Ω1, Ω2 = OrbitalElements.ComputeFrequenciesAE(ψ,dψ,d2ψ,a,e,params)
 E = OrbitalElements.EFromAE(ψ,dψ,a,e,params)
-J, L  = OrbitalElements.ComputeActionsAE(ψ,dψ,d2ψ,a,e,params)
+J, L  = OrbitalElements.ComputeActionsAE(ψ,dψ,a,e,params)
 rp, ra = OrbitalElements.RpRaFromAE(a,e)
 r = OrbitalElements.ru(u,a,e)
 
@@ -46,6 +46,8 @@ println("Frequencies computation Benchmark")
 println("Frequencies inversion Benchmark")
 @btime OrbitalElements.ComputeAEFromFrequencies(ψ,dψ,d2ψ,Ω1,Ω2)
 
+_, _, niter, _ = OrbitalElements.AEFromΩ1Ω2Brute(Ω1,Ω2,ψ,dψ,d2ψ)
+println("Number of iterations : ",niter)
 #####
 # Defined parameter structure
 #####
@@ -58,6 +60,9 @@ println("Frequencies computation Benchmark")
 
 println("Frequencies inversion Benchmark")
 @btime OrbitalElements.ComputeAEFromFrequencies(ψ,dψ,d2ψ,Ω1,Ω2,params)
+
+_, _, niter, _ = OrbitalElements.AEFromΩ1Ω2Brute(Ω1,Ω2,ψ,dψ,d2ψ,params)
+println("Number of iterations : ",niter)
 
 
 ######################################################################

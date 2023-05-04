@@ -111,24 +111,15 @@ function ComputeαβWithDerivAE(ψ::F0,dψ::F1,d2ψ::F2,
                               a::Float64,e::Float64,
                               params::OrbitalParameters=OrbitalParameters())::Tuple{Float64,Float64,Float64,Float64,Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function}
 
-    # Numerical derivative points
-    tola, tole = params.TOLA, EccentricityTolerance(a,params.rc,params.TOLECC)
-    ap, da, ep, de = NumericalDerivativePoints(a,e,params.da,params.de,tola,tole)
-
-    # Derivation outside the integral
-    α, β = αβFromAE(ψ,dψ,d2ψ,a,e,params)
-
-    # For a derivatives
-    αap, βap = αβFromAE(ψ,dψ,d2ψ,ap,e,params)
     
-    # For e derivatives
-    αep, βep = αβFromAE(ψ,dψ,d2ψ,a,ep,params)
-
-    ∂α∂a = (αap-α)/da
-    ∂β∂a = (βap-β)/da
-
-    ∂α∂e = (αep-α)/de
-    ∂β∂e = (βep-β)/de
+    # Function to differentiate
+    fun(atemp::Float64,etemp::Float64) = αβFromAE(ψ,dψ,d2ψ,atemp,etemp,params)
+    # Perform differentiation
+    floc, ∂f∂a, ∂f∂e = NumericalDerivativeAE(fun,a,e,params)
+    # Recast results
+    α, β = floc
+    ∂α∂a, ∂β∂a = ∂f∂a
+    ∂α∂e, ∂β∂e = ∂f∂e
 
     return α, β, ∂α∂a, ∂β∂a, ∂α∂e, ∂β∂e
 end
@@ -182,24 +173,14 @@ function ComputeActionsAEWithDeriv(ψ::F0,dψ::F1,
                                    a::Float64,e::Float64,
                                    params::OrbitalParameters=OrbitalParameters())::Tuple{Float64,Float64,Float64,Float64,Float64,Float64} where {F0 <: Function, F1 <: Function}
 
-    # Numerical derivative points
-    tola, tole = params.TOLA, EccentricityTolerance(a,params.rc,params.TOLECC)
-    ap, da, ep, de = NumericalDerivativePoints(a,e,params.da,params.de,tola,tole)
-
-    # Derivation outside the integral
-    J, L = ComputeActionsAE(ψ,dψ,a,e,params)
-
-    # For a derivatives
-    Jap, Lap = ComputeActionsAE(ψ,dψ,ap,e,params)
-    
-    # For e derivatives
-    Jep, Lep = ComputeActionsAE(ψ,dψ,a,ep,params)
-
-    ∂J∂a = (Jap-J)/da
-    ∂L∂a = (Lap-L)/da
-
-    ∂J∂e = (Jep-J)/de
-    ∂L∂e = (Lep-L)/de
+    # Function to differentiate
+    fun(atemp::Float64,etemp::Float64) = ComputeActionsAE(ψ,dψ,atemp,etemp,params)
+    # Perform differentiation
+    floc, ∂f∂a, ∂f∂e = NumericalDerivativeAE(fun,a,e,params)
+    # Recast results
+    J, L = floc
+    ∂J∂a, ∂L∂a = ∂f∂a
+    ∂J∂e, ∂L∂e = ∂f∂e
 
     return J, L, ∂J∂a, ∂L∂a, ∂J∂e, ∂L∂e
 end

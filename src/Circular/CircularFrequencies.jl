@@ -30,9 +30,9 @@ function Ω1circular(dψ::F1,d2ψ::F2,
 
     if (a == 0.)
         return 2.0*sqrt(abs(d2ψ(0.)))
-    else
-        return sqrt(d2ψ(a) + 3*dψ(a)/a)
     end
+        
+    return sqrt(d2ψ(a) + 3*dψ(a)/a)
 end
 
 ########################################################################
@@ -52,9 +52,9 @@ function Ω2circular(dψ::F1,d2ψ::F2,
 
     if (a == 0.)
         return sqrt(abs(d2ψ(0.)))
-    else
-        return sqrt(dψ(a)/a)
     end
+        
+    return sqrt(dψ(a)/a)
 end
 
 

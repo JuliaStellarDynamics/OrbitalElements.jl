@@ -72,6 +72,35 @@ function NumericalDerivativePoints(a::Float64,e::Float64,
     return ap, da, ep, de
 end
 
+
+"""
+    NumericalDerivativeAE(fun,a,e,params)
+    
+compute the numerical derivative of any function of (a,e).
+"""
+function NumericalDerivativeAE(fun::F0,
+                               a::Float64,e::Float64,
+                               params::OrbitalParameters=OrbitalParameters()) where {F0 <: Function}
+    
+    # Numerical derivative points
+    tola, tole = params.TOLA, EccentricityTolerance(a,params.rc,params.TOLECC)
+    ap, da, ep, de = NumericalDerivativePoints(a,e,params.da,params.de,tola,tole)
+
+    # Derivation outside the integral
+    floc = fun(a,e)
+
+    # For a derivatives
+    fap = fun(ap,e)
+    
+    # For e derivatives
+    fep = fun(a,ep)
+
+    ∂f∂a = (fap.-floc)./da
+    ∂f∂e = (fep.-floc)./de
+
+    return floc, ∂f∂a, ∂f∂e
+end
+
 ########################################################################
 #
 # Interpolation
@@ -86,9 +115,9 @@ function Interpolation1stOrder(x::Float64,
 end
 
 function Interpolation2ndOrder(x::Float64,
-                               x0::Float64,y0::Float64,
-                               x1::Float64,y1::Float64,
-                               x2::Float64,y2::Float64)::Float64
+                               x0::Float64,y0,
+                               x1::Float64,y1,
+                               x2::Float64,y2)
 
-    return ((x - x2)*((x - x1)*(x1 - x2)*y0 + (x - x0)*(-x0 + x2)*y1) + (x - x0)*(x - x1)*(x0 - x1)*y2)/((x0 - x1)*(x0 - x2)*(x1 - x2))
+    return ((x - x2).*((x - x1)*(x1 - x2).*y0 .+ (x - x0)*(-x0 + x2).*y1) .+ (x - x0)*(x - x1)*(x0 - x1).*y2)./((x0 - x1)*(x0 - x2)*(x1 - x2))
 end

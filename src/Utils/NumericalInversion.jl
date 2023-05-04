@@ -89,6 +89,54 @@ function NextGuessAE(acur::Float64,ecur::Float64,
     return anew, enew
 end
 
+"""
+    AEFromNewtonRaphson(ainit,einit,v1goal,v2goal,mjacobian,params)
+
+basic Newton-Raphson algorithm to find (a,e) from (v1,v2) goal brute force derivatives.
+@ASSUMPTION :
+    - The jacobian function is given as 
+        v1, v2, ∂v1∂a, ∂v2∂a, ∂v1∂e, ∂v2∂e = mjacobian(aguess,eguess)
+"""
+function AEFromNewtonRaphson(ainit::Float64,einit::Float64,
+                             v1goal::Float64,v2goal::Float64,
+                             mjacobian::F0,
+                             params::OrbitalParameters=OrbitalParameters()) where {F0 <: Function}
+
+    # then start from initial guess and take numerical derivatives
+    aguess, eguess = ainit, einit
+
+    v1, v2, ∂v1∂a, ∂v2∂a, ∂v1∂e, ∂v2∂e = mjacobian(aguess,eguess)
+
+    tol = (v1goal - v1)^2 + (v2goal - v2)^2
+    if (tol < (params.invε)^2)
+        return aguess, eguess, 0, tol
+    end
+
+    # 2d Newton Raphson inversion and find new increments
+    for iter = 1:params.ITERMAX
+
+        increment1, increment2 = inverse2Dlinear(∂v1∂a,∂v1∂e,∂v2∂a,∂v2∂e,v1goal-v1,v2goal-v2) 
+
+        # If non invertible 
+        if (increment1 == 0.) && (increment2 == 0.)
+            return aguess, eguess, iter, tol
+        end
+
+        # Update guesses
+        anew, enew = NextGuessAE(aguess,eguess,increment1,increment2,params)
+        aguess, eguess = anew, enew
+
+        v1, v2, ∂v1∂a, ∂v2∂a, ∂v1∂e, ∂v2∂e = mjacobian(aguess,eguess)
+
+        tol = (v1goal - v1)^2 + (v2goal - v2)^2
+        if (tol < (params.invε)^2)
+            return aguess, eguess, iter, tol
+        end
+    end
+
+    return aguess,eguess,params.ITERMAX,tol
+end
+
 
 
 """
@@ -98,45 +146,17 @@ basic Newton-Raphson algorithm to find (a,e) from (Ω₁,Ω₂) brute force deri
 """
 function AEFromΩ1Ω2Brute(Ω₁::Float64,Ω₂::Float64,
                          ψ::F0,dψ::F1,d2ψ::F2,
-                         params::OrbitalParameters=OrbitalParameters())::Tuple{Float64,Float64,Int64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function}
+                         params::OrbitalParameters=OrbitalParameters()) where {F0 <: Function, F1 <: Function, F2 <: Function}
 
     # get the circular orbit (maximum radius) for a given Ω₁,Ω₂. use the stronger constraint.
     acirc = RcircFromΩ1circ(Ω₁,dψ,d2ψ,params.rmin,params.rmax)
 
     # then start from ecc=0.5 and take numerical derivatives
-    aguess = acirc
-    eguess = 0.5
+    ainit, einit = acirc, 0.5
 
-    f1,f2,df1da,df2da,df1de,df2de = ComputeFrequenciesAEWithDeriv(ψ,dψ,d2ψ,aguess,eguess,params)
+    mjac(a::Float64,e::Float64) = ComputeFrequenciesAEWithDeriv(ψ,dψ,d2ψ,a,e,params)
 
-    tol = (Ω₁ - f1)^2 + (Ω₂ - f2)^2
-    if (tol < (params.invε)^2)
-        return aguess, eguess, iter, tol
-    end
-
-    # 2d Newton Raphson inversion and find new increments
-    for iter = 1:params.ITERMAX
-
-        increment1, increment2 = inverse2Dlinear(df1da,df1de,df2da,df2de,Ω₁-f1,Ω₂-f2) 
-
-        # If non invertible 
-        if (increment1 == 0.) && (increment2 == 0.)
-            break
-        end
-
-        # Update guesses
-        anew, enew = NextGuessAE(aguess,eguess,increment1,increment2,params)
-        aguess, eguess = anew, enew
-
-        f1,f2,df1da,df2da,df1de,df2de = ComputeFrequenciesAEWithDeriv(ψ,dψ,d2ψ,aguess,eguess,params)
-
-        tol = (Ω₁ - f1)^2 + (Ω₂ - f2)^2
-        if (tol < (params.invε)^2)
-            return aguess, eguess, iter, tol
-        end
-    end
-
-    return aguess,eguess,params.ITERMAX,tol
+    return AEFromNewtonRaphson(ainit,einit,Ω₁,Ω₂,mjac,params)
 end
 
 
@@ -147,43 +167,159 @@ basic Newton-Raphson algorithm to find (a,e) from (Jᵣ,L) brute force derivativ
 """
 function AEFromJLBrute(J::Float64,L::Float64,
                        ψ::F0,dψ::F1,
-                       params::OrbitalParameters=OrbitalParameters())::Tuple{Float64,Float64,Int64,Float64} where {F0 <: Function, F1 <: Function}
+                       params::OrbitalParameters=OrbitalParameters()) where {F0 <: Function, F1 <: Function}
 
-    # get the circular orbit (maximum radius) for a given angular momentum.
-    acirc = RcircFromL(L,dψ,params.rmin,params.rmax)
+    # Initial guess
+    einit = 0.5
+    ainitJ = try AfixedEFromJ(J,einit,ψ,dψ,params.rmin,params.rmax,params) catch; 0. end
+    ainitL = try AfixedEFromL(L,einit,ψ,dψ,params.rmin,params.rmax,params) catch; 0. end
+    ainit = 0.5 * (ainitJ + ainitL)
 
-    # then start from ecc=0.5 and take numerical derivatives
-    aguess = acirc
-    eguess = 0.5
+    mjac(a::Float64,e::Float64) = ComputeActionsAEWithDeriv(ψ,dψ,a,e,params)
 
-    Jguess, Lguess, dJgda, dLgda, dJgde, dLgde = ComputeActionsAEWithDeriv(ψ,dψ,aguess,eguess,params)
+    return AEFromNewtonRaphson(ainit,einit,J,L,mjac,params)
+end
 
-    tol = (Jguess - J)^2 + (Lguess - L)^2
-    if (tol < (params.invε)^2)
-        return aguess, eguess, iter, tol
+"""
+    AEFromELBrute(J,L,ψ,dψ,d2ψ,params)
+
+basic Newton-Raphson algorithm to find (a,e) from (E,L) brute force derivatives.
+"""
+function AEFromELBrute(E::Float64,L::Float64,
+                       ψ::F0,dψ::F1,
+                       params::OrbitalParameters=OrbitalParameters()) where {F0 <: Function, F1 <: Function}
+
+    # Initial guess
+    einit = 0.5
+    ainitE = try AfixedEFromE(E,einit,ψ,dψ,params.rmin,params.rmax,params) catch; 0. end
+    ainitL = try AfixedEFromL(L,einit,ψ,dψ,params.rmin,params.rmax,params) catch; 0. end
+    ainit = 0.5 * (ainitE + ainitL)
+
+    mjac(a::Float64,e::Float64) = ComputeELAEWithDeriv(ψ,dψ,a,e,params)
+
+    return AEFromNewtonRaphson(ainit,einit,E,L,mjac,params)
+end
+
+
+########################################################################
+#
+# Semi-major axis guess for energy, angular momentum and radial action
+#
+########################################################################
+# Guess using Lcirc poorly behave for eccentricity close to one.
+# Fix the guess with a given eccentricity
+
+"""
+    AfixedEFromL(L,e,ψ,dψ,params,tolx,tolf)
+    
+perform backwards mapping from energy E for a fixed eccentricity orbit to semi-major axis
+can tune [rmin,rmax] for extra optimisation (but not needed)
+@WARNING: important assumption E is a increasing function of semi-major axis (at fixed eccentricity)
+"""
+function AfixedEFromE(E::Float64,e::Float64,
+                      ψ::F0,dψ::F1,
+                      rmin::Float64,rmax::Float64,
+                      params::OrbitalParameters=OrbitalParameters(),
+                      tolx::Float64=1000.0*eps(Float64),tolf::Float64=1000.0*eps(Float64))::Float64 where {F0 <:Function, F1 <: Function}
+
+    # check that the input energy is valid
+    if E < ψ(0.)
+        error("OrbitalElements.Utils.AfixedEFromE: Too low energy E = $E")
+    elseif E == ψ(0.)
+        return 0.
+    elseif E > ψ(Inf)
+        error("OrbitalElements.Utils.AfixedEFromE: Too high energy E = $E")
+    elseif E == ψ(Inf)
+        return Inf
     end
 
-    # 2d Newton Raphson inversion and find new increments
-    for iter = 1:params.ITERMAX
+    # use bisection to find the circular orbit radius corresponding to given frequency
+    aguess = try bisection(a -> E - EFromAE(ψ,dψ,a,e,params),rmin,rmax,tolx=tolx,tolf=tolf) catch;   -1. end
 
-        increment1, increment2 = inverse2Dlinear(dJgda,dJgde,dLgda,dLgde,J-Jguess,L-Lguess)
-
-        # If non inversible 
-        if (increment1 == 0.) && (increment2 == 0.)
-            break
-        end
-        
-        # Update guesses
-        anew, enew = NextGuessAE(aguess,eguess,increment1,increment2,params)
-        aguess, eguess = anew, enew
-
-        Jguess, Lguess, dJgda, dLgda, dJgde, dLgde = ComputeActionsAEWithDeriv(ψ,dψ,aguess,eguess,params)
-
-        tol = (Jguess - J)^2 + (Lguess - L)^2
-        if (tol < (params.invε)^2)
-            return aguess, eguess, iter, tol
+    # check if bisection failed: report why
+    if (aguess == -1.)
+        if (EFromAE(ψ,dψ,rmax,e,params) < E)
+            return AfixedEFromE(E,e,ψ,dψ,rmax,10*rmax,params,tolx,tolf)
+        elseif (E < EFromAE(ψ,dψ,rmin,e,params))
+            return AfixedEFromE(E,e,ψ,dψ,rmin/10,rmin,params,tolx,tolf)
+        else
+            error("OrbitalElements.Utils.AfixedEFromE: Unable to find the associated radius of E = $E and e = $e")
         end
     end
 
-    return aguess,eguess,params.ITERMAX,tol
+    return aguess
+end
+
+"""
+    AfixedEFromJ(L,e,ψ,dψ,params,tolx,tolf)
+    
+perform backwards mapping from radial action J for a fixed eccentricity orbit to semi-major axis
+can tune [rmin,rmax] for extra optimisation (but not needed)
+@WARNING: important assumption L is a increasing function of semi-major axis (at fixed eccentricity)
+"""
+function AfixedEFromJ(J::Float64,e::Float64,
+                      ψ::F0,dψ::F1,
+                      rmin::Float64,rmax::Float64,
+                      params::OrbitalParameters=OrbitalParameters(),
+                      tolx::Float64=1000.0*eps(Float64),tolf::Float64=1000.0*eps(Float64))::Float64 where {F0 <:Function, F1 <: Function}
+
+    # check that the input energy is valid
+    if J < 0.
+        error("OrbitalElements.Utils.AfixedEFromJ: Too low radial action J = $J")
+    elseif J == 0.
+        return 0.
+    end
+
+    # use bisection to find the circular orbit radius corresponding to given frequency
+    aguess = try bisection(a -> J - HenonJFromAE(ψ,dψ,a,e,params),rmin,rmax,tolx=tolx,tolf=tolf) catch;   -1. end
+
+    # check if bisection failed: report why
+    if (aguess == -1.)
+        if (HenonJFromAE(ψ,dψ,rmax,e,params) < J)
+            return AfixedEFromJ(J,e,ψ,dψ,rmax,10*rmax,params,tolx,tolf)
+        elseif (J < HenonJFromAE(ψ,dψ,rmin,e,params))
+            return AfixedEFromJ(J,e,ψ,dψ,rmin/10,rmin,params,tolx,tolf)
+        else
+            error("OrbitalElements.Utils.AfixedEFromJ: Unable to find the associated radius of E = $E and e = $e")
+        end
+    end
+
+    return aguess
+end
+
+"""
+    AfixedEFromL(L,e,ψ,dψ,params,tolx,tolf)
+    
+perform backwards mapping from angular momentum L for a fixed eccentricity orbit to semi-major axis
+can tune [rmin,rmax] for extra optimisation (but not needed)
+@WARNING: important assumption L is a increasing function of semi-major axis (at fixed eccentricity)
+"""
+function AfixedEFromL(L::Float64,e::Float64,
+                      ψ::F0,dψ::F1,
+                      rmin::Float64,rmax::Float64,
+                      params::OrbitalParameters=OrbitalParameters(),
+                      tolx::Float64=1000.0*eps(Float64),tolf::Float64=1000.0*eps(Float64))::Float64 where {F0 <:Function, F1 <: Function}
+
+    # check that the input frequency is valid
+    if L < 0.
+        error("OrbitalElements.Utils.AfixedEFromL: Negative angular momentum L = $L")
+    elseif L == 0.
+        return 0.
+    end
+
+    # use bisection to find the circular orbit radius corresponding to given frequency
+    aguess = try bisection(a -> L - LFromAE(ψ,dψ,a,e,params),rmin,rmax,tolx=tolx,tolf=tolf) catch;   -1. end
+
+    # check if bisection failed: report why
+    if (aguess == -1.)
+        if (LFromAE(ψ,dψ,rmax,e,params) < L)
+            return AfixedEFromL(L,e,ψ,dψ,rmax,10*rmax,params,tolx,tolf)
+        elseif (L < LFromAE(ψ,dψ,rmin,e,params))
+            return AfixedEFromL(L,e,ψ,dψ,rmin/10,rmin,params,tolx,tolf)
+        else
+            error("OrbitalElements.Utils.AfixedEFromL: Unable to find the associated radius of L = $L and e = $e")
+        end
+    end
+
+    return aguess
 end

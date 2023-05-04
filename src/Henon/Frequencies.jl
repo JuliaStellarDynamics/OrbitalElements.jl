@@ -9,6 +9,20 @@ function HenonJFromAE(ψ::F0,dψ::F1,
                       a::Float64,e::Float64,
                       params::OrbitalParameters=OrbitalParameters())::Float64 where {F0  <: Function, F1 <: Function}
 
+    # Handling edges interpolations
+    # IMPORTANT : has to be first !
+    fun(atemp::Float64,etemp::Float64) = HenonJFromAE(ψ,dψ,atemp,etemp,params)
+    J = EdgeHandle(fun,a,e,params)
+    if !(isnothing(J))
+        return J
+    end
+
+    # Edge cases
+    if (a == 0.) || (e == 0.)
+        return 0.
+    end
+
+    # Generic
     u1func(u::Float64)::Float64 = drdu(u,a,e)*Vrad(ψ,dψ,u,a,e,params)
 
     return (1/pi)*UnitarySimpsonIntegration(u1func,params.NINT)
@@ -23,91 +37,48 @@ function αβHenonΘAE(ψ::F0,dψ::F1,d2ψ::F2,
                     a::Float64,e::Float64,
                     params::OrbitalParameters=OrbitalParameters())::Tuple{Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function}
 
-    Ω₀ = params.Ω₀
-    tola, tole = params.TOLA, EccentricityTolerance(a,params.rc,params.TOLECC)
-    if (a < tola)
-        # 2nd order interpolation
-        # between center (a=0) and value at a=tola and a=2*tola
-        # Center:
-        a0 = 0.
-        α0, β0 = Ω1circular(dψ,d2ψ,a0), 0.5
-        # e=tole:
-        atola = tola
-        αtola, βtola = αβHenonΘAE(ψ,dψ,d2ψ,atola,e,params)
-        # e=2*tole:
-        a2tola = 2*tola
-        α2tola, β2tola = αβHenonΘAE(ψ,dψ,d2ψ,a2tola,e,params)
-
-        # Interpolation
-        α = Interpolation2ndOrder(a,a0,α0,atola,αtola,a2tola,α2tola)
-        β = Interpolation2ndOrder(a,a0,β0,atola,βtola,a2tola,β2tola)
-
+    # Handling edges interpolations
+    # IMPORTANT : has to be first !
+    fun(atemp::Float64,etemp::Float64) = αβHenonΘAE(ψ,dψ,d2ψ,atemp,etemp,params)
+    res = EdgeHandle(fun,a,e,params)
+    if !(isnothing(res))
+        α, β = res
         return α, β
-    elseif (e == 0.)
+    end
+
+    # Edge cases
+    Ω₀ = params.Ω₀
+    if (e == 0.) || (a == 0.)
         Ω1, Ω2 = Ω1circular(dψ,d2ψ,a), Ω2circular(dψ,d2ψ,a)
 
         return αβFromFrequencies(Ω1,Ω2,Ω₀)
-    elseif (0. < e < tole)
-        # 2nd order interpolation
-        # between circular (e=0) and value at e=tole and e=2*tole
-        # Circular:
-        ecirc = 0.
-        αcirc, βcirc = αβHenonΘAE(ψ,dψ,d2ψ,a,ecirc,params)
-        # e=tole:
-        etole = tole
-        αtole, βtole = αβHenonΘAE(ψ,dψ,d2ψ,a,etole,params)
-        # e=2*tole:
-        e2tole = 2*tole
-        α2tole, β2tole = αβHenonΘAE(ψ,dψ,d2ψ,a,e2tole,params)
+    end
 
-        # Interpolation
-        α = Interpolation2ndOrder(e,ecirc,αcirc,etole,αtole,e2tole,α2tole)
-        β = Interpolation2ndOrder(e,ecirc,βcirc,etole,βtole,e2tole,β2tole)
+    # Generic
 
-        return α, β
-    elseif ((1.0-tole) < e < 1.)
-        # 2nd order interpolation
-        # between radial (e=1.) and value at e=1-tole and e=1-2*tole
-        # Radial:
-        erad = 1.
-        αrad, βrad = αβHenonΘAE(ψ,dψ,d2ψ,a,erad,params)
-        # e=1-tole:
-        etole = 1.0-tole
-        αtole, βtole = αβHenonΘAE(ψ,dψ,d2ψ,a,etole,params)
-        # e=1-2*tole:
-        e2tole = 1.0-2*tole
-        α2tole, β2tole = αβHenonΘAE(ψ,dψ,d2ψ,a,e2tole,params)
+    # using Θ calculations to compute frequencies: leans heavily on Θ from Ufunc.jl
+    # @IMPROVE: EDGE could be adaptive based on circularity and small-ness of rperi
 
-        # Interpolation
-        α = Interpolation2ndOrder(e,e2tole,α2tole,etole,αtole,erad,αrad)
-        β = Interpolation2ndOrder(e,e2tole,β2tole,etole,βtole,erad,βrad)
+    # currently using Simpson's 1/3 rule for integration: requires that NINT be even.
+    # Is it true ?? Why ?
+    # @IMPROVE: we could use a better integration scheme
 
-        return α, β
-    else
-        # using Θ calculations to compute frequencies: leans heavily on Θ from Ufunc.jl
-        # @IMPROVE: EDGE could be adaptive based on circularity and small-ness of rperi
+    # this doesn't throw any allocations, so don't worry about that!
+    function u2func(u::Float64)::Tuple{Float64,Float64}
+        # push integration forward on two different quantities: Θ(u),Θ(u)/r^2(u)
+        Θ = ΘAE(ψ,dψ,d2ψ,u,a,e,params)
 
-        # currently using Simpson's 1/3 rule for integration: requires that NINT be even.
-        # Is it true ?? Why ?
-        # @IMPROVE: we could use a better integration scheme
+        return Θ, Θ/(ru(u,a,e)^2)
+    end
 
-        # this doesn't throw any allocations, so don't worry about that!
-        function u2func(u::Float64)::Tuple{Float64,Float64}
-            # push integration forward on two different quantities: Θ(u),Θ(u)/r^2(u)
-            Θ = ΘAE(ψ,dψ,d2ψ,u,a,e,params)
+    accum1, accum2 = UnitarySimpsonIntegration(u2func,params.NINT)
 
-            return Θ, Θ/(ru(u,a,e)^2)
-        end
+    #return the values
+    invα = (Ω₀/pi)*accum1
+    α    = 1.0/invα
+    β = (e == 1.) ? 0.5 : (LFromAE(ψ,dψ,a,e,params)/pi)*accum2
 
-        accum1, accum2 = UnitarySimpsonIntegration(u2func,params.NINT)
-
-        #return the values
-        invα = (Ω₀/pi)*accum1
-        α    = 1.0/invα
-        β = (e == 1.) ? 0.5 : (LFromAE(ψ,dψ,a,e,params)/pi)*accum2
-
-        return α, β
-    end # switches for orbits who are too radial or circular
+    return α, β
 end
 
 """
@@ -122,77 +93,69 @@ function DαβHenonΘAE(ψ::F0,dψ::F1,d2ψ::F2,
 
     Ω₀ = params.Ω₀
     tola, tole = params.TOLA, EccentricityTolerance(a,params.rc,params.TOLECC)
-    # Numerical derivative points
-    ap, da, ep, de = NumDerivPoints(a,e,params.da,params.de,tola,tole)
     
     if (a < tola) || (e < tole) || (e > 1.0-tole)
         # For edge cases: Derivation outside the integral
-        # Current point
-        α, β = αβHenonΘAE(ψ,dψ,d2ψ,a,e,params)
-
-        # For a derivatives
-        αap, βap = αβHenonΘAE(ψ,dψ,d2ψ,ap,e,params)
-        
-        # For e derivatives
-        αep, βep = αβHenonΘAE(ψ,dψ,d2ψ,a,ep,params)
-
-        ∂α∂a = (αap-α)/da
-        ∂β∂a = (βap-β)/da
-
-        ∂α∂e = (αep-α)/de
-        ∂β∂e = (βep-β)/de
+        # Function to differentiate
+        fun(atemp::Float64,etemp::Float64) = αβHenonΘAE(ψ,dψ,d2ψ,atemp,etemp,params)
+        # Perform differentiation
+        floc, ∂f∂a, ∂f∂e = NumericalDerivativeAE(fun,a,e,params)
+        # Recast results
+        α, β = floc
+        ∂α∂a, ∂β∂a = ∂f∂a
+        ∂α∂e, ∂β∂e = ∂f∂e
 
         return α, β, ∂α∂a, ∂β∂a, ∂α∂e, ∂β∂e
-    else
-        # Derivation inside the integral
-        # using Θ calculations to compute frequencies: leans heavily on Θ from Ufunc.jl
-        # @IMPROVE: EDGE could be adaptive based on circularity and small-ness of rperi
+    end
 
-        # WARNING !! Strong assumption:
-        # r(u) = a(1+ef(u))
-        function u6func(u::Float64)
-            # push integration forward on eight different quantities:
-            # 1. Θ                          → α
-            # 2. Θ/r^2                      → β
-            # 3. ∂Θ/∂a                      → ∂α∂a
-            # 4. ∂Θ/∂e                      → ∂α∂e
-            # 5. ∂Θ/∂a/r^2                  → ∂β∂a
-            # 6. (∂Θ/∂e - 2af(u)Θ/r )/r^2   → ∂β∂e
+    # Derivation inside the integral
+    # using Θ calculations to compute frequencies: leans heavily on Θ from Ufunc.jl
+    # @IMPROVE: EDGE could be adaptive based on circularity and small-ness of rperi
 
-            Θ = ΘAE(ψ,dψ,d2ψ,u,a,e,params)
-            ∂Θ∂a, ∂Θ∂e = dΘAE(ψ,dψ,d2ψ,u,a,e,params)
+    # WARNING !! Strong assumption:
+    # r(u) = a(1+ef(u))
+    function u6func(u::Float64)
+        # push integration forward on eight different quantities:
+        # 1. Θ                          → α
+        # 2. Θ/r^2                      → β
+        # 3. ∂Θ/∂a                      → ∂α∂a
+        # 4. ∂Θ/∂e                      → ∂α∂e
+        # 5. ∂Θ/∂a/r^2                  → ∂β∂a
+        # 6. (∂Θ/∂e - 2af(u)Θ/r )/r^2   → ∂β∂e
 
-            r = ru(u,a,e)
+        Θ = ΘAE(ψ,dψ,d2ψ,u,a,e,params)
+        ∂Θ∂a, ∂Θ∂e = dΘAE(ψ,dψ,d2ψ,u,a,e,params)
 
-            return (Θ,
-                    Θ/(r^2),
-                    ∂Θ∂a,
-                    ∂Θ∂e,
-                    ∂Θ∂a/(r^2),
-                    (∂Θ∂e - 2.0*a*henonf(u)*Θ/r)/r^2)
-        end
+        r = ru(u,a,e)
 
-        accum1,accum2,accum3,accum4,accum5,accum6 = UnitarySimpsonIntegration(u6func,params.NINT)
+        return (Θ,
+                Θ/(r^2),
+                ∂Θ∂a,
+                ∂Θ∂e,
+                ∂Θ∂a/(r^2),
+                (∂Θ∂e - 2.0*a*henonf(u)*Θ/r)/r^2)
+    end
 
-        _, Lval, _, ∂L∂a, _, ∂L∂e = dELFromAE(ψ,dψ,a,e,params)
+    accum1,accum2,accum3,accum4,accum5,accum6 = UnitarySimpsonIntegration(u6func,params.NINT)
 
-        # α
-        invα = (Ω₀/pi)*accum1
-        α    = 1.0/invα
+    _, Lval, _, ∂L∂a, _, ∂L∂e = dELFromAE(ψ,dψ,a,e,params)
 
-        β = (Lval/pi)*accum2
+    # α
+    invα = (Ω₀/pi)*accum1
+    α    = 1.0/invα
 
-        # ∂α
-        ∂α∂a = -(α^2)*(Ω₀/pi)*accum3
-        ∂α∂e = -(α^2)*(Ω₀/pi)*accum4
+    β = (Lval/pi)*accum2
 
-        # ∂β
-        βoverL = accum2/pi
-        ∂β∂a = ∂L∂a*βoverL - 2.0*β/a + (Lval/pi)*accum5
-        ∂β∂e = ∂L∂e*βoverL + (Lval/pi)*accum6
+    # ∂α
+    ∂α∂a = -(α^2)*(Ω₀/pi)*accum3
+    ∂α∂e = -(α^2)*(Ω₀/pi)*accum4
 
-        return α, β, ∂α∂a, ∂β∂a, ∂α∂e, ∂β∂e
-    end # switches for orbits who are too radial or circular
+    # ∂β
+    βoverL = accum2/pi
+    ∂β∂a = ∂L∂a*βoverL - 2.0*β/a + (Lval/pi)*accum5
+    ∂β∂e = ∂L∂e*βoverL + (Lval/pi)*accum6
+
+    return α, β, ∂α∂a, ∂β∂a, ∂α∂e, ∂β∂e
 end
 
 """
