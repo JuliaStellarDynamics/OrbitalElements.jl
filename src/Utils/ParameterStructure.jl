@@ -30,7 +30,7 @@ end
 creates an OrbitalParameters structure with the defined values (which all have a default value)
 """
 function OrbitalParameters(;Ω₀::Float64=DEFAULT_Ω0,
-                            rmin::Float64=DEFAULT_RMIN,rmax::Float64=DEFAULT_RMAX,rc::Float64=1.,
+                            rmin::Float64=DEFAULT_RMIN,rmax::Float64=DEFAULT_RMAX,rc::Float64=DEFAULT_RC,
                             EDGE::Float64=DEFAULT_EDGE,TOLECC::Float64=DEFAULT_TOLECC,TOLA::Float64=DEFAULT_TOLA,
                             NINT::Int64=DEFAULT_NINT,
                             da::Float64=DEFAULT_DA,de::Float64=DEFAULT_DE,

@@ -61,8 +61,7 @@ function Findωminωmax(n1::Int64,n2::Int64,
     ωncirc(x::Float64)::Float64 = n1*Ω1circular(dψ,d2ψ,x)/Ω₀ + n2*Ω2circular(dψ,d2ψ,x)/Ω₀
 
     # If rmax is infinite, bisection search on a bounded interval
-    # @Warning: Allocating ...
-    xext = isinf(rmax) ? ExtremiseFunctionNulCure(ωncirc,rmin,1.e8) : ExtremiseFunctionNulCure(ωncirc,rmin,rmax)
+    xext = ExtremiseFunctionNulCure(ωncirc,rmin,min(rmax,1.e8))
 
     # The extreme values of n.Ω is either :
     #   - on the radial line, at α = αmin or αmax
@@ -100,11 +99,10 @@ end
 ########################################################################
 
 """
-    FindVminVmax(u,n1,n2,dψ,d2ψ,ωmin,ωmax,βc,params)
+    FindVminVmax(u,n1,n2,dψ,d2ψ,ωmin,ωmax,params)
 
 for a given resonance, at a specific value of u, find the v coordinate boundaries.
 
-@IMPROVE, put in guards for the edges in βC
 @ASSUMPTION:
     - rmin, rmax are the same used for ωmin, ωmax, αmin and αmax computation
 """
@@ -125,7 +123,7 @@ function FindVminVmax(u::Float64,
     # βcircular as a function of αcircular
     βc(αc::Float64)::Float64 = βcirc(αc,dψ,d2ψ,params)
 
-    if (n2==0)
+    if (n2==0) # v = β
         #####
         # (B9) Fouvry & Prunet : 1st inequality
         #####
@@ -134,11 +132,9 @@ function FindVminVmax(u::Float64,
         #####
         # (B9) Fouvry & Prunet : 2nd inequality
         #####
-        # put in guards for the edges
-        αvmax = min(αmax,max(hval/n1,αmin))
+        vmax = βc(hval/n1)
+    else # v = α
 
-        vmax = βc(αvmax)
-    else
         #####
         # (B10) Fouvry & Prunet : 1st & 2nd inequalities
         #####
@@ -146,8 +142,26 @@ function FindVminVmax(u::Float64,
         vmax = αmax
 
         #####
+        # Constraint for hval = 0.
+        # Line of constant β (or v = 0.)
+        #####
+        # β = - n1/n2 ≥ 1/2
+        if (hval == 0.) && (-n1/n2 < 0.5)
+            vmin = 0.
+            vmax = 0.
+        end
+        # β = - n1/n2 ≤ βc(v)
+        # Hypothesis : βc is a decreasing function of α (=v)
+        if (hval == 0.) && (-n1/n2 >= βc(αmin))
+            vmin = αmin
+            vmax = αmin
+        end
+
+        #####
         # (B10) Fouvry & Prunet : 3rd inequality
         #####
+        # Hiting radial boundary β = 1/2
+        # hval = (n1+n2/2)v
         radon = n1+0.5*n2 # Radial orbit equivalent n
         if (n2*hval > 0.) && (radon*hval > 0.)
             vmax = min(vmax, hval/radon) # Updating vmax
@@ -167,18 +181,17 @@ function FindVminVmax(u::Float64,
             vbound = FindVbound(n1,n2,dψ,d2ψ,Ω₀,rmin,rmax)
 
             # Extreme boundary to look for vbound
-            # @WARNING arbitrary fixed constant
-            locrmin, locrmax = 1.e-6, 1.e5
+            locrmin, locrmax = 0., Inf
 
             if (vbound != αmin) && (vbound != αmax)
                 branch = 2
             elseif (rmin > locrmin) || (rmax < locrmax)
-                # If vboung not in the asked boundary
+                # If vbound not in the asked boundary
                 # verify that it should indeed not exist
                 locrmin, locrmax = min(rmin,locrmin), max(rmax,locrmax)
                 vbound = FindVbound(n1,n2,dψ,d2ψ,Ω₀,locrmin,locrmax)
 
-                branch = ((vbound != Ω1circular(dψ,d2ψ,locrmin)/Ω₀) && (vbound != Ω1circular(dψ,d2ψ,locrmin)/Ω₀)) ? 2 : 1
+                branch = ((vbound != Ω1circular(dψ,d2ψ,locrmin)/Ω₀) && (vbound != Ω1circular(dψ,d2ψ,locrmax)/Ω₀)) ? 2 : 1
             else
                 branch = 1
             end
@@ -188,23 +201,21 @@ function FindVminVmax(u::Float64,
         rootequation(v::Float64)::Float64 = hval - n1*v - n2*v*βc(v)
 
         if branch == 1 # ωncirc(x) is monotonic
-            if rootequation(αmin)*rootequation(αmax) < 0.
-                vlim = bisection(rootequation,αmin,αmax)
-                if hval*n2 > 0.
-                    vmin = max(vmin,vlim)
-                elseif hval*n2 < 0.
-                    vmax = min(vmax,vlim)
-                end
+            vlim = try bisection(rootequation,αmin,αmax) catch; -1. end
+            if (vlim != -1.) && (hval*n2 > 0.)
+                vmin = max(vmin,vlim)
+            elseif (vlim != -1.) && (hval*n2 < 0.)
+                vmax = min(vmax,vlim)
             end
         elseif branch == 2 # ωncirc(x) is not monotonic
             # Search crossing in [αmin,vbound]
-            if rootequation(αmin)*rootequation(vbound) < 0.
-                vmin2 = bisection(rootequation,αmin,vbound)
+            vmin2 = try bisection(rootequation,αmin,vbound) catch; -1. end
+            if (vmin2 != -1.)
                 vmin = max(vmin,vmin2)
             end
             # Search crossing in [vbound,αmax]
-            if rootequation(vbound)*rootequation(αmax) < 0.
-                vmax2 = bisection(rootequation,vbound,αmax)
+            vmax2 = try bisection(rootequation,vbound,αmax) catch; -1. end
+            if (vmax2 != -1.)
                 vmax = min(vmax,vmax2)
             end
         end
@@ -221,6 +232,12 @@ return h_n(u) = ω_n(u), a helper quantity
 Fouvry & Prunet B8
 """
 function HUFunc(u::Float64,ωmin::Float64,ωmax::Float64)::Float64
+
+    if u == 1.
+        return ωmax
+    elseif u == -1.
+        return ωmin
+    end 
 
     return 0.5*(ωmax+ωmin + u*(ωmax-ωmin))
 end
@@ -240,7 +257,14 @@ function FindVbound(n1::Int64,n2::Int64,
     ωncirc(x) = n1*Ω1circular(dψ,d2ψ,x) + n2*Ω2circular(dψ,d2ψ,x)
 
     # If rmax is infinite, bisection search on a bounded interval
-    xext = (rmax == Inf) ? ExtremiseFunctionNulCure(ωncirc,rmin,1.e8) : ExtremiseFunctionNulCure(ωncirc,rmin,rmax)
+    locrmax = min(rmax,1.e8)
+    xext = ExtremiseFunctionNulCure(ωncirc,rmin,locrmax)
+
+    # If the extremum is reached at the imposed maximal boundary
+    # Use the true rmax (not the artificial 1.e8, which is here to handle Inf)
+    if (xext == locrmax)
+        xext = rmax
+    end
 
     return Ω1circular(dψ,d2ψ,xext)/Ω₀
 end

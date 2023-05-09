@@ -20,6 +20,17 @@ function αβFromUV(u::Float64,v::Float64,
     else
         α = v
         β  = (1.0/(n2*v))*(0.5*((ωmax-ωmin)*u + ωmin + ωmax) - n1*v)
+
+        # For v = 0. , β is 0./0.
+        # Indeed it implies α = 0 (= αmin) 
+        # and u = ±1, ωmin or ωmax = 0., vmin=vmax=0.)
+        # In this case, the mapping (α,β) → (u,v) is ill-defined.
+        # Every point on the resonance line goes to (ures,0.).
+        # We arbritrarly choose to send back all those points on 
+        # the radial axis β = 1/2.
+        if isnan(β)
+            β = 0.5
+        end
     end
 
     return α,β

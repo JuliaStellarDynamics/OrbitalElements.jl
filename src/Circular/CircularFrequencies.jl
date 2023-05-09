@@ -71,7 +71,19 @@ function βcirc(αcirc::Float64,
     Ω1 = params.Ω₀ * αcirc
 
     # get the radius corresponding to the circular orbit
-    rcirc = RcircFromΩ1circ(Ω1,dψ,d2ψ,params.rmin,params.rmax)
+    rcirc = RcircFromΩ1circ(Ω1,dψ,d2ψ,params.rmin,min(params.rmax,1.e8),eps(Float64),eps(Float64))
+
+    if rcirc == Inf
+        # Estimate growing rate α of dψ(x)≈x^α
+        x1, x2 = 1.0e8, 1.0e9
+        α = round(log(dψ(x2)/dψ(x1))/log(x2/x1))
+        if isnan(α)
+            error("OrbitalElements.Circular.βcirc: Unable to estimate the growth rate of the potential.")
+        elseif α <= -3.0
+            return Inf
+        end
+        return sqrt(1.0 / (3.0+α))
+    end
 
     # get the azimuthal frequency for the radius
     Ω2 = Ω2circular(dψ,d2ψ,rcirc)
@@ -101,8 +113,10 @@ function RadiusFromCircularFrequency(ω::Float64,
                                      tolx::Float64=1000.0*eps(Float64),tolf::Float64=1000.0*eps(Float64))::Float64 where {OmF <: Function}
 
     # check that the input frequency is valid
-    if ω  <= 0.
+    if ω < Ωfun(Inf)
         error("OrbitalElements.Circular.RadiusFromCircularFrequency: Negative circular frequency Ω = $ω")
+    elseif ω == Ωfun(Inf)
+        return Inf
     elseif ω > Ωfun(0.)
         error("OrbitalElements.Circular.RadiusFromCircularFrequency: Too high circular frequency Ω = $ω > Ω1max = $(Ωfun(0.))")
     elseif ω == Ωfun(0.)
