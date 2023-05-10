@@ -71,11 +71,11 @@ function βcirc(αcirc::Float64,
     Ω1 = params.Ω₀ * αcirc
 
     # get the radius corresponding to the circular orbit
-    rcirc = RcircFromΩ1circ(Ω1,dψ,d2ψ,params.rmin,min(params.rmax,1.e8),eps(Float64),eps(Float64))
+    rcirc = RcircFromΩ1circ(Ω1,dψ,d2ψ,params.rmin,min(params.rmax,1.e8*params.rc),eps(Float64),eps(Float64))
 
     if rcirc == Inf
         # Estimate growing rate α of dψ(x)≈x^α
-        x1, x2 = 1.0e8, 1.0e9
+        x1, x2 = 1.0e8*params.rc, 1.0e9*params.rc
         α = round(log(dψ(x2)/dψ(x1))/log(x2/x1))
         if isnan(α)
             error("OrbitalElements.Circular.βcirc: Unable to estimate the growth rate of the potential.")

@@ -61,7 +61,7 @@ function Findωminωmax(n1::Int64,n2::Int64,
     ωncirc(x::Float64)::Float64 = n1*Ω1circular(dψ,d2ψ,x)/Ω₀ + n2*Ω2circular(dψ,d2ψ,x)/Ω₀
 
     # If rmax is infinite, bisection search on a bounded interval
-    xext = ExtremiseFunctionNulCure(ωncirc,rmin,min(rmax,1.e8))
+    xext = ExtremiseFunctionNulCure(ωncirc,rmin,min(rmax,1.e8*params.rc))
 
     # The extreme values of n.Ω is either :
     #   - on the radial line, at α = αmin or αmax
@@ -114,6 +114,7 @@ function FindVminVmax(u::Float64,
 
 
     Ω₀ = params.Ω₀
+    rc = params.rc
     rmin, rmax = params.rmin, params.rmax
     αmin, αmax = αminmax(dψ,d2ψ,rmin,rmax,Ω₀)
 
@@ -178,7 +179,7 @@ function FindVminVmax(u::Float64,
             branch = 1
         else
             # First look for vbound in the asked boundary
-            vbound = FindVbound(n1,n2,dψ,d2ψ,Ω₀,rmin,rmax)
+            vbound = FindVbound(n1,n2,dψ,d2ψ,Ω₀,rc,rmin,rmax)
 
             # Extreme boundary to look for vbound
             locrmin, locrmax = 0., Inf
@@ -189,7 +190,7 @@ function FindVminVmax(u::Float64,
                 # If vbound not in the asked boundary
                 # verify that it should indeed not exist
                 locrmin, locrmax = min(rmin,locrmin), max(rmax,locrmax)
-                vbound = FindVbound(n1,n2,dψ,d2ψ,Ω₀,locrmin,locrmax)
+                vbound = FindVbound(n1,n2,dψ,d2ψ,Ω₀,rc,locrmin,locrmax)
 
                 branch = ((vbound != Ω1circular(dψ,d2ψ,locrmin)/Ω₀) && (vbound != Ω1circular(dψ,d2ψ,locrmax)/Ω₀)) ? 2 : 1
             else
@@ -250,18 +251,18 @@ find any valid non- 0 or 1 v value at u=-1 or u=1
 """
 function FindVbound(n1::Int64,n2::Int64,
                     dψ::F1,d2ψ::F2,
-                    Ω₀::Float64,
+                    Ω₀::Float64,rc::Float64,
                     rmin::Float64,rmax::Float64)::Float64 where {F1 <: Function, F2 <: Function}
 
     # define the function to extremise
     ωncirc(x) = n1*Ω1circular(dψ,d2ψ,x) + n2*Ω2circular(dψ,d2ψ,x)
 
     # If rmax is infinite, bisection search on a bounded interval
-    locrmax = min(rmax,1.e8)
+    locrmax = min(rmax,1.e8*rc)
     xext = ExtremiseFunctionNulCure(ωncirc,rmin,locrmax)
 
     # If the extremum is reached at the imposed maximal boundary
-    # Use the true rmax (not the artificial 1.e8, which is here to handle Inf)
+    # Use the true rmax (not the artificial 1.e8*rc, which is here to handle Inf)
     if (xext == locrmax)
         xext = rmax
     end

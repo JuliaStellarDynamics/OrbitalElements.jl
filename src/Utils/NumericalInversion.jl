@@ -149,7 +149,7 @@ function AEFromΩ1Ω2Brute(Ω₁::Float64,Ω₂::Float64,
                          params::OrbitalParameters=OrbitalParameters()) where {F0 <: Function, F1 <: Function, F2 <: Function}
 
     # get the circular orbit (maximum radius) for a given Ω₁,Ω₂. use the stronger constraint.
-    acirc = RcircFromΩ1circ(Ω₁,dψ,d2ψ,params.rmin,min(params.rmax,1.e8))
+    acirc = RcircFromΩ1circ(Ω₁,dψ,d2ψ,params.rmin,min(params.rmax,1.e8*params.rc))
 
     # then start from ecc=0.5 and take numerical derivatives
     ainit, einit = acirc, 0.5
@@ -171,8 +171,8 @@ function AEFromJLBrute(J::Float64,L::Float64,
 
     # Initial guess
     einit = 0.5
-    ainitJ = try AfixedEFromJ(J,einit,ψ,dψ,params.rmin,min(params.rmax,1.e8),params) catch; 0. end
-    ainitL = try AfixedEFromL(L,einit,ψ,dψ,params.rmin,min(params.rmax,1.e8),params) catch; 0. end
+    ainitJ = try AfixedEFromJ(J,einit,ψ,dψ,params.rmin,min(params.rmax,1.e8*params.rc),params) catch; 0. end
+    ainitL = try AfixedEFromL(L,einit,ψ,dψ,params.rmin,min(params.rmax,1.e8*params.rc),params) catch; 0. end
     ainit = ((ainitJ == 0.) && (ainitL == 0.)) ? params.rc : 0.5 * (ainitJ + ainitL)
 
     mjac(a::Float64,e::Float64) = ComputeActionsAEWithDeriv(ψ,dψ,a,e,params)
@@ -191,8 +191,8 @@ function AEFromELBrute(E::Float64,L::Float64,
 
     # Initial guess
     einit = 0.5
-    ainitE = try AfixedEFromE(E,einit,ψ,dψ,params.rmin,min(params.rmax,1.e8),params) catch; 0. end
-    ainitL = try AfixedEFromL(L,einit,ψ,dψ,params.rmin,min(params.rmax,1.e8),params) catch; 0. end
+    ainitE = try AfixedEFromE(E,einit,ψ,dψ,params.rmin,min(params.rmax,1.e8*params.rc),params) catch; 0. end
+    ainitL = try AfixedEFromL(L,einit,ψ,dψ,params.rmin,min(params.rmax,1.e8*params.rc),params) catch; 0. end
     ainit = ((ainitE == 0.) && (ainitL == 0.)) ? params.rc : 0.5 * (ainitE + ainitL)
 
     mjac(a::Float64,e::Float64) = ComputeELAEWithDeriv(ψ,dψ,a,e,params)
