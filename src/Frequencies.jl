@@ -236,7 +236,7 @@ function JacαβToELAE(ψ::F0,dψ::F1,d2ψ::F2,
 
 
     # the (a,e) -> (E,L) Jacobian (in Utils/ComputeEL.jl)
-    Jac_AE_To_EL = JacAEToEL(ψ,dψ,d2ψ,a,e,params)
+    Jac_AE_To_EL = JacAEToEL(ψ,dψ,a,e,params)
 
     # the (a,e) -> (α,β) Jacobian (below)
     Jac_AE_To_αβ = JacAEToαβ(ψ,dψ,d2ψ,a,e,params)
