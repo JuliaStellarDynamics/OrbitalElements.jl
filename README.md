@@ -7,9 +7,15 @@
 
 ### Quick activate
 
-`OrbitalElements` is (currently) unregistered, and as such if you would like to add it to your Julia registry, read [here](https://pkgdocs.julialang.org/v1/managing-packages/#Adding-unregistered-packages). Shortcut version: after cloning the repository, navigate to the top directory. Start julia (`julia`), then the package manager (`]`), then register the package in development mode (`dev .`).
+`OrbitalElements` is (currently) unregistered, and as such if you would like to add it to your Julia registry, read [here](https://pkgdocs.julialang.org/v1/managing-packages/#Adding-unregistered-packages). 
+Shortcut version: 
+1. start julia (`julia`)
+2. open the package manager (`]`)
+3. if you want to add the package to a local environment, active it (`activate myenv`)
+4. Finally, add the package using the Git repository URL (`add https://github.com/michael-petersen/OrbitalElements.jl.git`).
 
-Then, in your program, if you want to access specific elements listed below, use `import OrbitalElements`.
+Then, in your program, if you want to access specific elements listed below, use `import OrbitalElements` (no function are currently exported from the package so the keyword `using` should not be used).
+Any function `fun` from the package should the be called using the prefix `OrbitalElements.`. If you want to shorten it in an alias, just import the package as `import OrbitalElements as myalias`.
 
 -----------------------------
 
@@ -39,9 +45,10 @@ For a given potential, one can also compute the resonance mappings, called (u,v)
 -----------------------------
 
 ### Notes
-By default, `OrbitalElements` uses pericentre and apocentre. If you want to use semimajor axis and eccentricity units, transformations are available. `RpRaFromAE(a,e)` will return pericentre and apocentre from semimajor axis and eccentricity.
+By default, `OrbitalElements` uses semimajor axis and eccentricity. If you want to use pericentre and apocentre, transformations are available. `AEFromRpRa(rp,ra)` will return semimajor axis and eccentricity from pericentre and apocentre.
 
-`OrbitalElements` also uses the Henon (1971) technique to cure radial velocity divergences at peri- and apocentre. One could use other methods; the software is constructed to allow for drop-in anomaly replacements. See `src/Henon`.
+`OrbitalElements` also uses the Henon (1971) technique to cure radial velocity divergences at peri- and apocentre. 
+<!--- One could use other methods; the software is constructed to allow for drop-in anomaly replacements. See `src/Henon`. --->
 
 -----------------------------
 
