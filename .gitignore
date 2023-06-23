@@ -6,3 +6,10 @@
 # OSX hidden files
 *.DS_Store
 **/*.DS_Store
+
+ValidationData*
+tests/Plummer*
+tests/Theta*
+tests/Isochrone*
+tests/Basis*
+tests/*Validation*

@@ -5,23 +5,23 @@
 
 struct OrbitalParameters
 
-    Ω₀::Float64
-    rmin::Float64
-    rmax::Float64
+    Ω₀::Float64       # characteristic frequency of the system
+    rmin::Float64     # the minimum radius considered for the system
+    rmax::Float64     # the maximum radius considered for the system
 
-    rc::Float64
+    rc::Float64       # characteristic size of the system: below this, eccentricity tolerance starts to increase
 
-    EDGE::Float64
-    TOLECC::Float64
-    TOLA::Float64
+    EDGE::Float64     # the guard against the edges of [-1,1] integration boundaries
+    TOLECC::Float64   # the eccentricity tolerance
+    TOLA::Float64     # the semi-major axis tolerance
 
-    NINT::Int64
+    NINT::Int64       # step size number to compute orbit values (steps from pericentre to apocentre)
 
-    da::Float64
-    de::Float64
+    da::Float64       # delta size in semi-major axis for numerical derivatives
+    de::Float64       # delta size in eccentricity for numerical derivatives
 
-    ITERMAX::Int64
-    invε::Float64
+    ITERMAX::Int64    # number of iterations to minimise inversions of frequency and (E,L) or (a,e)
+    invε::Float64     # required accuracy on inversions
 end
 
 """
