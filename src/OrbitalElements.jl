@@ -2,7 +2,6 @@ module OrbitalElements
 
 
 # recommendations for various default parameters:
-#   you can call these externally
 const DEFAULT_TOLECC = 0.01
 const DEFAULT_TOLA   = 0.1
 const DEFAULT_EDGE   = 0.01
