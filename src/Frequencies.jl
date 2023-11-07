@@ -53,7 +53,7 @@ function FrequenciesDerivsFromαβDerivs(α::Float64,β::Float64,
                                        dα::Float64,dβ::Float64,
                                        Ω₀::Float64)::Tuple{Float64,Float64}
 
-    return Ω₀*dα, Ω₀*(dα*β + α*dβ) 
+    return Ω₀*dα, Ω₀*(dα*β + α*dβ)
 end
 
 ########################################################################
@@ -111,7 +111,7 @@ function ComputeαβWithDerivAE(ψ::F0,dψ::F1,d2ψ::F2,
                               a::Float64,e::Float64,
                               params::OrbitalParameters=OrbitalParameters())::Tuple{Float64,Float64,Float64,Float64,Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function}
 
-    
+
     # Function to differentiate
     fun(atemp::Float64,etemp::Float64) = αβFromAE(ψ,dψ,d2ψ,atemp,etemp,params)
     # Perform differentiation
@@ -130,7 +130,7 @@ end
 function ComputeFrequenciesAEWithDeriv(ψ::F0,dψ::F1,d2ψ::F2,
                                        a::Float64,e::Float64,
                                        params::OrbitalParameters=OrbitalParameters())::Tuple{Float64,Float64,Float64,Float64,Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function}
-    
+
     Ω₀ = params.Ω₀
     α, β, ∂α∂a, ∂β∂a, ∂α∂e, ∂β∂e = ComputeαβWithDerivAE(ψ,dψ,d2ψ,a,e,params)
 
@@ -200,6 +200,18 @@ function ComputeAEFromFrequencies(ψ::F0,dψ::F1,d2ψ::F2,
                                   params::OrbitalParameters=OrbitalParameters())::Tuple{Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function}
 
         a, e, _, _ = AEFromΩ1Ω2Brute(Ω1,Ω2,ψ,dψ,d2ψ,params)
+
+        return a, e
+end
+
+"""
+    ComputeAEFromαβ(ψ,dψ,d2ψ,Ω1,Ω2,params)
+"""
+function ComputeAEFromαβ(ψ::F0,dψ::F1,d2ψ::F2,
+                                  α::Float64,β::Float64,
+                                  params::OrbitalParameters=OrbitalParameters())::Tuple{Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function}
+
+        a, e, _, _ = AEFromαβBrute(α,β,ψ,dψ,d2ψ,params)
 
         return a, e
 end

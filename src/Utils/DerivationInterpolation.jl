@@ -14,39 +14,43 @@ Useful functions for numerical derivation or interpolations
 
 """
     NumericalDerivativePoints(a,e,da,de,tola,tole)
-    
-Points to use for numerical derivative w.r.t a and e 
+
+Points to use for numerical derivative w.r.t a and e
 depending on the location (switch close to border and close to cut off)
 default mode being 1st order right derivative [x,x+dx].
 
 Points are structured as follow:
  [+da]
-(ap, e) 
+(ap, e)
    ↑
 (a , e) → (a ,ep)
            [+de]
 
 Output order :
 semimajor axis derivative info followed by eccentricity
-  da      de   
+  da      de
 ap, da, ep, de
 (da and de could be switched to negative values)
 
-@WARNING: Important assumption here 
+@WARNING: Important assumption here
     → tolerances switch are made with exclusive lower or greater boundary conditions
     i.e. switch points are part of the standard case (not the border ones)
+
+@IMPROVE: Can we do something about the warnings?
 """
 function NumericalDerivativePoints(a::Float64,e::Float64,
                                     da::Float64,de::Float64,
-                                    tola::Float64,tole::Float64)::Tuple{Float64,Float64,Float64,Float64}
+                                    tola::Float64,tole::Float64,VERBOSE::Int64=-1)::Tuple{Float64,Float64,Float64,Float64}
 
     # Usual points
     ap = a + da
     ep = e + de
-    # Check for borders and tolerance limits and adapt 
+    # Check for borders and tolerance limits and adapt
     if (a < tola) && (ap >= tola)
         if a - da <= 0.
-            println("WARNING: Too low tolerance on semimajor axis compared to the numerical derivative step.")
+            if VERBOSE>0
+                println("WARNING: Too low tolerance on semimajor axis compared to the numerical derivative step.")
+            end
         else
             ap = a - da
             da *= -1.0
@@ -54,15 +58,18 @@ function NumericalDerivativePoints(a::Float64,e::Float64,
     end
     if (e < tole) && (ep >= tole)
         if e - de < 0.
-            println("WARNING: Too low tolerance on eccentricity compared to the numerical derivative step.")
-        else
+            if VERBOSE>0
+                println("WARNING: Lower boundary too low tolerance on eccentricity compared to the numerical derivative step.")
+            end
+        end
             ep = e - de
             de *= -1.0
-        end
     elseif ep > 1.0 - tole
         if (ep > 1.0) || (e < 1.0 - tole)
             if (ep > 1.0) && (e - de < 1.0 - tole)
-                println("WARNING: Too low tolerance on eccentricity compared to the numerical derivative step.")
+                if VERBOSE>0
+                    println("WARNING: Upper boundary too low tolerance on eccentricity compared to the numerical derivative step.")
+                end
             end
             ep = e - de
             de *= -1.0
@@ -75,13 +82,13 @@ end
 
 """
     NumericalDerivativeAE(fun,a,e,params)
-    
+
 compute the numerical derivative of any function of (a,e).
 """
 function NumericalDerivativeAE(fun::F0,
                                a::Float64,e::Float64,
                                params::OrbitalParameters=OrbitalParameters()) where {F0 <: Function}
-    
+
     # Numerical derivative points
     tola, tole = params.TOLA, EccentricityTolerance(a,params.rc,params.TOLECC)
     ap, da, ep, de = NumericalDerivativePoints(a,e,params.da,params.de,tola,tole)
@@ -91,7 +98,7 @@ function NumericalDerivativeAE(fun::F0,
 
     # For a derivatives
     fap = fun(ap,e)
-    
+
     # For e derivatives
     fep = fun(a,ep)
 

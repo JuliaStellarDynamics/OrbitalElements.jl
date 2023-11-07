@@ -17,10 +17,10 @@ function isochroneSahaDF(E::Float64,L::Float64,ra::Float64,bc::Float64=1.,M::Flo
     Q = isochroneQROI(E,L,ra,bc,M,astronomicalG)
     gamma = (bc/ra)^2
 
-    prefactor = (M/((G*M*bc)^(3/2))) * (1/(128*sqrt(2)*pi)) * (sqrt(Q)/((1-Q)^4))
+    prefactor = (M/((astronomicalG*M*bc)^(3/2))) * (1/(128*sqrt(2)*(pi^3))) * (1/((1-Q)^4))
 
-    term1 = 27 + 77gamma - (66+286gamma)*Q + (320+136gamma)*Q*Q -(240+32gamma)*Q*Q*Q + 64*Q*Q*Q*Q
-    term2 = ((3*asin(sqrt(Q)))/sqrt(Q*(1-Q))) * ((-9 + 17gamma) + (28-44gamma)*Q + (16-8gamma)*Q*Q)
+    term1 = sqrt(Q)*(27 + 77gamma - (66+286gamma)*Q + (320+136gamma)*Q*Q -(240+32gamma)*Q*Q*Q + 64*Q*Q*Q*Q)
+    term2 = ((3*asin(sqrt(Q)))/sqrt((1-Q))) * ((-9 + 17gamma) + (28-44gamma)*Q + (16-8gamma)*Q*Q)
 
     return prefactor * (term1+term2)
 end
@@ -45,10 +45,33 @@ ra is the anisotropy radius
 """
 function isochroneSahadDFdQ(Q::Float64,ra::Float64,bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
     gammaROI = (bc/ra)^2
-    return (M*((-1.0+Q)*(-128.0*gammaROI+Q*(-75.0+451.0*gammaROI+2.0*Q*
+    prefactor = M/(bc*astronomicalG*M)^(3/2)
+
+    #return prefactor*(((-1.0+Q)*(-128.0*gammaROI+Q*(-75.0+451.0*gammaROI+2.0*Q*
+    #(-659.0+387.0*gammaROI+4.0*Q*(90-23.0*gammaROI+2.0*Q*(-21.0+4.0*Q+2.0*gammaROI)))))-
+    #15.0*sqrt(-((-1.0+Q)*Q))*(5.0-13.0*gammaROI+4.0*Q*(-13.0+2.0*Q*(-2.0+gammaROI)+
+    #17.0*gammaROI))*asin(sqrt(Q)))/(256.0*sqrt(2.0)*(pi)^(3)*(-1.0+Q)^(6)*sqrt(Q)))
+
+    prefactor2 = 1/(128*sqrt(2)*(pi^3))
+    prefactor3 = - (1/(2Q*(1-Q)^(11/2)))
+
+    term1 = (15Q*(5-13gammaROI - 52Q+ 68gammaROI*Q + 8*(-2+gammaROI)*(Q^2)))*asin(sqrt(Q))
+    term2 = sqrt(Q) * (sqrt(1-Q)*(-27 + gammaROI * (-77 + Q*(319+2Q*(375+4*Q*(-23 + 4*Q)))) + Q*(9+2*Q*(-635+8*Q*(45+Q*(-21+4*Q)))) ) - 3 * (-1+Q)*(9-4*Q*(7+4*Q)+gammaROI*(-17+44*Q+8*(Q^2))*(1/(1-Q))))
+
+    return prefactor*prefactor2*prefactor3*(term1+term2)
+
+end
+
+function isochroneSahadDFdQoriginal(Q::Float64,ra::Float64,bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
+    gammaROI = (bc/ra)^2
+    prefactor = M/(bc*astronomicalG*M)^(3/2)
+
+    return prefactor*(((-1.0+Q)*(-128.0*gammaROI+Q*(-75.0+451.0*gammaROI+2.0*Q*
     (-659.0+387.0*gammaROI+4.0*Q*(90-23.0*gammaROI+2.0*Q*(-21.0+4.0*Q+2.0*gammaROI)))))-
     15.0*sqrt(-((-1.0+Q)*Q))*(5.0-13.0*gammaROI+4.0*Q*(-13.0+2.0*Q*(-2.0+gammaROI)+
-    17.0*gammaROI))*asin(sqrt(Q))))/(256.0*sqrt(2.0)*(bc*astronomicalG*M)^(3/2)*(pi)^(3)*(-1.0+Q)^(6)*sqrt(Q))
+    17.0*gammaROI))*asin(sqrt(Q)))/(256.0*sqrt(2.0)*(pi)^(3)*(-1.0+Q)^(6)*sqrt(Q)))
+
+
 end
 
 """

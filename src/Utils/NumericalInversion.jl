@@ -60,8 +60,8 @@ function NextGuessAE(acur::Float64,ecur::Float64,
     # (Dividing the increment length until being in the domain can lead to unexpected behaviour :
     # new point too close to the border where inversion can be impossible).
     tola, tole = params.TOLA, EccentricityTolerance(acur,params.rc,params.TOLECC)
-    if (acur + adir < tola) || (ecur + edir < tole) || (ecur + edir > 1.0-tole) 
-        
+    if (acur + adir < tola) || (ecur + edir < tole) || (ecur + edir > 1.0-tole)
+
         # Fraction of the direction to reach the border
         # acur + afrac * adir = 0.
         afrac = (adir >= 0.) ? Inf : -acur/adir
@@ -94,7 +94,7 @@ end
 
 basic Newton-Raphson algorithm to find (a,e) from (v1,v2) goal brute force derivatives.
 @ASSUMPTION :
-    - The jacobian function is given as 
+    - The jacobian function is given as
         v1, v2, ∂v1∂a, ∂v2∂a, ∂v1∂e, ∂v2∂e = mjacobian(aguess,eguess)
 """
 function AEFromNewtonRaphson(ainit::Float64,einit::Float64,
@@ -115,9 +115,9 @@ function AEFromNewtonRaphson(ainit::Float64,einit::Float64,
     # 2d Newton Raphson inversion and find new increments
     for iter = 1:params.ITERMAX
 
-        increment1, increment2 = inverse2Dlinear(∂v1∂a,∂v1∂e,∂v2∂a,∂v2∂e,v1goal-v1,v2goal-v2) 
+        increment1, increment2 = inverse2Dlinear(∂v1∂a,∂v1∂e,∂v2∂a,∂v2∂e,v1goal-v1,v2goal-v2)
 
-        # If non invertible 
+        # If non invertible
         if (increment1 == 0.) && (increment2 == 0.)
             return aguess, eguess, iter, tol
         end
@@ -158,6 +158,28 @@ function AEFromΩ1Ω2Brute(Ω₁::Float64,Ω₂::Float64,
 
     return AEFromNewtonRaphson(ainit,einit,Ω₁,Ω₂,mjac,params)
 end
+
+"""
+    AEFromαβBrute(α,β,ψ,dψ,d2ψ,params)
+
+basic Newton-Raphson algorithm to find (a,e) from (Ω₁,Ω₂) brute force derivatives.
+"""
+function AEFromαβBrute(α::Float64,β::Float64,
+                         ψ::F0,dψ::F1,d2ψ::F2,
+                         params::OrbitalParameters=OrbitalParameters()) where {F0 <: Function, F1 <: Function, F2 <: Function}
+
+    # get the circular orbit (maximum radius) for a given Ω₁,Ω₂. use the stronger constraint.
+    acirc = RcircFromΩ1circ(α*params.Ω₀,dψ,d2ψ,params.rmin,min(params.rmax,1.e8*params.rc))
+
+    # then start from ecc=0.5 and take numerical derivatives
+    # @IMPROVE, is there a more optimal starting eccentricity?
+    ainit, einit = acirc, 0.5
+
+    mjac(a::Float64,e::Float64) = ComputeαβWithDerivAE(ψ,dψ,d2ψ,a,e,params)
+
+    return AEFromNewtonRaphson(ainit,einit,α,β,mjac,params)
+end
+
 
 
 """
@@ -211,7 +233,7 @@ end
 
 """
     AfixedEFromL(L,e,ψ,dψ,params,tolx,tolf)
-    
+
 perform backwards mapping from energy E for a fixed eccentricity orbit to semi-major axis
 can tune [rmin,rmax] for extra optimisation (but not needed)
 @WARNING: important assumption E is a increasing function of semi-major axis (at fixed eccentricity)
@@ -252,7 +274,7 @@ end
 
 """
     AfixedEFromJ(L,e,ψ,dψ,params,tolx,tolf)
-    
+
 perform backwards mapping from radial action J for a fixed eccentricity orbit to semi-major axis
 can tune [rmin,rmax] for extra optimisation (but not needed)
 @WARNING: important assumption L is a increasing function of semi-major axis (at fixed eccentricity)
@@ -289,7 +311,7 @@ end
 
 """
     AfixedEFromL(L,e,ψ,dψ,params,tolx,tolf)
-    
+
 perform backwards mapping from angular momentum L for a fixed eccentricity orbit to semi-major axis
 can tune [rmin,rmax] for extra optimisation (but not needed)
 @WARNING: important assumption L is a increasing function of semi-major axis (at fixed eccentricity)
