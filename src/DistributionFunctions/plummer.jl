@@ -74,8 +74,9 @@ function plummer_ROI_dFdQ(Q::Float64,ra::Float64,bc::Float64=1.,M::Float64=1.,as
 
     # differentiate outside
     prefactor = (M/((astronomicalG*M*bc)^(3/2))) * ((3*sqrt(2))/(4*(pi^3)))
-    #return prefactor * sqrt(Q) * ( (gamma)*(3 - 16(Q^2)) + 16(Q^2)) # the version from Breen paper
-    return prefactor * sqrt(Q) * ( (gamma)*(3 - 16(Q^2)*(ra/bc)) + 16(Q^2)) # the version from Breen code (CORRECT)
+    return prefactor * sqrt(Q) * ( (gamma)*(3 - 16(Q^2)) + 16(Q^2)) # the version from Breen code (CORRECT)
+    #return prefactor * sqrt(Q) * ( (gamma)*(3 - 16(Q^2)*(ra/bc)) + 16(Q^2)) # the version from Breen paper (WRONG)
+    #return prefactor * sqrt(Q) * ( (gamma^2)*(3 - 16(Q^2)) + 16(Q^2)) # original, incorrect version
 
 end
 
