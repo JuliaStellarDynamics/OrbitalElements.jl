@@ -50,7 +50,7 @@ the truncated Mestel frequency scale.
 """
 function Ω₀Mestel(R0::Float64=1.,V0::Float64=1.)
 
-    return 2.0 * V0 / R0
+    return V0 / R0
 end
 
 #####
@@ -60,45 +60,45 @@ end
 #####
 
 """
-    ψMestelTrunc(r[, R0, V0, epsilon])
+    ψMestelTrunc(r[, R0, V0, ε0])
 
 the truncated Mestel potential (flat rotation curve).
 """
-function ψMestelTrunc(r::Float64,R0::Float64=1.,V0::Float64=1.,eps::Float64=0.01)
+function ψMestelTrunc(r::Float64,R0::Float64=1.,V0::Float64=1.,ε0::Float64=0.01)
 
-    return 0.5 * (V0)^(2) * log((r/R0)^(2) + (eps)^(2))
+    return 0.5 * (V0)^(2) * log((r/R0)^(2) + (ε0)^(2))
 end
 
 """
-    dψMestelTrunc(r[, R0, V0, epsilon])
+    dψMestelTrunc(r[, R0, V0, ε0])
 
 the truncated Mestel potential derivative.
 """
-function dψMestelTrunc(r::Float64,R0::Float64=1.,V0::Float64=1.,eps::Float64=0.01)
+function dψMestelTrunc(r::Float64,R0::Float64=1.,V0::Float64=1.,ε0::Float64=0.01)
 
     x = r/R0
     # Stable version at infinity (not stable in 0.)
     if x > 1.e5
-        return ((V0)^(2) / R0) / (x * (1.0 + (eps/x)^(2)))
+        return ((V0)^(2) / R0) / (x * (1.0 + (ε0/x)^(2)))
     end
 
-    return ((V0)^(2) / R0) * x / ((eps)^(2) + (x)^(2))
+    return ((V0)^(2) / R0) * x / ((ε0)^(2) + (x)^(2))
 end
 
 """
-    d2ψMestelTrunc(r[, R0, V0, epsilon])
+    d2ψMestelTrunc(r[, R0, V0, ε0])
 
 the truncated Mestel potential second derivative.
 """
-function d2ψMestelTrunc(r::Float64,R0::Float64=1.,V0::Float64=1.,eps::Float64=0.01)
+function d2ψMestelTrunc(r::Float64,R0::Float64=1.,V0::Float64=1.,ε0::Float64=0.01)
 
     x = r/R0
     # Stable version at infinity (not stable in 0.)
     if x > 1.e5
-        return ((V0)^(2) / (R0)^(2)) * ((eps/x)^(2) - 1.0) / (x * (1.0 + (eps/x)^(2)))^2
+        return ((V0)^(2) / (R0)^(2)) * ((ε0/x)^(2) - 1.0) / (x * (1.0 + (ε0/x)^(2)))^2
     end
 
-    return  ((V0)^(2) / (R0)^(2)) * ((eps)^(2) - (x)^(2)) / ((eps)^(2) + (x)^(2))^(2)
+    return  ((V0)^(2) / (R0)^(2)) * ((ε0)^(2) - (x)^(2)) / ((ε0)^(2) + (x)^(2))^(2)
 end
 
 """
@@ -106,7 +106,7 @@ end
 
 the truncated Mestel frequency scale.
 """
-function Ω₀MestelTrunc(R0::Float64=1.,V0::Float64=1.,eps::Float64=0.01)
+function Ω₀MestelTrunc(R0::Float64=1.,V0::Float64=1.,ε0::Float64=0.01)
 
-    return (2.0 * V0) / (eps * R0)
+    return V0 / R0
 end
