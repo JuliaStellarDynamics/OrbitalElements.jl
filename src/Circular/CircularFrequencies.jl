@@ -31,7 +31,7 @@ function Ω1circular(dψ::F1,d2ψ::F2,
     if (a == 0.)
         return 2.0*sqrt(abs(d2ψ(0.)))
     end
-        
+
     return sqrt(d2ψ(a) + 3*dψ(a)/a)
 end
 
@@ -53,7 +53,7 @@ function Ω2circular(dψ::F1,d2ψ::F2,
     if (a == 0.)
         return sqrt(abs(d2ψ(0.)))
     end
-        
+
     return sqrt(dψ(a)/a)
 end
 
@@ -118,7 +118,8 @@ function RadiusFromCircularFrequency(ω::Float64,
     elseif ω == Ωfun(Inf)
         return Inf
     elseif ω > Ωfun(0.)
-        error("OrbitalElements.Circular.RadiusFromCircularFrequency: Too high circular frequency Ω = $ω > Ω1max = $(Ωfun(0.))")
+        #error("OrbitalElements.Circular.RadiusFromCircularFrequency: Too high circular frequency Ω = $ω > Ω1max = $(Ωfun(0.))")
+        return 0.
     elseif ω == Ωfun(0.)
         return 0.
     end
