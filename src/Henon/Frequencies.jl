@@ -39,6 +39,7 @@ function αβHenonΘAE(ψ::F0,dψ::F1,d2ψ::F2,
 
     # Handling edges interpolations
     # IMPORTANT : has to be first !
+    # @TOIMPROVE when interpolation is needed, we go through this function 3 times instead of 1 truly needed.
     fun(atemp::Float64,etemp::Float64) = αβHenonΘAE(ψ,dψ,d2ψ,atemp,etemp,params)
     res = EdgeHandle(fun,a,e,params)
     if !(isnothing(res))
