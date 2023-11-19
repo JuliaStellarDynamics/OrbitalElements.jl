@@ -12,6 +12,6 @@ jobs:
             julia -e '
               using Pkg
               Pkg.add(url="https://github.com/michael-petersen/OrbitalElements.jl.git")
-              Pkg.develop(PackageSpec(path="/home/runner/work/OrbitalElements.jl/")'
+              Pkg.develop(PackageSpec(path="/home/runner/work/OrbitalElements.jl/"))'
       - name: benchmark
         run: julia tests/benchmarks.jl
