@@ -7,16 +7,15 @@ jobs:
   Benchmark:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v2
+      - uses: julia-actions/setup-julia@v1
       - name: instantiate environment
         run: |
             pwd
-            julia -e '
+            julia --project=benchmark -e '
               using Pkg
-              Pkg.add(url="https://github.com/michael-petersen/OrbitalElements.jl.git")'
-            ls /home/runner/work/OrbitalElements.jl/
-            ls /home/runner/work/OrbitalElements.jl/OrbitalElements.jl
-            julia -e '
-              using Pkg
-              Pkg.develop(PackageSpec(path="/home/runner/work/OrbitalElements.jl/OrbitalElements.jl"))'
+              Pkg.add(url="https://github.com/michael-petersen/OrbitalElements.jl.git")
+#              Pkg.develop(PackageSpec(path=pwd()))
+              Pkg.instantiate()'
       - name: benchmark
         run: julia tests/benchmarks.jl
