@@ -17,6 +17,7 @@ jobs:
             pwd
             julia --project=oe -e '
               using Pkg
+              Pkg.add("BenchmarkTools")
               Pkg.add(url="https://github.com/michael-petersen/OrbitalElements.jl.git")'
             ls /home/runner/work/OrbitalElements.jl/
             ls /home/runner/work/OrbitalElements.jl/OrbitalElements.jl
