@@ -4,7 +4,7 @@ on:
   push:
 
 jobs:
-  CompatHelper:
+  Benchmark:
     runs-on: ubuntu-latest
     steps:
       - name: instantiate environment
@@ -12,6 +12,6 @@ jobs:
             julia -e '
               using Pkg
               Pkg.add(url="https://github.com/michael-petersen/OrbitalElements.jl.git")
-              Pkg.develop(PackageSpec(path=pwd()))'
+              Pkg.develop(PackageSpec(path="/home/runner/work/OrbitalElements.jl/")'
       - name: benchmark
         run: julia tests/benchmarks.jl
