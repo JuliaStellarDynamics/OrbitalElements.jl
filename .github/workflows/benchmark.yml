@@ -24,4 +24,4 @@ jobs:
               using Pkg
               Pkg.develop(PackageSpec(path="/home/runner/work/OrbitalElements.jl/OrbitalElements.jl"))'
       - name: benchmark
-        run: julia tests/benchmarks.jl
+        run: julia --project=oe tests/benchmarks.jl
