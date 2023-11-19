@@ -4,21 +4,22 @@ on:
   push:
 
 jobs:
-  Benchmark:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: julia-actions/setup-julia@v1
-        with:
-          version: '1'
-      - run: julia -e 'println("Hello, World!")'
-      - name: instantiate environment
-        run: |
-            pwd
-            julia --project=benchmark -e '
-              using Pkg
-              Pkg.add(url="https://github.com/michael-petersen/OrbitalElements.jl.git")
+  name: Benchmark
+  runs-on: ubuntu-latest
+  steps:
+    - uses: actions/checkout@v2
+    - uses: julia-actions/setup-julia@v1
+      with:
+        version: '1'
+    - run: |
+      julia -e 'println("Hello, World!")'
+  name: Instantiate Environment
+    run: |
+        pwd
+        julia --project=benchmark -e '
+          using Pkg
+          Pkg.add(url="https://github.com/michael-petersen/OrbitalElements.jl.git")
 #              Pkg.develop(PackageSpec(path=pwd()))
-              Pkg.instantiate()'
-      - name: benchmark
-        run: julia tests/benchmarks.jl
+          Pkg.instantiate()'
+  name: Execute Benchmark
+    run: julia tests/benchmarks.jl
