@@ -9,9 +9,9 @@ jobs:
     steps:
       - name: instantiate environment
         run: |
-            julia -e '
-              using Pkg
-              Pkg.add(url="https://github.com/michael-petersen/OrbitalElements.jl.git")
-              Pkg.develop(PackageSpec(path="/home/runner/work/OrbitalElements.jl/"))'
+            pwd
+            ls
+            ls OrbitalElements.jl
+
       - name: benchmark
         run: julia tests/benchmarks.jl
