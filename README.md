@@ -1,5 +1,6 @@
 
 # OrbitalElements.jl
+## Version 1.9 (missing documentation)
 
 `OrbitalElements.jl` is a package written in Julia to compute numerical elements for astronomical orbits to high precision, for arbitrary potentials.
 
@@ -7,8 +8,8 @@
 
 ### Quick activate
 
-`OrbitalElements` is (currently) unregistered, and as such if you would like to add it to your Julia registry, read [here](https://pkgdocs.julialang.org/v1/managing-packages/#Adding-unregistered-packages). 
-Shortcut version: 
+`OrbitalElements` is (currently) unregistered, and as such if you would like to add it to your Julia registry, read [here](https://pkgdocs.julialang.org/v1/managing-packages/#Adding-unregistered-packages).
+Shortcut version:
 1. start julia (`julia`)
 2. open the package manager (`]`)
 3. if you want to add the package to a local environment, active it (`activate myenv`)
@@ -31,9 +32,7 @@ The principal use for `OrbitalElements` is to provide descriptions of orbits. Th
 1. Conversion from (semimajor axis, eccentricity) to (pericentre, apocentre) to (energy, angular momentum), to coordinates aligned with resonance vectors.
 2. Additional support for actions and angles.
 
-`ComputeFrequenciesAE(ψ,dψ,d2ψ,d3ψ,d4ψ,a,e)` will compute frequencies (Ω₁,Ω₂) given a potential (ψ) plus two derivatives (dψ,d2ψ), for an orbit described by semimajor axis and eccentricity.
-
-`Θ(ψ,dψ,d2ψ,u,rp,ra)` will compute the anomaly along an orbit, given a potential plus two derivatives.
+`ComputeFrequenciesAE(ψ,dψ,d2ψ,a,e)` will compute frequencies (Ω₁,Ω₂) given a potential (ψ) plus two derivatives (dψ,d2ψ), for an orbit described by semimajor axis and eccentricity.
 
 -----------------------------
 
@@ -47,13 +46,13 @@ For a given potential, one can also compute the resonance mappings, called (u,v)
 ### Notes
 By default, `OrbitalElements` uses semimajor axis and eccentricity. If you want to use pericentre and apocentre, transformations are available. `AEFromRpRa(rp,ra)` will return semimajor axis and eccentricity from pericentre and apocentre.
 
-`OrbitalElements` also uses the Henon (1971) technique to cure radial velocity divergences at peri- and apocentre. 
+`OrbitalElements` also uses the Henon (1971) technique to cure radial velocity divergences at peri- and apocentre.
 <!--- One could use other methods; the software is constructed to allow for drop-in anomaly replacements. See `src/Henon`. --->
 
 -----------------------------
 
 ### Authors
 
-Mike Petersen -  @michael-petersen - petersen@iap.fr, michael.petersen@roe.ac.uk
+Mike Petersen -  @michael-petersen - michael.petersen@roe.ac.uk
 
 Mathieu Roule -  @MathieuRoule     - roule@iap.fr
