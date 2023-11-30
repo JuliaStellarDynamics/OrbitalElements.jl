@@ -9,4 +9,5 @@ makedocs(sitename = "OrbitalElements.jl",
                 "Functions" => "functions.md"
                ],
          format = Documenter.HTML(prettyurls=false))
-deploydocs(repo="github.com/michael-petersen/OrbitalElements.jl")
+
+deploydocs(repo="github.com/michael-petersen/OrbitalElements.jl",devbranch="documentation")
