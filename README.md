@@ -1,6 +1,8 @@
 
 # OrbitalElements.jl
-## Version 1.9 (missing documentation)
+## Version 1.9
+
+[![image](https://github.com/JuliaStellarDynamics/OrbitalElements.jl/actions/workflows/documentation.yml/badge.svg?branch=documentation)](https://juliastellardynamics.github.io/OrbitalElements.jl/)
 
 `OrbitalElements.jl` is a package written in Julia to compute numerical elements for astronomical orbits to high precision, for arbitrary potentials.
 
