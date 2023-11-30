@@ -13,3 +13,6 @@ tests/Theta*
 tests/Isochrone*
 tests/Basis*
 tests/*Validation*
+
+# Documentation (avoid committing generated content)
+docs/build/
