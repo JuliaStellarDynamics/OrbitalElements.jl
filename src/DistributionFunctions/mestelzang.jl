@@ -184,7 +184,7 @@ function TruncatedZangDF(E::Float64,L::Float64,
                          q::IntorFloat=11.44, σ::Float64=2.835e-1,
                          μ::Int64=5, ν::Int64=4)::Float64
 
-    if (L <= 0.) || (L > Rmax*V0) || (E < (V0^2)/2 + ψMestel(L/V0,R0,V0)) || (E > L^2/(2*Rmax^2))
+    if (L <= 0.) || (L > Rmax*V0) || (E < (V0^2)/2 + ψMestel(L/V0,R0,V0)) || (E > ψMestel(Rmax,R0,V0) + L^2/(2*Rmax^2))
         return 0.
     end
     return MestelDF(E,L,C,q,σ) * ZangOuterTaper(L,Rout,V0,μ) * ZangInnerTaper(L,Rin,V0,ν)
@@ -201,7 +201,7 @@ function TruncatedZangndDFdJ(n1::Int64,n2::Int64,E::Float64,L::Float64,ndotOmega
                     q::IntorFloat=11.44, σ::Float64=2.835e-1,
                     μ::Int64=5, ν::Int64=4)::Float64
 
-    if (L <= 0.) || (L > Rmax*V0) || (E < (V0^2)/2 + ψMestel(L/V0,R0,V0)) || (E > L^2/(2*Rmax^2))
+    if (L <= 0.) || (L > Rmax*V0) || (E < (V0^2)/2 + ψMestel(L/V0,R0,V0)) || (E > ψMestel(Rmax,R0,V0) + L^2/(2*Rmax^2))
         return 0.
     end
 
