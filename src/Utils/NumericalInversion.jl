@@ -145,16 +145,16 @@ end
 basic Newton-Raphson algorithm to find (a,e) from (Ω₁,Ω₂) brute force derivatives.
 """
 function AEFromΩ1Ω2Brute(Ω₁::Float64,Ω₂::Float64,
-                         ψ::F0,dψ::F1,d2ψ::F2,
-                         params::OrbitalParameters=OrbitalParameters()) where {F0 <: Function, F1 <: Function, F2 <: Function}
+                         model::Potential,
+                         params::OrbitalParameters=OrbitalParameters())
 
     # get the circular orbit (maximum radius) for a given Ω₁,Ω₂. use the stronger constraint.
-    acirc = RcircFromΩ1circ(Ω₁,dψ,d2ψ,params.rmin,min(params.rmax,1.e8*params.rc))
+    acirc = RcircFromΩ1circ(Ω₁,model,params.rmin,min(params.rmax,1.e8*params.rc))
 
     # then start from ecc=0.5 and take numerical derivatives
     ainit, einit = acirc, 0.5
 
-    mjac(a::Float64,e::Float64) = ComputeFrequenciesAEWithDeriv(ψ,dψ,d2ψ,a,e,params)
+    mjac(a::Float64,e::Float64) = ComputeFrequenciesAEWithDeriv(model,a,e,params)
 
     return AEFromNewtonRaphson(ainit,einit,Ω₁,Ω₂,mjac,params)
 end
@@ -165,17 +165,17 @@ end
 basic Newton-Raphson algorithm to find (a,e) from (Ω₁,Ω₂) brute force derivatives.
 """
 function AEFromαβBrute(α::Float64,β::Float64,
-                         ψ::F0,dψ::F1,d2ψ::F2,
-                         params::OrbitalParameters=OrbitalParameters()) where {F0 <: Function, F1 <: Function, F2 <: Function}
+                        model::Potential,
+                        params::OrbitalParameters=OrbitalParameters())
 
     # get the circular orbit (maximum radius) for a given Ω₁,Ω₂. use the stronger constraint.
-    acirc = RcircFromΩ1circ(α*params.Ω₀,dψ,d2ψ,params.rmin,min(params.rmax,1.e8*params.rc))
+    acirc = RcircFromΩ1circ(α*params.Ω₀,model,params.rmin,min(params.rmax,1.e8*params.rc))
 
     # then start from ecc=0.5 and take numerical derivatives
     # @IMPROVE, is there a more optimal starting eccentricity?
     ainit, einit = acirc, 0.5
 
-    mjac(a::Float64,e::Float64) = ComputeαβWithDerivAE(ψ,dψ,d2ψ,a,e,params)
+    mjac(a::Float64,e::Float64) = ComputeαβWithDerivAE(model,a,e,params)
 
     return AEFromNewtonRaphson(ainit,einit,α,β,mjac,params)
 end
@@ -188,16 +188,16 @@ end
 basic Newton-Raphson algorithm to find (a,e) from (Jᵣ,L) brute force derivatives.
 """
 function AEFromJLBrute(J::Float64,L::Float64,
-                       ψ::F0,dψ::F1,
-                       params::OrbitalParameters=OrbitalParameters()) where {F0 <: Function, F1 <: Function}
+                       model::Potential,
+                       params::OrbitalParameters=OrbitalParameters())
 
     # Initial guess
     einit = 0.5
-    ainitJ = try AfixedEFromJ(J,einit,ψ,dψ,params.rmin,min(params.rmax,1.e8*params.rc),params) catch; 0. end
-    ainitL = try AfixedEFromL(L,einit,ψ,dψ,params.rmin,min(params.rmax,1.e8*params.rc),params) catch; 0. end
+    ainitJ = try AfixedEFromJ(J,einit,model,params.rmin,min(params.rmax,1.e8*params.rc),params) catch; 0. end
+    ainitL = try AfixedEFromL(L,einit,model,params.rmin,min(params.rmax,1.e8*params.rc),params) catch; 0. end
     ainit = ((ainitJ == 0.) && (ainitL == 0.)) ? params.rc : 0.5 * (ainitJ + ainitL)
 
-    mjac(a::Float64,e::Float64) = ComputeActionsAEWithDeriv(ψ,dψ,a,e,params)
+    mjac(a::Float64,e::Float64) = ComputeActionsAEWithDeriv(model,a,e,params)
 
     return AEFromNewtonRaphson(ainit,einit,J,L,mjac,params)
 end
@@ -208,16 +208,16 @@ end
 basic Newton-Raphson algorithm to find (a,e) from (E,L) brute force derivatives.
 """
 function AEFromELBrute(E::Float64,L::Float64,
-                       ψ::F0,dψ::F1,
-                       params::OrbitalParameters=OrbitalParameters()) where {F0 <: Function, F1 <: Function}
+                       model::Potential,
+                       params::OrbitalParameters=OrbitalParameters())
 
     # Initial guess
     einit = 0.5
-    ainitE = try AfixedEFromE(E,einit,ψ,dψ,params.rmin,min(params.rmax,1.e8*params.rc),params) catch; 0. end
-    ainitL = try AfixedEFromL(L,einit,ψ,dψ,params.rmin,min(params.rmax,1.e8*params.rc),params) catch; 0. end
+    ainitE = try AfixedEFromE(E,einit,model,params.rmin,min(params.rmax,1.e8*params.rc),params) catch; 0. end
+    ainitL = try AfixedEFromL(L,einit,model,params.rmin,min(params.rmax,1.e8*params.rc),params) catch; 0. end
     ainit = ((ainitE == 0.) && (ainitL == 0.)) ? params.rc : 0.5 * (ainitE + ainitL)
 
-    mjac(a::Float64,e::Float64) = ComputeELAEWithDeriv(ψ,dψ,a,e,params)
+    mjac(a::Float64,e::Float64) = ComputeELAEWithDeriv(model,a,e,params)
 
     return AEFromNewtonRaphson(ainit,einit,E,L,mjac,params)
 end
@@ -239,31 +239,31 @@ can tune [rmin,rmax] for extra optimisation (but not needed)
 @WARNING: important assumption E is a increasing function of semi-major axis (at fixed eccentricity)
 """
 function AfixedEFromE(E::Float64,e::Float64,
-                      ψ::F0,dψ::F1,
+                      model::Potential,
                       rmin::Float64,rmax::Float64,
                       params::OrbitalParameters=OrbitalParameters(),
-                      tolx::Float64=1000.0*eps(Float64),tolf::Float64=1000.0*eps(Float64))::Float64 where {F0 <:Function, F1 <: Function}
+                      tolx::Float64=1000.0*eps(Float64),tolf::Float64=1000.0*eps(Float64))::Float64
 
     # check that the input energy is valid
-    if E < ψ(0.)
+    if E < ψ(model,0.)
         error("OrbitalElements.Utils.AfixedEFromE: Too low energy E = $E")
-    elseif E == ψ(0.)
+    elseif E == ψ(model,0.)
         return 0.
-    elseif E > ψ(Inf)
+    elseif E > ψ(model,Inf)
         error("OrbitalElements.Utils.AfixedEFromE: Too high energy E = $E")
-    elseif E == ψ(Inf)
+    elseif E == ψ(model,Inf)
         return Inf
     end
 
     # use bisection to find the circular orbit radius corresponding to given frequency
-    aguess = try bisection(a -> E - EFromAE(ψ,dψ,a,e,params),rmin,rmax,tolx=tolx,tolf=tolf) catch;   -1. end
+    aguess = try bisection(a -> E - EFromAE(model,a,e,params),rmin,rmax,tolx=tolx,tolf=tolf) catch;   -1. end
 
     # check if bisection failed: report why
     if (aguess == -1.)
-        if (EFromAE(ψ,dψ,rmax,e,params) < E)
-            return AfixedEFromE(E,e,ψ,dψ,rmax,10*rmax,params,tolx,tolf)
-        elseif (E < EFromAE(ψ,dψ,rmin,e,params))
-            return AfixedEFromE(E,e,ψ,dψ,rmin/10,rmin,params,tolx,tolf)
+        if (EFromAE(model,rmax,e,params) < E)
+            return AfixedEFromE(E,e,model,rmax,10*rmax,params,tolx,tolf)
+        elseif (E < EFromAE(model,rmin,e,params))
+            return AfixedEFromE(E,e,model,rmin/10,rmin,params,tolx,tolf)
         else
             error("OrbitalElements.Utils.AfixedEFromE: Unable to find the associated radius of E = $E and e = $e")
         end
@@ -280,10 +280,10 @@ can tune [rmin,rmax] for extra optimisation (but not needed)
 @WARNING: important assumption L is a increasing function of semi-major axis (at fixed eccentricity)
 """
 function AfixedEFromJ(J::Float64,e::Float64,
-                      ψ::F0,dψ::F1,
+                      model::Potential,
                       rmin::Float64,rmax::Float64,
                       params::OrbitalParameters=OrbitalParameters(),
-                      tolx::Float64=1000.0*eps(Float64),tolf::Float64=1000.0*eps(Float64))::Float64 where {F0 <:Function, F1 <: Function}
+                      tolx::Float64=1000.0*eps(Float64),tolf::Float64=1000.0*eps(Float64))::Float64
 
     # check that the input energy is valid
     if J < 0.
@@ -298,9 +298,9 @@ function AfixedEFromJ(J::Float64,e::Float64,
     # check if bisection failed: report why
     if (aguess == -1.)
         if (HenonJFromAE(ψ,dψ,rmax,e,params) < J)
-            return AfixedEFromJ(J,e,ψ,dψ,rmax,10*rmax,params,tolx,tolf)
-        elseif (J < HenonJFromAE(ψ,dψ,rmin,e,params))
-            return AfixedEFromJ(J,e,ψ,dψ,rmin/10,rmin,params,tolx,tolf)
+            return AfixedEFromJ(J,e,model,rmax,10*rmax,params,tolx,tolf)
+        elseif (J < HenonJFromAE(model,rmin,e,params))
+            return AfixedEFromJ(J,e,model,rmin/10,rmin,params,tolx,tolf)
         else
             error("OrbitalElements.Utils.AfixedEFromJ: Unable to find the associated radius of E = $E and e = $e")
         end
@@ -317,10 +317,10 @@ can tune [rmin,rmax] for extra optimisation (but not needed)
 @WARNING: important assumption L is a increasing function of semi-major axis (at fixed eccentricity)
 """
 function AfixedEFromL(L::Float64,e::Float64,
-                      ψ::F0,dψ::F1,
+                      model::Potential,
                       rmin::Float64,rmax::Float64,
                       params::OrbitalParameters=OrbitalParameters(),
-                      tolx::Float64=1000.0*eps(Float64),tolf::Float64=1000.0*eps(Float64))::Float64 where {F0 <:Function, F1 <: Function}
+                      tolx::Float64=1000.0*eps(Float64),tolf::Float64=1000.0*eps(Float64))::Float64
 
     # check that the input frequency is valid
     if L < 0.
@@ -330,14 +330,14 @@ function AfixedEFromL(L::Float64,e::Float64,
     end
 
     # use bisection to find the circular orbit radius corresponding to given frequency
-    aguess = try bisection(a -> L - LFromAE(ψ,dψ,a,e,params),rmin,rmax,tolx=tolx,tolf=tolf) catch;   -1. end
+    aguess = try bisection(a -> L - LFromAE(model,a,e,params),rmin,rmax,tolx=tolx,tolf=tolf) catch;   -1. end
 
     # check if bisection failed: report why
-    if (aguess == -1.)
-        if (LFromAE(ψ,dψ,rmax,e,params) < L)
-            return AfixedEFromL(L,e,ψ,dψ,rmax,10*rmax,params,tolx,tolf)
-        elseif (L < LFromAE(ψ,dψ,rmin,e,params))
-            return AfixedEFromL(L,e,ψ,dψ,rmin/10,rmin,params,tolx,tolf)
+    if aguess == -1.
+        if LFromAE(model,rmax,e,params) < L
+            return AfixedEFromL(L,e,model,rmax,10*rmax,params,tolx,tolf)
+        elseif L < LFromAE(model,rmin,e,params)
+            return AfixedEFromL(L,e,model,rmin/10,rmin,params,tolx,tolf)
         else
             error("OrbitalElements.Utils.AfixedEFromL: Unable to find the associated radius of L = $L and e = $e")
         end

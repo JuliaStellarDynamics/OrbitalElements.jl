@@ -5,13 +5,13 @@ HenonJFromAE(ψ,dψ,a,e,params)
 
 compute the radial action alone
 """
-function HenonJFromAE(ψ::F0,dψ::F1,
+function HenonJFromAE(model::Potential,
                       a::Float64,e::Float64,
-                      params::OrbitalParameters=OrbitalParameters())::Float64 where {F0  <: Function, F1 <: Function}
+                      params::OrbitalParameters=OrbitalParameters())::Float64
 
     # Handling edges interpolations
     # IMPORTANT : has to be first !
-    fun(atemp::Float64,etemp::Float64) = HenonJFromAE(ψ,dψ,atemp,etemp,params)
+    fun(atemp::Float64,etemp::Float64) = HenonJFromAE(model,atemp,etemp,params)
     J = EdgeHandle(fun,a,e,params)
     if !(isnothing(J))
         return J
@@ -23,7 +23,7 @@ function HenonJFromAE(ψ::F0,dψ::F1,
     end
 
     # Generic
-    u1func(u::Float64)::Float64 = drdu(u,a,e)*Vrad(ψ,dψ,u,a,e,params)
+    u1func(u::Float64)::Float64 = drdu(u,a,e)*Vrad(model,u,a,e,params)
 
     return (1/pi)*UnitarySimpsonIntegration(u1func,params.NINT)
 end
@@ -33,14 +33,14 @@ end
 
 use the defined function Θ(u) to compute frequency ratios integrals.
 """
-function αβHenonΘAE(ψ::F0,dψ::F1,d2ψ::F2,
+function αβHenonΘAE(model::Potential,
                     a::Float64,e::Float64,
-                    params::OrbitalParameters=OrbitalParameters())::Tuple{Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function}
+                    params::OrbitalParameters=OrbitalParameters())::Tuple{Float64,Float64}
 
     # Handling edges interpolations
     # IMPORTANT : has to be first !
     # @TOIMPROVE when interpolation is needed, we go through this function 3 times instead of 1 truly needed.
-    fun(atemp::Float64,etemp::Float64) = αβHenonΘAE(ψ,dψ,d2ψ,atemp,etemp,params)
+    fun(atemp::Float64,etemp::Float64) = αβHenonΘAE(model,atemp,etemp,params)
     res = EdgeHandle(fun,a,e,params)
     if !(isnothing(res))
         α, β = res
@@ -50,7 +50,7 @@ function αβHenonΘAE(ψ::F0,dψ::F1,d2ψ::F2,
     # Edge cases
     Ω₀ = params.Ω₀
     if (e == 0.) || (a == 0.)
-        Ω1, Ω2 = Ω1circular(dψ,d2ψ,a), Ω2circular(dψ,d2ψ,a)
+        Ω1, Ω2 = Ω1circular(model,a), Ω2circular(model,a)
 
         return αβFromFrequencies(Ω1,Ω2,Ω₀)
     end
@@ -67,7 +67,7 @@ function αβHenonΘAE(ψ::F0,dψ::F1,d2ψ::F2,
     # this doesn't throw any allocations, so don't worry about that!
     function u2func(u::Float64)::Tuple{Float64,Float64}
         # push integration forward on two different quantities: Θ(u),Θ(u)/r^2(u)
-        Θ = ΘAE(ψ,dψ,d2ψ,u,a,e,params)
+        Θ = ΘAE(model,u,a,e,params)
 
         return Θ, Θ/(ru(u,a,e)^2)
     end
@@ -77,7 +77,7 @@ function αβHenonΘAE(ψ::F0,dψ::F1,d2ψ::F2,
     #return the values
     invα = (Ω₀/pi)*accum1
     α    = 1.0/invα
-    β = (e == 1.) ? 0.5 : (LFromAE(ψ,dψ,a,e,params)/pi)*accum2
+    β = (e == 1.) ? 0.5 : (LFromAE(model,a,e,params)/pi)*accum2
 
     return α, β
 end
@@ -88,9 +88,9 @@ end
 use the defined function Θ(u) to compute frequency ratios integrals
 AND DERIVATIVES
 """
-function DαβHenonΘAE(ψ::F0,dψ::F1,d2ψ::F2,
+function DαβHenonΘAE(model::Potential,
                      a::Float64,e::Float64,
-                     params::OrbitalParameters=OrbitalParameters())::Tuple{Float64,Float64,Float64,Float64,Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function}
+                     params::OrbitalParameters=OrbitalParameters())::Tuple{Float64,Float64,Float64,Float64,Float64,Float64}
 
     Ω₀ = params.Ω₀
     tola, tole = params.TOLA, EccentricityTolerance(a,params.rc,params.TOLECC)
@@ -98,7 +98,7 @@ function DαβHenonΘAE(ψ::F0,dψ::F1,d2ψ::F2,
     if (a < tola) || (e < tole) || (e > 1.0-tole)
         # For edge cases: Derivation outside the integral
         # Function to differentiate
-        fun(atemp::Float64,etemp::Float64) = αβHenonΘAE(ψ,dψ,d2ψ,atemp,etemp,params)
+        fun(atemp::Float64,etemp::Float64) = αβHenonΘAE(model,atemp,etemp,params)
         # Perform differentiation
         floc, ∂f∂a, ∂f∂e = NumericalDerivativeAE(fun,a,e,params)
         # Recast results
@@ -124,8 +124,8 @@ function DαβHenonΘAE(ψ::F0,dψ::F1,d2ψ::F2,
         # 5. ∂Θ/∂a/r^2                  → ∂β∂a
         # 6. (∂Θ/∂e - 2af(u)Θ/r )/r^2   → ∂β∂e
 
-        Θ = ΘAE(ψ,dψ,d2ψ,u,a,e,params)
-        ∂Θ∂a, ∂Θ∂e = dΘAE(ψ,dψ,d2ψ,u,a,e,params)
+        Θ = ΘAE(model,u,a,e,params)
+        ∂Θ∂a, ∂Θ∂e = dΘAE(model,u,a,e,params)
 
         r = ru(u,a,e)
 
@@ -139,7 +139,7 @@ function DαβHenonΘAE(ψ::F0,dψ::F1,d2ψ::F2,
 
     accum1,accum2,accum3,accum4,accum5,accum6 = UnitarySimpsonIntegration(u6func,params.NINT)
 
-    _, Lval, _, ∂L∂a, _, ∂L∂e = dELFromAE(ψ,dψ,a,e,params)
+    _, Lval, _, ∂L∂a, _, ∂L∂e = dELFromAE(model,a,e,params)
 
     # α
     invα = (Ω₀/pi)*accum1
@@ -165,12 +165,12 @@ end
 use the defined function Θ(u) to compute frequency integrals
 AND DERIVATIVES
 """
-function DFrequenciesHenonΘAE(ψ::F0,dψ::F1,d2ψ::F2,
+function DFrequenciesHenonΘAE(model::Potential,
                               a::Float64,e::Float64,
-                              params::OrbitalParameters=OrbitalParameters())::Tuple{Float64,Float64,Float64,Float64,Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function}
+                              params::OrbitalParameters=OrbitalParameters())::Tuple{Float64,Float64,Float64,Float64,Float64,Float64}
 
     Ω₀ = params.Ω₀
-    α, β, ∂α∂a, ∂β∂a, ∂α∂e, ∂β∂e = DαβHenonΘAE(ψ,dψ,d2ψ,a,e,params)
+    α, β, ∂α∂a, ∂β∂a, ∂α∂e, ∂β∂e = DαβHenonΘAE(model,a,e,params)
 
     Ω1, Ω2          = FrequenciesFromαβ(α,β,Ω₀)
     ∂Ω1∂a, ∂Ω2∂a    = FrequenciesDerivsFromαβDerivs(α,β,∂α∂a,∂β∂a,Ω₀)

@@ -1,112 +1,133 @@
-#####
-#
-#   The truncated Mestel disc (Zang, see, e.g., Sellwood (2012), Fouvry+ (2015))
-#   + potential flattening in the center
-#
-#####
 
-#####
+#####################################
 #
-# Classic Mestel potential
+# Classic Mestel potential (cuspy)
 #
-#####
+#####################################
 
+#####################################
+# Mestel structure
+#####################################
 """
-    ψMestel(r[, R0, V0, epsilon])
-
-the Mestel potential (flat rotation curve).
+Mestel potential structure
 """
-function ψMestel(r::Float64,R0::Float64=1.,V0::Float64=1.)
-
-    return (V0)^(2) * log(r/R0)
+struct MestelPotential <: CentralCuspPotential 
+    R0::Float64
+    V0::Float64
 end
 
 """
-    dψMestel(r[, R0, V0, epsilon])
+    MestelPotential([, R0, V0])
 
-the Mestel potential derivative.
+Create a Mestel potential structure with 'characteristic radius' `R0`
+and circular velocity `V0`. 
+
+The characteristic radius just set the potential offset, fixing ``ψ(R0)=0``. 
 """
-function dψMestel(r::Float64,R0::Float64=1.,V0::Float64=1.)
-
-    x = r/R0
-    return ((V0)^(2) / R0) / x
+function MestelPotential(;R0::Float64=1.,V0::Float64=1.)
+    return MestelPotential(R0,V0)
 end
 
-"""
-    d2ψMestel(r[, R0, V0, epsilon])
+#####################################
+# Potential methods for Mestel
+#####################################
+function ψ(model::MestelPotential,r::Float64)
 
-the Mestel potential second derivative.
-"""
-function d2ψMestel(r::Float64,R0::Float64=1.,V0::Float64=1.)
-
-    x = r/R0
-    return  - ((V0)^(2) / (R0)^(2)) / (x^2)
+    x = r/model.R0
+    scale = model.V0^2
+    return scale * log(x)
 end
 
-"""
-    Ω₀Mestel([R0, V0, epsilon])
+function dψ(model::MestelPotential,r::Float64)
 
-the truncated Mestel frequency scale.
-"""
-function Ω₀Mestel(R0::Float64=1.,V0::Float64=1.)
-
-    return V0 / R0
+    x = r/model.R0
+    scale = model.V0^2 / model.R0
+    return scale / x
 end
 
-#####
+function d2ψ(model::MestelPotential,r::Float64)
+
+    x = r/model.R0
+    scale = model.V0^2 / (model.R0^2)
+    return  - scale / (x^2)
+end
+
+#####################################
+# Scales for Mestel
+#####################################
+function Ω₀(model::MestelPotential)
+    return model.V0 / model.R0
+end
+
+
+#####################################
 #
-# Tapered Mestel potential
+# Tapered Mestel potential (core)
 #
-#####
+#####################################
 
+#####################################
+# Tapered Mestel structure
+#####################################
 """
-    ψMestelTrunc(r[, R0, V0, ε0])
-
-the truncated Mestel potential (flat rotation curve).
+Tapered Mestel potential structure
 """
-function ψMestelTrunc(r::Float64,R0::Float64=1.,V0::Float64=1.,ε0::Float64=0.01)
-
-    return 0.5 * (V0)^(2) * log((r/R0)^(2) + (ε0)^(2))
+struct TaperedMestel <: CentralCorePotential 
+    R0::Float64
+    V0::Float64
+    ε0::Float64
 end
 
 """
-    dψMestelTrunc(r[, R0, V0, ε0])
+    TaperedMestel([, R0, V0])
 
-the truncated Mestel potential derivative.
+Create a tapered Mestel potential structure with 'characteristic radius' `R0`
+and circular velocity `V0` and taper length scale `ε0`. 
 """
-function dψMestelTrunc(r::Float64,R0::Float64=1.,V0::Float64=1.,ε0::Float64=0.01)
+function TaperedMestel(;R0::Float64=1.,V0::Float64=1.,ε0::Float64=1.e-5)
+    return TaperedMestel(R0,V0,ε0)
+end
 
-    x = r/R0
+#####################################
+# Potential methods for tapered Mestel
+#####################################
+function ψ(model::TaperedMestel,r::Float64)
+
+    x = r/model.R0
+    scale = model.V0^2
+    return scale * log(x^2 + model.ε0^2) / 2
+end
+
+function dψ(model::TaperedMestel,r::Float64)
+
+    x = r/model.R0
+    scale = model.V0^2 / model.R0
+    
     # Stable version at infinity (not stable in 0.)
     if x > 1.e5
-        return ((V0)^(2) / R0) / (x * (1.0 + (ε0/x)^(2)))
+        return scale / (x * (1 + (model.ε0/x)^2))
     end
 
-    return ((V0)^(2) / R0) * x / ((ε0)^(2) + (x)^(2))
+    return scale * x / (model.ε0^2 + x^2)
 end
 
-"""
-    d2ψMestelTrunc(r[, R0, V0, ε0])
+function d2ψ(model::TaperedMestel,r::Float64)
 
-the truncated Mestel potential second derivative.
-"""
-function d2ψMestelTrunc(r::Float64,R0::Float64=1.,V0::Float64=1.,ε0::Float64=0.01)
+    x = r/model.R0
+    scale = model.V0^2 / (model.R0^2)
 
-    x = r/R0
     # Stable version at infinity (not stable in 0.)
     if x > 1.e5
-        return ((V0)^(2) / (R0)^(2)) * ((ε0/x)^(2) - 1.0) / (x * (1.0 + (ε0/x)^(2)))^2
+        d2 = (model.ε0/x)^2
+        return scale * (d2 - 1) / ((x * (1 + d2))^2)
     end
 
-    return  ((V0)^(2) / (R0)^(2)) * ((ε0)^(2) - (x)^(2)) / ((ε0)^(2) + (x)^(2))^(2)
+    return  scale * (model.ε0^2 - x^2) / ((model.ε0^2 + x^2)^2)
 end
 
-"""
-    Ω₀MestelTrunc([R0, V0, epsilon])
-
-the truncated Mestel frequency scale.
-"""
-function Ω₀MestelTrunc(R0::Float64=1.,V0::Float64=1.,ε0::Float64=0.01)
-
-    return V0 / R0
+#####################################
+# Scales for tapered Mestel
+#####################################
+function Ω₀(model::TaperedMestel)
+    return model.V0 / model.R0
 end

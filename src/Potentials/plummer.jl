@@ -1,76 +1,127 @@
-#=
+"""
 The plummer potential definitions
 
   plummer.jl is an example of how to implement a simple new function and derivatives.
-  a frequency scaling that creates unity frequencies at the centre is also required.
+  a frequency scaling is also required.
 
-=#
+"""
 
+#####################################
+# Plummer structures
+#####################################
+"""
+Abstract Plummer potential structure
+"""
+abstract type PlummerPotential <: CentralCorePotential end
+
+"""
+Plummer potential structure using numerical computations
+"""
+struct NumericalPlummer <: PlummerPotential
+    G::Float64      # Gravitational constant
+    M::Float64      # Total mass
+    bc::Float64     # Characteristic radius
+end
+
+"""
+Plummer potential structure using some analytical computations
+"""
+struct AnalyticalPlummer <: PlummerPotential
+    G::Float64      # Gravitational constant
+    M::Float64      # Total mass
+    bc::Float64     # Characteristic radius
+end
+
+"""
+    NumericalPlummer([, bc, M, G])
+
+Create a Plummer potential structure with characteristic radius `bc`
+total mass `M` and gravitational constant `G`.
+"""
+function NumericalPlummer(;G::Float64=1.,M::Float64=1.,bc::Float64=1.)
+    return NumericalPlummer(name,G,M,bc)
+end
+
+"""
+    AnalyticalPlummer([, bc, M, G])
+
+Create a Plummer potential structure with characteristic radius `bc`
+total mass `M` and gravitational constant `G`.
+For this structure, most computations will use analytical expressions.
+"""
+function AnalyticalPlummer(;G::Float64=1.,M::Float64=1.,bc::Float64=1.)
+    return AnalyticalPlummer(name,G,M,bc)
+end
+
+#####################################
+# Potential methods for Plummer
+#####################################
+function ψ(model::PlummerPotential,r::Float64)
+
+    x = r/model.bc
+    scale = model.G*model.M/model.bc
+    return - scale / sqrt(1.0+x^2)
+end
+
+function dψ(model::PlummerPotential,r::Float64)
+    
+    x = r/model.bc
+    scale = model.G*model.M/(model.bc^2)
+
+    # Stable version at infinity (not stable in 0.)
+    if x > 1.e5
+        return scale / (x^2 * (sqrt(1.0+x^(-2)))^3)
+    end
+
+    return scale * x / (sqrt(1.0+x^2))^3
+end
+
+function d2ψ(model::PlummerPotential,r::Float64)
+
+    x = r/model.bc
+    scale = model.G*model.M/(model.bc^3)
+
+    # Stable version at infinity (not stable in 0.)
+    if x > 1.e5
+        return scale * ( 1.0 / (sqrt(1.0 + x^2))^3 
+                        - 3.0 / (x^3 * (sqrt(1.0 + x^(-2)))^5))
+    end
+
+    return scale * (1.0 - 2.0*(x^2)) / (sqrt(1.0 + x^2))^5
+end
+
+#####################################
+# Scales for Plummer
+#####################################
+function Ω₀(model::PlummerPotential)
+    return 2*sqrt(model.G*model.M/(model.bc^3))
+end
+
+"""
+    E₀(model::PlummerPotential)
+
+for Plummer, see Tep+ 22 (equation E2).
+"""
+function E₀(model::PlummerPotential)
+    return -model.G*model.M/model.bc
+end
+
+"""
+    L₀(model::PlummerPotential)
+
+for Plummer, see Tep+ 22 (equation E2).
+"""
+function L₀(model::PlummerPotential)
+    return sqrt(model.G*model.M*model.bc)
+end
+
+#####################################
+# Analytical functions for Plummer
+#####################################
 
 include("PlummerUtils/CoordinateTransforms.jl")
 include("PlummerUtils/ActionGradient.jl")
 include("PlummerUtils/Inversion.jl")
-
-"""
-the plummer potential
-"""
-function ψPlummer(r::Float64,bc::Float64=1.,M::Float64=1.,G::Float64=1.)
-
-    x = r/bc
-    return -(G*M/bc) / sqrt(1.0+x^2)
-end
-
-"""
-the plummer potential derivative
-"""
-function dψPlummer(r::Float64,bc::Float64=1.,M::Float64=1.,G::Float64=1.)
-
-    x = r/bc
-    # Stable version at infinity (not stable in 0.)
-    if x > 1.e5
-        return (G*M/(bc^2)) / (x^2 * (sqrt(1.0+x^(-2)))^3)
-    end
-
-    return (G*M/(bc^2)) * x / (sqrt(1.0+x^2))^3
-end
-
-"""
-the plummer potential second derivative
-"""
-function d2ψPlummer(r::Float64,bc::Float64=1.,M::Float64=1.,G::Float64=1.)
-    x = r/bc
-    # Stable version at infinity (not stable in 0.)
-    if x > 1.e5
-        return (G*M/(bc^3)) * ( 1.0 / (sqrt(1.0 + x^2))^3 - 3.0 / (x^3 * (sqrt(1.0 + x^(-2)))^5))
-    end
-
-    return (G*M/(bc^3)) * (1.0 - 2.0*(x^2)) / (sqrt(1.0 + x^2))^5
-end
-
-"""
-the central frequency for the Plummer potential
-"""
-function Ω₀Plummer(bc::Float64=1.,M::Float64=1.,G::Float64=1.)
-
-    return 2*sqrt(G*M/bc^3)
-end
-
-
-"""
-Plummer energy scale, From Tep+ 2022 (equation E2)
-"""
-function PlummerE0(bc::Float64=1.,M::Float64=1.,G::Float64=1.)
-    return -G*M/bc
-end
-
-"""
-Plummer action scale, From Tep+ 2022 (equation E2)
-"""
-function PlummerL0(bc::Float64=1.,M::Float64=1.,G::Float64=1.)
-    return sqrt(G*M*bc)
-end
-
-
 
 """
 the raw Theta function From Tep et al. 2022, equation F9

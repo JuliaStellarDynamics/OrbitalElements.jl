@@ -18,7 +18,7 @@ IntorFloat = Union{Int64,Float64}
 radial velocity dispersion of the tapered Mestel DF
 """
 function σMestelDF(R0::Float64=20.,V0::Float64=1.,q::IntorFloat=11.44)::Float64
-    return V0 / sqrt(q+1.0)
+    return V0 / sqrt(q+1)
 end
 
 """
@@ -28,7 +28,7 @@ normalization constant of the tapered Mestel DF.
 """
 function NormConstMestelDF(G::Float64,R0::Float64=20.,V0::Float64=1.,q::IntorFloat=11.44)::Float64
     σ = σMestelDF(R0,V0,q)
-    return (V0)^(2) / ( (2.0)^(0.5*q+1) * (pi)^(3/2) * G * gamma(0.5+0.5*q) * (σ)^(q+2.0) * (R0)^(q+1.0) )
+    return (V0)^(2) / ( 2^(q/2+1) * (pi)^(3/2) * G * gamma(0.5+0.5*q) * (σ)^(q+2) * (R0)^(q+1) )
 end
 
 #####

@@ -115,10 +115,10 @@ end
 ########################################################################
 
 function Interpolation1stOrder(x::Float64,
-                               x0::Float64,y0::Float64,
-                               x1::Float64,y1::Float64)::Float64
+                               x0::Float64,y0,
+                               x1::Float64,y1)
 
-    return (x*y0 - x1*y0 - x*y1 + x0*y1)/(x0 - x1)
+    return ((x-x1).*y0 - (x-x0).*y1)/(x0 - x1)
 end
 
 function Interpolation2ndOrder(x::Float64,

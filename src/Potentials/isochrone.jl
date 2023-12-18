@@ -7,244 +7,259 @@ The isochrone potential definitions
 
 """
 
-"""ψIsochrone(r[,bc,M,G])
-
-the isochrone potential
+#####################################
+# Isochrone structures
+#####################################
 """
-function ψIsochrone(r::Float64,bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
+Abstract Isochrone potential structure
+"""
+abstract type IsochronePotential <: CentralCorePotential end
 
-    x = r/bc
-    return -astronomicalG*M*(bc^(-1))*(1.0+sqrt(1.0+x^2))^(-1)
+"""
+Isochrone potential structure using numerical computations
+"""
+struct NumericalIsochrone <: IsochronePotential
+    G::Float64      # Gravitational constant
+    M::Float64      # Total mass
+    bc::Float64     # Characteristic radius
 end
 
-"""dψIsochrone(r[,bc,M,G])
-
-the isochrone potential derivative
 """
-function dψIsochrone(r::Float64,bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
+Isochrone potential structure using analytical computations
+"""
+struct AnalyticalIsochrone <: IsochronePotential
+    G::Float64      # Gravitational constant
+    M::Float64      # Total mass
+    bc::Float64     # Characteristic radius
+end
+
+"""
+    NumericalIsochrone([, bc, M, G])
+
+Create an Isochrone potential structure with characteristic radius `bc`
+total mass `M` and gravitational constant `G`.
+"""
+function NumericalIsochrone(;G::Float64=1.,M::Float64=1.,bc::Float64=1.)
+    return NumericalIsochrone(G,M,bc)
+end
+
+"""
+    AnalyticalIsochrone([, bc, M, G])
+
+Create an Isochrone potential structure with characteristic radius `bc`
+total mass `M` and gravitational constant `G`.
+
+For this structure, most computations will use analytical expressions.
+"""
+function AnalyticalIsochrone(;G::Float64=1.,M::Float64=1.,bc::Float64=1.)
+    return AnalyticalIsochrone(G,M,bc)
+end
+
+#####################################
+# Potential methods for the Isochrone
+#####################################
+function ψ(model::IsochronePotential,r::Float64)
+
+    x = r/model.bc
+    scale = model.G*model.M/model.bc
+
+    return - scale / (1.0+sqrt(1.0+x^2))
+end
+
+function dψ(model::IsochronePotential,r::Float64)
     
-    x = r/bc
-    return astronomicalG*M*(bc^(-2))*(sqrt(1.0+x^(-2))*(1.0+sqrt(1.0+x^2))^2)^(-1)
+    x = r/model.bc
+    scale = model.G*model.M/(model.bc^2)
+
+    return scale / (sqrt(1.0+x^(-2))*(1.0+sqrt(1.0+x^2))^2)
 end
 
-"""d2ψIsochrone(r[,bc,M,G])
+function d2ψ(model::IsochronePotential,r::Float64)
 
-the isochrone potential second derivative
-"""
-function d2ψIsochrone(r::Float64,bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
-
-    x = r/bc
+    x = r/model.bc
+    scale = model.G*model.M/(model.bc^3)
     sqxp = 1.0 + x^2
     invx = x^(-1)
     invsqxp = 1.0 + invx^2
-    return astronomicalG*M*(bc^(-3))*(- ((sqxp^(3/2))*(invx+sqrt(invsqxp))^2)^(-1)
-                                      - 2*(invsqxp*(1.0+sqrt(sqxp))^3)^(-1)
-                                      + (sqrt(sqxp)*(1.0+sqrt(sqxp))^2)^(-1))
+    return scale *(- ((sqxp^(3/2))*(invx+sqrt(invsqxp))^2)^(-1)
+                    - 2*(invsqxp*(1.0+sqrt(sqxp))^3)^(-1)
+                    + (sqrt(sqxp)*(1.0+sqrt(sqxp))^2)^(-1))
+end
+
+#####################################
+# Scales for the Isochrone
+#####################################
+function Ω₀(model::IsochronePotential)
+    return sqrt(model.G*model.M/(model.bc^3))
 end
 
 """
-isochrone frequency scale, from Fouvry 21 (appendix G)
+    E₀(model::IsochronePotential)
+
+for isochrone, see Fouvry 21 (appendix G).
 """
-function Ω₀Isochrone(bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
-    return sqrt(astronomicalG*M/bc^3)
+function E₀(model::IsochronePotential)
+    return -model.G*model.M/model.bc
 end
 
 """
-isochrone energy scale, from Fouvry 21 (appendix G)
-Emin = -GM/(2bc)
-"""
-function isochroneE0(bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
-    #return -sqrt(astronomicalG*M/bc)
-    return -astronomicalG*M/bc
-end
+    L₀(model::IsochronePotential)
 
+for isochrone, see Fouvry 21 (appendix G)
 """
-isochrone action scale, from Fouvry 21 (appendix G)
-"""
-function isochroneL0(bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
-    return sqrt(astronomicalG*M*bc)
+function L₀(model::IsochronePotential)
+    return sqrt(model.G*model.M*model.bc)
 end
 
 
+#####################################
+# Analytical functions for Isochrone
+#####################################
+
 """
-isochrone reduced coordinates for pericentre and apocentre
+    SpSaFromRpRa(model::AnalyticalIsochrone, rp, ra)
+
+isochrone reduced coordinates from pericentre `rp` and apocentre `ra`.
 """
-function IsochroneSpSaFromRpRa(rp::Float64,ra::Float64,bc::Float64=1.)
-    xp = rp/bc
-    xa = ra/bc
-   return sqrt(1+xp^2),sqrt(1+xa^2)
+function SpSaFromRpRa(model::AnalyticalIsochrone,rp::Float64,ra::Float64)
+    xp, xa = (rp, ra) ./ model.bc
+    return sqrt(1+xp^2), sqrt(1+xa^2)
 end
 
 """
-compute the radial action
-(Fouvry 21 eq. G3)
+    SpSafromAE(model::AnalyticalIsochrone, a, e)
+
+isochrone reduced coordinates from semi-major axis `a` and eccentricity `e`.
 """
-function IsochroneJrRpRa(rp::Float64,ra::Float64,
-                         bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
-    E = isochroneEfromrpra(rp,ra,bc,M,astronomicalG)
-    L = isochroneLfromrpra(rp,ra,bc,M,astronomicalG)
-    return (astronomicalG*M/sqrt(-2E)) - 0.5 * (L + sqrt(L*L + 4*astronomicalG*M*bc))
+function SpSaFromAE(model::AnalyticalIsochrone,a::Float64,e::Float64)
+    rp, ra = RpRaFromAE(a,e)
+    return SpSaFromRpRa(model,rp,ra)
 end
 
+"""   
+    EFromAE(model::AnalyticalIsochrone, a, e)
 
-function IsochroneActionsFromAE(a::Float64,ecc::Float64,bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
-    rp,ra = a*(1-ecc),a*(1+ecc)
-    xp          = rp/bc
-    xa          = ra/bc
-    L0          = isochroneL0(bc,M,astronomicalG)
-    scaleEnergy = isochroneE0(bc,M,astronomicalG)
-    sp,sa       = IsochroneSpSaFromRpRa(rp,ra,bc)
-    Jval = IsochroneJrRpRa(rp,ra,bc,M,astronomicalG)
-    return Jval,sqrt(2)*L0*xp*xa/sqrt((1+sp)*(1+sa)*(sp+sa))
+for isochrone analytical version, see equation (G9)
+in Fouvry&Prunet (2021)
+"""
+function EFromAE(model::AnalyticalIsochrone,a::Float64,e::Float64)
+    sp,sa = SpSaFromAE(model,a,e)
+    return E₀(model)/(sp+sa)
 end
 
+"""   
+    LFromAE(model::AnalyticalIsochrone, a, e)
 
+for isochrone analytical version, see equation (G9)
+in Fouvry&Prunet (2021)
+"""
+function LFromAE(model::AnalyticalIsochrone,a::Float64,e::Float64)
 
-"""
-compute the dimensionless function for Omega1
-(Fouvry 21 eq. G5)
-"""
-function IsochroneαRpRa(rp::Float64,ra::Float64,bc::Float64=1.)
-    sp,sa = IsochroneSpSaFromRpRa(rp,ra,bc)
-    return (2/(sp+sa))^(3/2)
-end
+    rp, ra = RpRaFromAE(a,e)
+    xp, xa = (rp, ra) ./ model.bc
+    sp,sa = SpSaFromRpRa(model,rp,ra)
 
-"""
-compute the dimensionless function for Omega1
-(Fouvry 21 eq. G5)
-"""
-function IsochroneαAE(a::Float64,ecc::Float64,bc::Float64=1.)
-    sp,sa = IsochroneSpSaFromRpRa(a*(1-ecc),a*(1+ecc),bc)
-    return (2/(sp+sa))^(3/2)
+    return sqrt(2)*L₀(model)*xp*xa/sqrt((1+sp)*(1+sa)*(sp+sa))
 end
 
 """
-compute the dimensionless function for Omega2 from (rp,ra)
-(Fouvry 21 eq. G7)
+    ELFromAE(model::AnalyticalIsochrone, a, e)
+
+for isochrone analytical version, see equation (G9)
+in Fouvry&Prunet (2021)
 """
-function IsochroneβRpRa(rp::Float64,ra::Float64,bc::Float64=1.)
-    xp = rp/bc
-    xa = ra/bc
-    sp,sa = IsochroneSpSaFromRpRa(rp,ra,bc)
-    return (1/2)*(1+(xp*xa)/((1+sp)*(1+sa)))
+function ELfromAE(model::AnalyticalIsochrone,a::Float64,e::Float64)
+    return EFromAE(model,a,e), LFromAE(model,a,e)
 end
 
 """
-compute the dimensionless function for Omega2 from (a,e)
-(Fouvry 21 eq. G7)
-"""
-function IsochroneβAE(a::Float64,ecc::Float64,bc::Float64=1.)
-    xp = (a*(1-ecc))/bc
-    xa = (a*(1+ecc))/bc
-    sp,sa = IsochroneSpSaFromRpRa(a*(1-ecc),a*(1+ecc),bc)
-    return (1/2)*(1+(xp*xa)/((1+sp)*(1+sa)))
-end
+    JFromAE(model::AnalyticalIsochrone, a, e)
 
-
+for isochrone analytical version, see equation (G3)
+in Fouvry&Prunet (2021)
 """
-analytic function to return isochrone frequencies from (rp,ra)
-"""
-function IsochroneOmega12FromRpRa(rp::Float64,ra::Float64,bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
-    Omega0   = Ω₀Isochrone(bc,M,astronomicalG)
-    omegaae = IsochroneαRpRa(rp,ra,bc)
-    etaae   = IsochroneβRpRa(rp,ra,bc)
-    return omegaae*Omega0,omegaae*etaae*Omega0
+function JFromAE(model::AnalyticalIsochrone,a::Float64,e::Float64)
 
+    E, L = ELFromAE(model,a,e)
+    return (model.G*model.M/sqrt(-2E)) - 0.5 * (L + sqrt(L*L + 4*model.G*model.M*model.bc))
 end
 
 """
-analytic function to return isochrone frequencies from (a,e)
+    ComputeActionsAE(model::AnalyticalIsochrone, a, e)
+
+for isochrone analytical version, see equation (G3)
+in Fouvry&Prunet (2021)
 """
-function IsochroneOmega12FromAE(a::Float64,ecc::Float64,bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
-    Omega0   = Ω₀Isochrone(bc,M,astronomicalG)
-    omegaae = IsochroneαAE(a,ecc,bc)
-    etaae   = IsochroneβAE(a,ecc,bc)
-    return omegaae*Omega0,omegaae*etaae*Omega0
+function ComputeActionsAE(model::AnalyticalIsochrone,a::Float64,e::Float64)
+
+    Jval = JFromAE(model,a,e)
+    return Jval, LFromAE(model,a,e)
 end
 
 """
-inversion of EL -> α,β function
+    αβFromAE(model::AnalyticalIsochrone, a, e)
+
+for isochrone analytical version, 
+see equations (G5-G7) in Fouvry&Prunet (2021)
 """
-function isochroneELfromαβ(α::Float64,β::Float64,bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
-    scaleEnergy = isochroneE0(bc,M,astronomicalG)
-    scaleAction = isochroneL0(bc,M,astronomicalG)
-    E = 0.5*scaleEnergy*(α)^(2/3) # Value of the energy
-    L = scaleAction*(2.0*β-1.0)/(sqrt(β*(1.0-β))) # Value of the angular momentum
-    return E, L # Output
+function αβFromAE(model::AnalyticalIsochrone,a::Float64,e::Float64)
+
+    rp, ra = RpRaFromAE(a,e)
+    xp, xa = (rp, ra) ./ model.bc
+    sp,sa = SpSaFromRpRa(model,rp,ra)
+
+    return (2/(sp+sa))^(3/2), (1/2)*(1+(xp*xa)/((1+sp)*(1+sa)))
+end
+
+function ComputeFrequenciesAE(model::AnalyticalIsochrone,
+                              a::Float64,e::Float64)
+    
+    α, β = αβFromAE(model,a,e)
+    return FrequenciesFromαβ(α,β,Ω₀(model))
 end
 
 """
+    ELFromαβ(model::AnalyticalIsochrone, α, β)
+
+for isochrone analytical version, 
+see equations @TOCOMPLETE in Fouvry&Prunet (2021)
+"""
+function ELFromαβ(model::AnalyticalIsochrone,α::Float64,β::Float64)
+
+    return 0.5*E₀(model)*(α)^(2/3), L₀(model)*(2.0*β-1.0)/(sqrt(β*(1.0-β)))
+end
+
+"""    
+    AEFromEL(model::AnalyticalIsochrone, E, L)
+
+for isochrone analytical version, 
+see equations @TOCOMPLETE in Fouvry&Prunet (2021)
 
 @IMPROVE, uses a floor to avoid any sqrt problems with circular orbits
 """
-function isochronerprafromEL(E::Float64,L::Float64,bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
-    scaleEnergy = isochroneE0(bc,M,astronomicalG)
-    scaleAction = isochroneL0(bc,M,astronomicalG)
-    xc = ((0.5*scaleEnergy)/E) - 1.0                                 # Value of xc
-    eccov = sqrt(max(0,1.0 - (L/scaleAction)^(2)*(1.0/xc)*(1.0+(1.0/xc)))) # Value of overline{e}
-    xp = sqrt(max(0,(2.0 + xc*(1.0-eccov))*(xc*(1.0-eccov))))             # Value of xp
-    xa = sqrt(max(0,(2.0 + xc*(1.0+eccov))*(xc*(1.0+eccov))))             # Value of xa
-    rp, ra = xp*bc, xa*bc                                            # Value of rp,ra
-    return rp, ra # Output
+function AEFromEL(model::AnalyticalIsochrone,E::Float64,L::Float64)
+
+    xc = (0.5*E₀(model)/E) - 1.0
+    eccov = sqrt(max(0,1.0 - (L/L₀(model))^(2)*(1.0/xc)*(1.0+(1.0/xc))))
+    xp = sqrt(max(0.,(2.0 + xc*(1.0-eccov))*(xc*(1.0-eccov))))
+    xa = sqrt(max(0.,(2.0 + xc*(1.0+eccov))*(xc*(1.0+eccov))))
+    rp, ra = xp*model.bc, xa*model.bc
+
+    return AEFromRpRa(rp,ra)
 end
 
-"""
-function to wrap (α,β)->(E,L)->(rp,ra)->(a,e) conversions for isochrone
-"""
-function IsochroneAEFromOmega1Omega2(omega1::Float64,omega2::Float64,bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
-    Omega0= Ω₀Isochrone(bc,M,astronomicalG)
-    E,L   = isochroneELfromαβ(omega1/Omega0,omega2/omega1,bc,M,astronomicalG)
-    rp,ra = isochronerprafromEL(E,L,bc,M,astronomicalG)
-    a,e   = AEFromRpRa(rp,ra)
+function ComputeAEFromFrequencies(model::AnalyticalIsochrone,Ω1::Float64,Ω2::Float64)
+    
+    # (Ω1,Ω2) ↦ (α,β), generically analytical
+    α, β = αβFromFrequencies(Ω1,Ω2,Ω₀(model))
+    # (α,β) ↦ (E,L), analytic expressions specific to isochrone potential
+    E, L = ELFromαβ(model,α,β)
+    # (E,L) ↦ (a,e), analytic expressions specific to isochrone potential
+    a, e = AEFromEL(model,E,L)
+
     return a,e
 end
 
-"""
-energy from isochrone model, using rpra
-Fouvry 21 G9
-"""
-function isochroneEfromrpra(rp::Float64,ra::Float64,bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
-    scaleEnergy = isochroneE0(bc,M,astronomicalG)
-    sp,sa       = IsochroneSpSaFromRpRa(rp,ra,bc)
-    return scaleEnergy/(sp+sa)
-end
-
-"""
-angular momentum from isochrone model, using rpra
-"""
-function isochroneLfromrpra(rp::Float64,ra::Float64,bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
-    # isochrone analytic energy, Fouvry 21 G9
-    xp = rp/bc
-    xa = ra/bc
-    L0 = isochroneL0(bc,M,astronomicalG)
-    sp,sa = IsochroneSpSaFromRpRa(rp,ra,bc)
-    return sqrt(2)*L0*xp*xa/sqrt((1+sp)*(1+sa)*(sp+sa))
-end
-
-"""
-energy and angular momentum from isochrone model, using rpra
-"""
-function isochroneELfromrpra(rp::Float64,ra::Float64,bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
-    xp          = rp/bc
-    xa          = ra/bc
-    L0          = isochroneL0(bc,M,astronomicalG)
-    scaleEnergy = isochroneE0(bc,M,astronomicalG)
-    sp,sa       = IsochroneSpSaFromRpRa(rp,ra,bc)
-    return scaleEnergy/(sp+sa),sqrt(2)*L0*xp*xa/sqrt((1+sp)*(1+sa)*(sp+sa))
-end
-
-"""
-energy and angular momentum from isochrone model, using ae
-"""
-function IsochroneELFromAE(a::Float64,ecc::Float64,bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
-    rp,ra = a*(1-ecc),a*(1+ecc)
-    xp          = rp/bc
-    xa          = ra/bc
-    L0          = isochroneL0(bc,M,astronomicalG)
-    scaleEnergy = isochroneE0(bc,M,astronomicalG)
-    sp,sa       = IsochroneSpSaFromRpRa(rp,ra,bc)
-    return scaleEnergy/(sp+sa),sqrt(2)*L0*xp*xa/sqrt((1+sp)*(1+sa)*(sp+sa))
-end
 
 function isochronedthetadufromrpra(r::Float64,u::Float64,rp::Float64,ra::Float64,bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
     #=

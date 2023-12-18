@@ -25,14 +25,14 @@ Strategies:
 radial frequency for circular orbits, from the epicyclic approximation
 a is the semi-major axis (equivalent to r for a circular orbit)
 """
-function Ω1circular(dψ::F1,d2ψ::F2,
-                    a::Float64)::Float64 where {F1 <: Function, F2 <: Function}
+function Ω1circular(model::Potential,
+                    a::Float64)::Float64
 
     if (a == 0.)
-        return 2.0*sqrt(abs(d2ψ(0.)))
+        return 2.0*sqrt(abs(d2ψ(model,0.)))
     end
 
-    return sqrt(d2ψ(a) + 3*dψ(a)/a)
+    return sqrt(d2ψ(model,a) + 3*dψ(model,a)/a)
 end
 
 ########################################################################
@@ -47,14 +47,14 @@ end
 azimuthal frequency for circular orbits, from the epicyclic approximation
 with value at a = 0.
 """
-function Ω2circular(dψ::F1,d2ψ::F2,
-                    a::Float64)::Float64 where {F1 <: Function, F2 <: Function}
+function Ω2circular(model::Potential,
+                    a::Float64)::Float64
 
     if (a == 0.)
-        return sqrt(abs(d2ψ(0.)))
+        return sqrt(abs(d2ψ(model,0.)))
     end
 
-    return sqrt(dψ(a)/a)
+    return sqrt(dψ(model,a)/a)
 end
 
 
@@ -64,19 +64,19 @@ end
 return βc(α), the frequency ratio Ω2/Ω1 as a function of α = Ω1/Ω₀ .
 """
 function βcirc(αcirc::Float64,
-               dψ::F1,d2ψ::F2,
-               params::OrbitalParameters=OrbitalParameters())::Float64 where {F1 <: Function, F2 <: Function}
+               model::Potential,
+               params::OrbitalParameters=OrbitalParameters())::Float64
 
     # compute the radial frequency for a circular orbit
     Ω1 = params.Ω₀ * αcirc
 
     # get the radius corresponding to the circular orbit
-    rcirc = RcircFromΩ1circ(Ω1,dψ,d2ψ,params.rmin,min(params.rmax,1.e8*params.rc),eps(Float64),eps(Float64))
+    rcirc = RcircFromΩ1circ(Ω1,model,params.rmin,min(params.rmax,1.e8*params.rc),eps(Float64),eps(Float64))
 
     if rcirc == Inf
         # Estimate growing rate α of dψ(x)≈x^α
         x1, x2 = 1.0e8*params.rc, 1.0e9*params.rc
-        α = round(log(dψ(x2)/dψ(x1))/log(x2/x1))
+        α = round(log(dψ(model,x2)/dψ(model,x1))/log(x2/x1))
         if isnan(α)
             error("OrbitalElements.Circular.βcirc: Unable to estimate the growth rate of the potential.")
         elseif α <= -3.0
@@ -86,7 +86,7 @@ function βcirc(αcirc::Float64,
     end
 
     # get the azimuthal frequency for the radius
-    Ω2 = Ω2circular(dψ,d2ψ,rcirc)
+    Ω2 = Ω2circular(model,rcirc)
 
     # return β
     return Ω2/Ω1
@@ -150,12 +150,12 @@ can tune [rmin,rmax] for extra optimisation (but not needed)
 @WARNING: important assumption Ω1circular is a decreasing function of radius
 """
 function RcircFromΩ1circ(ω::Float64,
-                         dψ::F1,d2ψ::F2,
+                         model::Potential,
                          rmin::Float64,rmax::Float64,
-                         tolx::Float64=1000.0*eps(Float64),tolf::Float64=1000.0*eps(Float64))::Float64 where {F1 <: Function, F2 <: Function}
+                         tolx::Float64=1000.0*eps(Float64),tolf::Float64=1000.0*eps(Float64))::Float64
 
     # check that the input frequency is valid
-    Ωfun(r::Float64)::Float64 = Ω1circular(dψ,d2ψ,r)
+    Ωfun(r::Float64)::Float64 = Ω1circular(model,r)
 
     return RadiusFromCircularFrequency(ω,Ωfun,rmin,rmax,tolx,tolf)
 end
@@ -171,12 +171,12 @@ perform backwards mapping from Omega_2 for a circular orbit to radius
     - d2ψ used for value at 0.
 """
 function RcircFromΩ2circ(ω::Float64,
-                         dψ::F1,d2ψ::F2,
+                         model::Potential,
                          rmin::Float64,rmax::Float64,
-                         tolx::Float64=1000.0*eps(Float64),tolf::Float64=1000.0*eps(Float64))::Float64 where {F1 <: Function, F2 <: Function}
+                         tolx::Float64=1000.0*eps(Float64),tolf::Float64=1000.0*eps(Float64))::Float64
 
     # check that the input frequency is valid
-    Ωfun(r::Float64)::Float64 = Ω2circular(dψ,d2ψ,r)
+    Ωfun(r::Float64)::Float64 = Ω2circular(model,r)
 
     return RadiusFromCircularFrequency(ω,Ωfun,rmin,rmax,tolx,tolf)
 end

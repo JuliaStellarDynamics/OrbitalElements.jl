@@ -96,12 +96,12 @@ end
 
 the effective potential: note the relationship to Q
 """
-function ψeff(ψ::Function,r::Float64,L::Float64)::Float64
+function ψeff(model::Potential,r::Float64,L::Float64)::Float64
     if L == 0.
-        return ψ(r)
+        return ψ(model,r)
     end
         
-    return ψ(r) + 0.5 * (L/r)^(2)
+    return ψ(model,r) + 0.5 * (L/r)^(2)
 end
 
 """
@@ -109,12 +109,12 @@ end
 
 the derivative of the effective potential
 """
-function dψeffdr(dψ::Function,r::Float64,L::Float64)::Float64
+function dψeffdr(model::Potential,r::Float64,L::Float64)::Float64
     if L == 0.
-        return dψ(r)
+        return dψ(model,r)
     end
         
-    return dψ(r) - (L)^(2) / (r^3)
+    return dψ(model,r) - (L)^(2) / (r^3)
 end
 
 """
@@ -122,12 +122,12 @@ end
 
 the second derivative of the effective potential
 """
-function d2ψeffdr2(d2ψ::Function,r::Float64,L::Float64)::Float64
+function d2ψeffdr2(model::Potential,r::Float64,L::Float64)::Float64
     if L == 0.
-        return d2ψ(r)
+        return d2ψ(model,r)
     end
         
-    return d2ψ(r) + 3 * (L)^(2) / (r^4)
+    return d2ψ(model,r) + 3 * (L)^(2) / (r^4)
 end
 
 ########################################################################
@@ -141,15 +141,15 @@ end
 
 radial velocity as a function of the orbital constants (a,e) and the anomaly u
 """
-function Vrad(ψ::F0,dψ::F1,
+function Vrad(model::Potential,
               u::Float64,a::Float64,e::Float64,
-              params::OrbitalParameters=OrbitalParameters())::Float64 where {F0 <: Function, F1 <: Function}
+              params::OrbitalParameters=OrbitalParameters())::Float64
 
-    E, L = ELFromAE(ψ,dψ,a,e,params)
+    E, L = ELFromAE(model,a,e,params)
 
     r = ru(u,a,e)
 
-    vrSQ = 2*(E - ψeff(ψ,r,L))
+    vrSQ = 2*(E - ψeff(model,r,L))
 
     if (vrSQ < 0.0) || isnan(vrSQ) || isinf(vrSQ)
         return 0.0
@@ -171,21 +171,21 @@ end
 Θ, the anomaly for computing orbit averages as a function of (a,e)
 equivalent to Θ = (dr/du)(1/Vrad)
 """
-function ΘAE(ψ::F0,dψ::F1,d2ψ::F2,
+function ΘAE(model::Potential,
              u::Float64,a::Float64,e::Float64,
-             params::OrbitalParameters=OrbitalParameters())::Float64 where {F0 <: Function, F1 <: Function, F2 <: Function}
+             params::OrbitalParameters=OrbitalParameters())::Float64
 
     # use the expanded approximation
     # CAUTION: 1-(1-EDGE) < EDGE is true ...
     # To prevent this → EDGE - eps(Float64)
     if ((1.0 - abs(u)) < (params.EDGE - eps(Float64)))
-        return ΘExpansionAE(ψ,dψ,d2ψ,u,a,e,params)
+        return ΘExpansionAE(model,u,a,e,params)
     end
 
     dr = drdu(u,a,e)
 
     # this can somehow be negative: do we need an extra check?
-    vr = Vrad(ψ,dψ,u,a,e,params)
+    vr = Vrad(model,u,a,e,params)
 
     if (vr == 0.0)
         # go back to the expansion -- or should we return 0.0?
@@ -205,9 +205,9 @@ end
 
 Used when u is sufficiently close to +1,-1
 """
-function ΘExpansionAE(ψ::F0,dψ::F1,d2ψ::F2,
+function ΘExpansionAE(model::Potential,
                       u::Float64,a::Float64,e::Float64,
-                      params::OrbitalParameters=OrbitalParameters())::Float64 where {F0 <: Function, F1 <: Function, F2 <: Function}
+                      params::OrbitalParameters=OrbitalParameters())::Float64
 
     # which boundary are we close to?
     ul = (u > 0.) ? 1.0 : -1.0
@@ -216,10 +216,10 @@ function ΘExpansionAE(ψ::F0,dψ::F1,d2ψ::F2,
     rl = ru(ul,a,e)
 
     # compute energy and angular momentum from the potential (allow for expansions)
-    L = LFromAE(ψ,dψ,a,e,params)
+    L = LFromAE(model,a,e,params)
 
     # compute the derivatives of the effective potential
-    dψeffl, d2ψeffl = dψeffdr(dψ,rl,L), d2ψeffdr2(d2ψ,rl,L)
+    dψeffl, d2ψeffl = dψeffdr(model,rl,L), d2ψeffdr2(model,rl,L)
 
     # compute the derivatives of the Henon f function
     d2fl, d3fl, d4fl = henond2f(ul), henond3f(ul), henond4f(ul)
@@ -241,9 +241,9 @@ function ΘExpansionAE(ψ::F0,dψ::F1,d2ψ::F2,
         u2 = ul * (1.0 - 2*params.EDGE)
         u3 = ul * (1.0 - 3*params.EDGE)
 
-        Θ1 = ΘAE(ψ,dψ,d2ψ,u1,a,e,params)
-        Θ2 = ΘAE(ψ,dψ,d2ψ,u2,a,e,params)
-        Θ3 = ΘAE(ψ,dψ,d2ψ,u3,a,e,params)
+        Θ1 = ΘAE(model,u1,a,e,params)
+        Θ2 = ΘAE(model,u2,a,e,params)
+        Θ3 = ΘAE(model,u3,a,e,params)
 
         return Interpolation2ndOrder(u,u1,Θ1,u2,Θ2,u3,Θ3)
     end
@@ -270,12 +270,12 @@ end
 
 numerical differentiation of Θ w.r.t. semimajor axis and eccentricity
 """
-function dΘAE(ψ::F0,dψ::F1,d2ψ::F2,
+function dΘAE(model::Potential,
               u::Float64,a::Float64,e::Float64,
-              params::OrbitalParameters=OrbitalParameters())::Tuple{Float64,Float64} where {F0 <: Function, F1 <: Function, F2 <: Function}
+              params::OrbitalParameters=OrbitalParameters())::Tuple{Float64,Float64}
 
     # Function to differentiate
-    fun(atemp::Float64,etemp::Float64) = ΘAE(ψ,dψ,d2ψ,u,atemp,etemp,params)
+    fun(atemp::Float64,etemp::Float64) = ΘAE(model,u,atemp,etemp,params)
     # Perform differentiation
     _, ∂Θ∂a, ∂Θ∂e = NumericalDerivativeAE(fun,a,e,params)
 

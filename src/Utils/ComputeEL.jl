@@ -22,13 +22,13 @@ Strategies:
 
 energy as a function of (a,e) for a given potential ψ (and its derivatives)
 """
-function EFromAE(ψ::F0,dψ::F1,
+function EFromAE(model::Potential,
                  a::Float64,e::Float64,
-                 params::OrbitalParameters=OrbitalParameters())::Float64 where {F0 <: Function, F1 <: Function}
+                 params::OrbitalParameters=OrbitalParameters())::Float64
 
     # Handling edges interpolations
     # IMPORTANT : has to be first !
-    fun(atemp::Float64,etemp::Float64) = EFromAE(ψ,dψ,atemp,etemp,params)
+    fun(atemp::Float64,etemp::Float64) = EFromAE(model,atemp,etemp,params)
     E = EdgeHandle(fun,a,e,params)
     if !(isnothing(E))
         return E
@@ -36,7 +36,7 @@ function EFromAE(ψ::F0,dψ::F1,
 
     # Edge cases
     if (a == 0.)
-        return ψ(0.)
+        return ψ(model,0.)
     elseif (e == 0.)
         return Ecirc(ψ,dψ,a)
     elseif (e == 1.)
@@ -44,7 +44,7 @@ function EFromAE(ψ::F0,dψ::F1,
     end
 
     # Generic
-    return ((1+e)^(2)*ψ(a*(1+e)) - (1-e)^(2)*ψ(a*(1-e))) / (4e)
+    return ((1+e)^(2)*ψ(model,a*(1+e)) - (1-e)^(2)*ψ(model,a*(1-e))) / (4e)
 end
 
 """
@@ -52,13 +52,13 @@ end
 
 angular momentum as a function of (a,e) for a given potenial ψ (and its derivatives)
 """
-function LFromAE(ψ::F0,dψ::F1,
+function LFromAE(model::Potential,
                  a::Float64,e::Float64,
-                 params::OrbitalParameters=OrbitalParameters())::Float64 where {F0 <: Function, F1 <: Function}
+                 params::OrbitalParameters=OrbitalParameters())::Float64
 
     # Handling edges interpolations
     # IMPORTANT : has to be first !
-    fun(atemp::Float64,etemp::Float64) = LFromAE(ψ,dψ,atemp,etemp,params)
+    fun(atemp::Float64,etemp::Float64) = LFromAE(model,atemp,etemp,params)
     L = EdgeHandle(fun,a,e,params)
     if !(isnothing(L))
         return L
@@ -68,13 +68,13 @@ function LFromAE(ψ::F0,dψ::F1,
     if (a == 0.)
         return 0.
     elseif (e == 0.)
-        return Lcirc(dψ,a)
+        return Lcirc(model,a)
     elseif (e == 1.)
         return 0.
     end
 
     # Generic
-    return a * (1-(e)^(2)) * sqrt( (ψ(a*(1+e)) - ψ(a*(1-e))) / (2e) )
+    return a * (1-(e)^(2)) * sqrt( (ψ(model,a*(1+e)) - ψ(model,a*(1-e))) / (2e) )
 end
 
 """
@@ -82,12 +82,12 @@ end
 
 combined energy + angular momentum as a function of (a,e) for a given potenial ψ (and its derivatives)
 """
-function ELFromAE(ψ::F0,dψ::F1,
+function ELFromAE(model::Potential,
                   a::Float64,e::Float64,
-                  params::OrbitalParameters=OrbitalParameters())::Tuple{Float64,Float64} where {F0 <: Function, F1 <: Function}
+                  params::OrbitalParameters=OrbitalParameters())::Tuple{Float64,Float64}
 
-    E = EFromAE(ψ,dψ,a,e,params)
-    L = LFromAE(ψ,dψ,a,e,params)
+    E = EFromAE(model,a,e,params)
+    L = LFromAE(model,a,e,params)
 
     return E, L
 end
@@ -103,10 +103,10 @@ end
 
 energy for an exactly radial orbit
 """
-function Erad(ψ::Function,
+function Erad(model::Potential,
               a::Float64)::Float64
 
-    return ψ(2*a)
+    return ψ(model,2*a)
 end
 
 ########################################################################
@@ -120,10 +120,10 @@ end
 
 energy for an exactly circular orbit.
 """
-function Ecirc(ψ::F0,dψ::F1,
-               a::Float64)::Float64 where {F0 <: Function, F1 <: Function}
+function Ecirc(model::Potential,
+               a::Float64)::Float64
 
-    return ψ(a) + 0.5*a*dψ(a)
+    return ψ(model,a) + 0.5*a*dψ(model,a)
 end
 
 """
@@ -131,10 +131,10 @@ end
 
 angular momentum for an exactly circular orbit.
 """
-function Lcirc(dψ::Function,
+function Lcirc(model::Potential,
                a::Float64)::Float64
 
-    return (sqrt(a))^(3)*sqrt(dψ(a))
+    return (sqrt(a))^(3)*sqrt(dψ(model,a))
 end
 
 
@@ -147,12 +147,12 @@ end
 """
     ComputeELAEWithDeriv(ψ,dψ,a,e,params)
 """
-function ComputeELAEWithDeriv(ψ::F0,dψ::F1,
+function ComputeELAEWithDeriv(model::Potential,
                               a::Float64,e::Float64,
-                              params::OrbitalParameters=OrbitalParameters())::Tuple{Float64,Float64,Float64,Float64,Float64,Float64} where {F0 <: Function, F1 <: Function}
+                              params::OrbitalParameters=OrbitalParameters())::Tuple{Float64,Float64,Float64,Float64,Float64,Float64}
 
     # Function to differentiate
-    fun(atemp::Float64,etemp::Float64) = ELFromAE(ψ,dψ,atemp,etemp,params)
+    fun(atemp::Float64,etemp::Float64) = ELFromAE(model,atemp,etemp,params)
     # Perform differentiation
     floc, ∂f∂a, ∂f∂e = NumericalDerivativeAE(fun,a,e,params)
     # Recast results
@@ -175,11 +175,11 @@ end
 
 Jacobian of the (a,e) ↦ (E,L) mapping, i.e. |∂(E,L)/∂(a,e)|
 """
-function JacAEToEL(ψ::F0,dψ::F1,
+function JacAEToEL(model::Potential,
                    a::Float64,e::Float64,
-                   params::OrbitalParameters=OrbitalParameters()) where {F0 <: Function, F1 <: Function}
+                   params::OrbitalParameters=OrbitalParameters())
 
-    _, _, ∂E∂a, ∂L∂a, ∂E∂e, ∂L∂e = ComputeELAEWithDeriv(ψ,dψ,a,e,params)
+    _, _, ∂E∂a, ∂L∂a, ∂E∂e, ∂L∂e = ComputeELAEWithDeriv(model,a,e,params)
 
     return abs(∂E∂a*∂L∂e - ∂L∂a*∂E∂e)
 end
@@ -193,11 +193,11 @@ end
 """
     ComputeAEFromEL(ψ,dψ,E,L,params)
 """
-function ComputeAEFromEL(ψ::F0,dψ::F1,
+function ComputeAEFromEL(model::Potential,
                          E::Float64,L::Float64,
-                         params::OrbitalParameters=OrbitalParameters())::Tuple{Float64,Float64} where {F0 <: Function, F1 <: Function}
+                         params::OrbitalParameters=OrbitalParameters())::Tuple{Float64,Float64}
 
-    a, e, _, _ = AEFromELBrute(E,L,ψ,dψ,params)
+    a, e, _, _ = AEFromELBrute(E,L,model,params)
 
     return a, e
 end
@@ -214,13 +214,13 @@ end
 
 energy as a function of (rp,ra) for a given potential ψ (and its derivatives)
 """
-function EFromRpRa(ψ::F0,dψ::F1,
+function EFromRpRa(model::Potential,
                    rp::Float64,ra::Float64,
-                   params::OrbitalParameters=OrbitalParameters())::Float64 where {F0 <: Function, F1 <: Function}
+                   params::OrbitalParameters=OrbitalParameters())::Float64
 
     a,e = AEFromRpRa(rp,ra)
 
-    return EFromAE(ψ,dψ,a,e,params)
+    return EFromAE(model,a,e,params)
 end
 
 
@@ -229,13 +229,13 @@ end
 
 angular momentum as a function of (rp,ra) for a given potential ψ (and its derivatives)
 """
-function LFromRpRa(ψ::F0,dψ::F1,
+function LFromRpRa(model::Potential,
                    rp::Float64,ra::Float64,
-                   params::OrbitalParameters=OrbitalParameters())::Float64 where {F0 <: Function, F1 <: Function}
+                   params::OrbitalParameters=OrbitalParameters())::Float64
 
     a,e = AEFromRpRa(rp,ra)
 
-    return LFromAE(ψ,dψ,a,e,params)
+    return LFromAE(model,a,e,params)
 end
 
 
@@ -244,11 +244,11 @@ end
 
 combined energy + angular momentum as a function of (rp,ra) for a given potenial ψ (and its derivatives)
 """
-function ELFromRpRa(ψ::F0,dψ::F1,
+function ELFromRpRa(model::Potential,
                     rp::Float64,ra::Float64,
-                    params::OrbitalParameters=OrbitalParameters())::Tuple{Float64,Float64} where {F0 <: Function, F1 <: Function}
+                    params::OrbitalParameters=OrbitalParameters())::Tuple{Float64,Float64}
 
     a,e = AEFromRpRa(rp,ra)
 
-    return ELFromAE(ψ,dψ,a,e,params)
+    return ELFromAE(model,a,e,params)
 end
