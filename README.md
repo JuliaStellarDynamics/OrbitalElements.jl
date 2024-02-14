@@ -76,7 +76,7 @@ To get more familiar with the content of the library and start and design your o
 
 First start by removing the package from the environment by running
 ```
-julia -e 'using Pkg; Pkg.rm("AstroBasis");'
+julia -e 'using Pkg; Pkg.rm("OrbitalElements");'
 ```
 <sup><sub>*If you worked in a given environment, do not forget the* `--project=/path/to/my_env` *option.*</sub></sup>
 
@@ -90,7 +90,7 @@ julia -e 'using Pkg; using Dates; Pkg.gc(collect_delay=Day(0));'
 ```
 <sup><sub>*No need for the* `--project=/path/to/my_env` *option here anyway!*</sub></sup>
 
-It will erase all the packages which are not known in any of your "active" (i.e., for which the Manifest.toml file is reachable) project/environments, in particular `AstroBasis`.
+It will erase all the packages which are not known in any of your "active" (i.e., for which the Manifest.toml file is reachable) project/environments, in particular `OrbitalElements`.
 
 ---
 ## Authors
