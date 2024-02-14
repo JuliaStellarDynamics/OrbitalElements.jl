@@ -1,57 +1,99 @@
 
 # OrbitalElements.jl
-## Version 1.9 (missing documentation)
 
-`OrbitalElements.jl` is a package written in Julia to compute numerical elements for astronomical orbits to high precision, for arbitrary potentials.
+[![image](https://github.com/JuliaStellarDynamics/OrbitalElements.jl/actions/workflows/documentation.yml/badge.svg?branch=documentation)](https://juliastellardynamics.github.io/OrbitalElements.jl/)
 
------------------------------
 
-### Quick activate
+`OrbitalElements` is a package written in Julia to compute numerical elements for astronomical orbits to high precision, for arbitrary potentials.
 
-`OrbitalElements` is (currently) unregistered, and as such if you would like to add it to your Julia registry, read [here](https://pkgdocs.julialang.org/v1/managing-packages/#Adding-unregistered-packages).
-Shortcut version:
-1. start julia (`julia`)
-2. open the package manager (`]`)
-3. if you want to add the package to a local environment, active it (`activate myenv`)
-4. Finally, add the package using the Git repository URL (`add https://github.com/michael-petersen/OrbitalElements.jl.git`).
+---
+## Quick installation and use test
 
-Then, in your program, if you want to access specific elements listed below, use `import OrbitalElements` (no function are currently exported from the package so the keyword `using` should not be used).
-Any function `fun` from the package should the be called using the prefix `OrbitalElements.`. If you want to shorten it in an alias, just import the package as `import OrbitalElements as myalias`.
+Install Julia by following the instructions at [julialang.org/downloads/](https://julialang.org/downloads/).
 
------------------------------
+To invoke Julia in the Terminal, you need to make sure that the `julia` command-line program is in your `PATH`. 
+See [here](https://julialang.org/downloads/platform/#optional_add_julia_to_path) for detailed instructions.
 
-### Sample potentials
+We will now proceed to the installation of the `OrbitalElements` library.
 
-`OrbitalElements` ships with a handful of simple potentials and distribution functions for testing purposes. These are located in `src/Potential`: (1) the 3d Isochrone potential, (2) the 3d Plummer potential, (3) the 2d Mestel-Zang disc, and (4) the 2d Kuzmin-Toomre disc. Corresponding distribution functions are located in `src/DistributionFunctions`.
+**Note on working with environments.** *By default packages are added to the default environment at ~/.julia/environments/v1.#.* 
+*It is however easy to create other, independent, projects.*
+*If you want to install the* `OrbitalElements` *package in a different/test environment, first create a folder to host the environment files (Project.toml and Manifest.toml which will be created later on).* 
+*Then, for every command line invoking Julia, use* `julia --project=/path/to/my_env` *instead of* `julia` *alone.* 
+*Note that packages will always be cloned in ~/.julia/packages but only accessible in your project's context.* 
+*A procedure to fully uninstall the package is described at the end of this readme.*
 
-----------------------------
+Install the `OrbitalElements` library by running
+```
+julia -e 'using Pkg; Pkg.add(url="https://github.com/JuliaStellarDynamics/OrbitalElements.jl.git")'
+```
+<sup><sub>*If you want to work in a given environment, do not forget the* `--project=/path/to/my_env` *option.*</sub></sup>
 
-### Obtaining Orbital Frequencies
 
-The principal use for `OrbitalElements` is to provide descriptions of orbits. This means
-1. Conversion from (semimajor axis, eccentricity) to (pericentre, apocentre) to (energy, angular momentum), to coordinates aligned with resonance vectors.
-2. Additional support for actions and angles.
+An introduction example is given in `example/test_OrbitalElements.jl`.
+Download the file by running:
+```
+wget https://raw.githubusercontent.com/JuliaStellarDynamics/OrbitalElements.jl/main/examples/test_OrbitalElements.jl
+```
+Then run the code with the following command
+```
+julia test_OrbitalElements.jl
+```
+<sup><sub>*If you want to work in a given environment, do not forget the* `--project=/path/to/my_env` *option.*</sub></sup>
 
-`ComputeFrequenciesAE(ψ,dψ,d2ψ,a,e)` will compute frequencies (Ω₁,Ω₂) given a potential (ψ) plus two derivatives (dψ,d2ψ), for an orbit described by semimajor axis and eccentricity.
+This example will first install some required libraries (`Plots`, `LaTeXStrings`) and their dependencies. These installations might take up to 4 minutes.
 
------------------------------
+The resulting plots will be created in the same folder as the test code under the names `IsochroneFrequencies.png`
 
-### Mapping to Resonance Space
+![`Isochrone frequencies`](examples/IsochroneFrequencies_original.png)
 
-For a given potential, one can also compute the resonance mappings, called (u,v). See `src/Resonance` for associated conversions.
-`UVFromαβ(α,β,n₁,n₂,ωmin,ωmax)` will compute the resonant mappings (u,v) for a given frequency pair (α,β), resonance vector (n₁,n₂), and frequency limits.
+and `ForwardBackwardErrors.png`.
 
------------------------------
+![`Forward+backward errors`](examples/ForwardBackwardErrors_original.png)
 
-### Notes
-By default, `OrbitalElements` uses semimajor axis and eccentricity. If you want to use pericentre and apocentre, transformations are available. `AEFromRpRa(rp,ra)` will return semimajor axis and eccentricity from pericentre and apocentre.
+---
+### Interactive notebook
 
-`OrbitalElements` also uses the Henon (1971) technique to cure radial velocity divergences at peri- and apocentre.
-<!--- One could use other methods; the software is constructed to allow for drop-in anomaly replacements. See `src/Henon`. --->
+If you prefer interactive Jupyter notebooks, you will need to install `IJulia` following these [instructions](https://github.com/JuliaLang/IJulia.jl).
 
------------------------------
+The interactive introduction example is then given in `example/test_OrbitalElements.ipynb`.
 
-### Authors
+---
+### Without installing Julia
+
+*If you do not want to install Julia but want to test the library, you can use this [Google colab notebook](https://colab.research.google.com/drive/1mCShKnyL9gIIuDhLsmvMJSO4F3JlSfSJ?usp=sharing).
+However, Google colab is not primarly made to run Julia code. 
+It will then need to be installed on the remote machine which can take a few minutes.
+This notebook is not maintained as a priority. We would recommend you install Julia on your machine to test the library locally.*
+
+---
+## Documentation and usage
+
+To get more familiar with the content of the library and start and design your own use case, you may want to visit the [documentation](https://juliastellardynamics.github.io/OrbitalElements.jl/).
+
+---
+## Uninstall
+
+First start by removing the package from the environment by running
+```
+julia -e 'using Pkg; Pkg.rm("AstroBasis");'
+```
+<sup><sub>*If you worked in a given environment, do not forget the* `--project=/path/to/my_env` *option.*</sub></sup>
+
+Following the same syntax, you can also remove the `Plots` and `LaTeXString` packages installed for the example if you want to. 
+
+If you worked in a test environment (that you do not want to keep) you can also simply erase the folder using `rm -r /path/to/my_env`.
+
+Then to fully erase the package (installed in ~/.julia), run
+```
+julia -e 'using Pkg; using Dates; Pkg.gc(collect_delay=Day(0));'
+```
+<sup><sub>*No need for the* `--project=/path/to/my_env` *option here anyway!*</sub></sup>
+
+It will erase all the packages which are not known in any of your "active" (i.e., for which the Manifest.toml file is reachable) project/environments, in particular `AstroBasis`.
+
+---
+## Authors
 
 Mike Petersen -  @michael-petersen - michael.petersen@roe.ac.uk
 
