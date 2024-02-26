@@ -33,7 +33,7 @@ Then run the code with the following command
 julia test_OrbitalElements.jl
 ```
 
-This example will first install some required libraries (`Plots`, `LaTeXStrings`) and their dependencies. These installations might take up to 4 minutes.
+This example will first install some required libraries (`Plots`, `LaTeXStrings`) and their dependencies. These installations might take up to 4 minutes. If it fails have a look at [known issues](#known-issues), open an issue or [contact us](#authors)
 
 The resulting plots will be created in the same folder as the test code under the names `IsochroneFrequencies.png`
 
@@ -42,6 +42,15 @@ The resulting plots will be created in the same folder as the test code under th
 and `ForwardBackwardErrors.png`.
 
 ![`Forward+backward errors`](examples/ForwardBackwardErrors_original.png)
+
+---
+### Known issues
+
+- ```Plots``` fails to precompile due to ```FFMPEG``` and ```BinaryProvider```: ```Plots``` probably installed an old version of ```FFMPEG``` while newer are supported (```BinaryProvider``` is outdated). Force the update of ```FFMPEG``` and recompile by running:
+```
+julia -e 'using Pkg; Pkg.update("FFMPEG");Pkg.precompile();'
+```
+<sup><sub>*Do not forget the* `--project=/path/to/my_env` *option if you are running in a local environment.*</sub></sup>
 
 ---
 ### Note on working with environments
