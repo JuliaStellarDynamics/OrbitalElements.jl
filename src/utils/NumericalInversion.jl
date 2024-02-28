@@ -293,11 +293,11 @@ function AfixedEFromJ(J::Float64,e::Float64,
     end
 
     # use bisection to find the circular orbit radius corresponding to given frequency
-    aguess = try bisection(a -> J - HenonJFromAE(ψ,dψ,a,e,params),rmin,rmax,tolx=tolx,tolf=tolf) catch;   -1. end
+    aguess = try bisection(a -> J - HenonJFromAE(model,a,e,params),rmin,rmax,tolx=tolx,tolf=tolf) catch;   -1. end
 
     # check if bisection failed: report why
     if (aguess == -1.)
-        if (HenonJFromAE(ψ,dψ,rmax,e,params) < J)
+        if (HenonJFromAE(model,rmax,e,params) < J)
             return AfixedEFromJ(J,e,model,rmax,10*rmax,params,tolx,tolf)
         elseif (J < HenonJFromAE(model,rmin,e,params))
             return AfixedEFromJ(J,e,model,rmin/10,rmin,params,tolx,tolf)

@@ -25,8 +25,9 @@
         @test (@allocated OrbitalElements.AEFromELBrute(E,L,pot,params)) == 0
         # J, L
         J, L = ComputeActionsAE(pot,a,e)
-        @test (@allocated ComputeAEFromActions(pot,a,e)) == 0
-        @test (@allocated ComputeAEFromActions(pot,a,e,params)) == 0
+        # @IMPROVE no analytic backward from actions for now
+        # @test (@allocated ComputeAEFromActions(pot,a,e)) == 0
+        @test (@allocated OrbitalElements.AEFromJLBrute(J,L,pot,params)) == 0
         # Ω₁, Ω₂
         Ω₁, Ω₂ = ComputeFrequenciesAE(pot,a,e)
         @test (@allocated ComputeAEFromFrequencies(pot,Ω₁,Ω₂)) == 0
