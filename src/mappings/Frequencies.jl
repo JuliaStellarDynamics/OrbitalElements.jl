@@ -15,7 +15,7 @@ include("Henon/Ufunc.jl")
 include("Henon/Frequencies.jl")
 
 # bring in the frequency inversion
-include("Utils/NumericalInversion.jl")
+include("../utils/NumericalInversion.jl")
 
 ########################################################################
 #

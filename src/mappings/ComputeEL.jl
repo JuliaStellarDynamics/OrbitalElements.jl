@@ -38,9 +38,9 @@ function EFromAE(model::Potential,
     if (a == 0.)
         return ψ(model,0.)
     elseif (e == 0.)
-        return Ecirc(ψ,dψ,a)
+        return Ecirc(model,a)
     elseif (e == 1.)
-        return Erad(ψ,a)
+        return Erad(model,a)
     end
 
     # Generic

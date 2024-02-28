@@ -19,8 +19,7 @@ end
 """
     MestelPotential([, R0, V0])
 
-Create a Mestel potential structure with 'characteristic radius' `R0`
-and circular velocity `V0`. 
+Create a Mestel potential structure with 'characteristic radius' `R0` and circular velocity `V0`. 
 
 The characteristic radius just set the potential offset, fixing ``ψ(R0)=0``. 
 """
@@ -32,13 +31,17 @@ end
 # Potential methods for Mestel
 #####################################
 function ψ(model::MestelPotential,r::Float64)
-
+    # Check for positive radius
+    if r<0; throw(DomainError(r, "Negative radius")); end
+    
     x = r/model.R0
     scale = model.V0^2
     return scale * log(x)
 end
 
 function dψ(model::MestelPotential,r::Float64)
+    # Check for positive radius
+    if r<0; throw(DomainError(r, "Negative radius")); end
 
     x = r/model.R0
     scale = model.V0^2 / model.R0
@@ -46,6 +49,8 @@ function dψ(model::MestelPotential,r::Float64)
 end
 
 function d2ψ(model::MestelPotential,r::Float64)
+    # Check for positive radius
+    if r<0; throw(DomainError(r, "Negative radius")); end
 
     x = r/model.R0
     scale = model.V0^2 / (model.R0^2)
@@ -79,10 +84,9 @@ struct TaperedMestel <: CentralCorePotential
 end
 
 """
-    TaperedMestel([, R0, V0])
+    TaperedMestel([, R0, V0, ε0])
 
-Create a tapered Mestel potential structure with 'characteristic radius' `R0`
-and circular velocity `V0` and taper length scale `ε0`. 
+Create a tapered Mestel potential structure with 'characteristic radius' `R0` and circular velocity `V0` and taper length scale `ε0`. 
 """
 function TaperedMestel(;R0::Float64=1.,V0::Float64=1.,ε0::Float64=1.e-5)
     return TaperedMestel(R0,V0,ε0)
@@ -92,6 +96,8 @@ end
 # Potential methods for tapered Mestel
 #####################################
 function ψ(model::TaperedMestel,r::Float64)
+    # Check for positive radius
+    if r<0; throw(DomainError(r, "Negative radius")); end
 
     x = r/model.R0
     scale = model.V0^2
@@ -99,29 +105,29 @@ function ψ(model::TaperedMestel,r::Float64)
 end
 
 function dψ(model::TaperedMestel,r::Float64)
+    # Check for positive radius
+    if r<0; throw(DomainError(r, "Negative radius")); end
 
     x = r/model.R0
     scale = model.V0^2 / model.R0
-    
     # Stable version at infinity (not stable in 0.)
     if x > 1.e5
         return scale / (x * (1 + (model.ε0/x)^2))
     end
-
     return scale * x / (model.ε0^2 + x^2)
 end
 
 function d2ψ(model::TaperedMestel,r::Float64)
+    # Check for positive radius
+    if r<0; throw(DomainError(r, "Negative radius")); end
 
     x = r/model.R0
     scale = model.V0^2 / (model.R0^2)
-
     # Stable version at infinity (not stable in 0.)
     if x > 1.e5
         d2 = (model.ε0/x)^2
         return scale * (d2 - 1) / ((x * (1 + d2))^2)
     end
-
     return  scale * (model.ε0^2 - x^2) / ((model.ε0^2 + x^2)^2)
 end
 

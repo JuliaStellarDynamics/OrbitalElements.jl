@@ -7,7 +7,7 @@ Pkg.add(["Plots","LaTeXStrings"])
 ########################################
 # Importing the necessary libraries
 ########################################
-import OrbitalElements
+using OrbitalElements
 using Plots
 using LaTeXStrings
 
@@ -22,13 +22,10 @@ cd(@__DIR__()) # Setting pwd to the directory where the example file is located
 # Creating the potential
 println("Creating the potential ... ")
 G, M, bc = 1.0, 1.0, 1.0
-ψ(r::Float64)   = OrbitalElements.ψIsochrone(r,bc,M,G)
-dψ(r::Float64)  = OrbitalElements.dψIsochrone(r,bc,M,G)
-d2ψ(r::Float64) = OrbitalElements.d2ψIsochrone(r,bc,M,G)
-Ω₀ = OrbitalElements.Ω₀Isochrone(bc,M,G)
+model = IsochronePotential(G=G,M=M,bc=bc)
 
 # Creating the parameter structure
-params = OrbitalElements.OrbitalParameters(Ω₀=Ω₀)
+params = OrbitalParameters(Ω₀=Ω₀(model))
 
 # Points (rescaled radius)
 println("Compute frequencies ... ")
@@ -42,8 +39,8 @@ tabΩ = zeros(2,ne)      # Storage for the numerical frequencies
 tabΩIso = zeros(2,ne)   # Storage for the analytic frequencies
 for j = 1:ne
     # Compute the frequencies at (a,e)
-    Ω1, Ω2 = OrbitalElements.ComputeFrequenciesAE(ψ,dψ,d2ψ,a,tabe[j],params)
-    Ω1true, Ω2true = OrbitalElements.IsochroneOmega12FromAE(a,tabe[j])
+    Ω1, Ω2 = OrbitalElements.ComputeFrequenciesAE(model,a,tabe[j],params)
+    Ω1true, Ω2true = OrbitalElements.ComputeFrequenciesAE(model,a,tabe[j])
     # Store them
     tabΩ[1,j], tabΩ[2,j] = Ω1, Ω2
     tabΩIso[1,j], tabΩIso[2,j] = Ω1true, Ω2true
@@ -79,9 +76,9 @@ for ka = 1:na
     for ke = 1:ne
         e = tabe[ke]
         # Forward mapping
-        Ω1, Ω2 = OrbitalElements.ComputeFrequenciesAE(ψ,dψ,d2ψ,loca,e,params)
+        Ω1, Ω2 = OrbitalElements.ComputeFrequenciesAE(model,loca,e,params)
         # Backward mapping
-        aback, eback = OrbitalElements.ComputeAEFromFrequencies(ψ,dψ,d2ψ,Ω1,Ω2,params)
+        aback, eback = OrbitalElements.ComputeAEFromFrequencies(model,Ω1,Ω2,params)
         # Error
         errtabAE[ka,ke] = abs((aback-loca)/loca) + abs(eback-e)
     end

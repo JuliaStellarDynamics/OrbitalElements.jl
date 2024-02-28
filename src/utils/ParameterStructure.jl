@@ -1,8 +1,27 @@
+
+
+#####################################
+# Default parameter values
+#####################################
+# recommendations for various default parameters:
+const DEFAULT_TOLECC = 0.01
+const DEFAULT_TOLA   = 0.1
+const DEFAULT_EDGE   = 0.01
+const DEFAULT_NINT   = 32
+const DEFAULT_RMIN   = 0.
+const DEFAULT_RC     = 1.
+const DEFAULT_RMAX   = Inf
+const DEFAULT_TOL    = 1.e-12
+const DEFAULT_DA     = 1.e-4
+const DEFAULT_DE     = 1.e-4
+const DEFAULT_ITERMAX= 100
+const DEFAULT_Ω0     = 1.0
+
+
 """
     Parameter structure for orbital computations
 
 """
-
 struct OrbitalParameters
 
     Ω₀::Float64       # characteristic frequency of the system

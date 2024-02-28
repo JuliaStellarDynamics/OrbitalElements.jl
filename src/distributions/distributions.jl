@@ -1,0 +1,6 @@
+# bring in the test distribution functions (not strictly needed)
+include("isochrone.jl")
+include("plummer.jl")
+include("mestelzang.jl")
+include("miyamoto.jl")
+include("isochrone_discs.jl")
