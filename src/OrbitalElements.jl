@@ -11,6 +11,7 @@ using HypergeometricFunctions   # potentials/distributions
 # Export
 #####################################
 # Potentials
+export Potential, CentralPotential, CentralCorePotential, CentralCuspPotential
 export IsochronePotential, PlummerPotential, MestelPotential, TaperedMestel
 export ψ, dψ, d2ψ, E₀, L₀, Ω₀
 # Mappings (naive)
