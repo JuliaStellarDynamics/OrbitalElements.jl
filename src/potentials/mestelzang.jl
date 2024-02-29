@@ -64,6 +64,8 @@ function Ω₀(model::MestelPotential)
     return model.V0 / model.R0
 end
 
+# @IMPROVE define E₀ and L₀ scales
+
 
 #####################################
 #
@@ -137,3 +139,5 @@ end
 function Ω₀(model::TaperedMestel)
     return model.V0 / model.R0
 end
+
+# @IMPROVE define E₀ and L₀ scales

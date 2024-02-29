@@ -20,7 +20,7 @@ jobs:
       - uses: actions/checkout@v2
       - uses: julia-actions/setup-julia@v1
         with:
-          version: '1.10' # Leave this line unchanged. '1' will automatically expand to the latest stable 1.x release of Julia.
+          version: '1' # Leave this line unchanged. '1' will automatically expand to the latest stable 1.x release of Julia.
           arch: x64
       - uses: julia-actions/julia-buildpkg@v1
       - uses: julia-actions/julia-runtest@v1

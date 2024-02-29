@@ -1,0 +1,4 @@
+# Ignore "documentation only" files
+# @WARNING Make sure they contain only non testable functions
+ignore:
+  - src/potentials/potentials.jl
