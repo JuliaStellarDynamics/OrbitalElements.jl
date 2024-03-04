@@ -10,4 +10,4 @@ makedocs(sitename = "OrbitalElements.jl",
                ],
          format = Documenter.HTML(prettyurls=false))
 
-deploydocs(repo="github.com/JuliaStellarDynamics/OrbitalElements.jl",devbranch="documentation")
+deploydocs(repo="github.com/JuliaStellarDynamics/OrbitalElements.jl")
