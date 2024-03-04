@@ -1,6 +1,7 @@
 
 # OrbitalElements.jl
 
+[![image](https://img.shields.io/badge/docs-dev-blue.svg)](https://juliastellardynamics.github.io/OrbitalElements.jl/dev/)
 [![image](https://github.com/JuliaStellarDynamics/OrbitalElements.jl/actions/workflows/devCI.yml/badge.svg?branch=v2.0)](https://github.com/JuliaStellarDynamics/OrbitalElements.jl/actions/workflows/devCI.yml)
 [![image](https://github.com/JuliaStellarDynamics/OrbitalElements.jl/actions/workflows/documentation.yml/badge.svg?branch=documentation)](https://juliastellardynamics.github.io/OrbitalElements.jl/)
 [![image](https://img.shields.io/badge/julia-stable-blue)](https://github.com/JuliaStellarDynamics/OrbitalElements.jl/actions/workflows/devCI.yml)
