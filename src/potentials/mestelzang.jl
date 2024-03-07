@@ -30,7 +30,7 @@ end
 #####################################
 # Potential methods for Mestel
 #####################################
-function ψ(model::MestelPotential,r::Float64)
+function ψ(r::Float64,model::MestelPotential)
     # Check for positive radius
     if r<0; throw(DomainError(r, "Negative radius")); end
     
@@ -39,7 +39,7 @@ function ψ(model::MestelPotential,r::Float64)
     return scale * log(x)
 end
 
-function dψ(model::MestelPotential,r::Float64)
+function dψ(r::Float64,model::MestelPotential)
     # Check for positive radius
     if r<0; throw(DomainError(r, "Negative radius")); end
 
@@ -48,7 +48,7 @@ function dψ(model::MestelPotential,r::Float64)
     return scale / x
 end
 
-function d2ψ(model::MestelPotential,r::Float64)
+function d2ψ(r::Float64,model::MestelPotential)
     # Check for positive radius
     if r<0; throw(DomainError(r, "Negative radius")); end
 
@@ -97,7 +97,7 @@ end
 #####################################
 # Potential methods for tapered Mestel
 #####################################
-function ψ(model::TaperedMestel,r::Float64)
+function ψ(r::Float64,model::TaperedMestel)
     # Check for positive radius
     if r<0; throw(DomainError(r, "Negative radius")); end
 
@@ -106,7 +106,7 @@ function ψ(model::TaperedMestel,r::Float64)
     return scale * log(x^2 + model.ε0^2) / 2
 end
 
-function dψ(model::TaperedMestel,r::Float64)
+function dψ(r::Float64,model::TaperedMestel)
     # Check for positive radius
     if r<0; throw(DomainError(r, "Negative radius")); end
 
@@ -119,7 +119,7 @@ function dψ(model::TaperedMestel,r::Float64)
     return scale * x / (model.ε0^2 + x^2)
 end
 
-function d2ψ(model::TaperedMestel,r::Float64)
+function d2ψ(r::Float64,model::TaperedMestel)
     # Check for positive radius
     if r<0; throw(DomainError(r, "Negative radius")); end
 

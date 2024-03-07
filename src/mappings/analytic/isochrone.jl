@@ -1,229 +1,254 @@
 
-#####################################
-# Analytical functions for Isochrone
-#####################################
+########################################################################
+#
+# Appropriate reduced coordinates
+#
+########################################################################
 """
-    SpSaFromRpRa(model::IsochronePotential, rp, ra)
+    spsa_from_rpra(rp, ra, model::AnalyticIsochrone)
 
 isochrone reduced coordinates from pericentre `rp` and apocentre `ra`.
 """
-function SpSaFromRpRa(model::IsochronePotential,rp::Float64,ra::Float64)
+function spsa_from_rpra(rp::Float64, ra::Float64, model::AnalyticIsochrone)
     xp, xa = (rp, ra) ./ model.bc
-    return sqrt(1+xp^2), sqrt(1+xa^2)
+    return sqrt(1 + xp^2), sqrt(1 + xa^2)
 end
 
 """
-    SpSaFromAE(model::IsochronePotential, a, e)
+    spsa_from_ae(a, e, model::AnalyticIsochrone)
 
 isochrone reduced coordinates from semi-major axis `a` and eccentricity `e`.
 """
-function SpSaFromAE(model::IsochronePotential,a::Float64,e::Float64)
-    rp, ra = RpRaFromAE(a,e)
-    return SpSaFromRpRa(model,rp,ra)
+function spsa_from_ae(a::Float64, e::Float64, model::AnalyticIsochrone)
+    rp, ra = rpra_from_ae(a, e)
+    return spsa_from_rpra(rp,ra, model)
 end
 
-"""   
-    EFromAE(model::IsochronePotential, a, e)
-
-for isochrone analytical version, see equation (G9) in Fouvry&Prunet (2021)
+########################################################################
+#
+# (a,e) ↔ (E,L) mappings
+#
+########################################################################
 """
-function EFromAE(model::IsochronePotential,a::Float64,e::Float64)
-    sp,sa = SpSaFromAE(model,a,e)
-    return E₀(model)/(sp+sa)
-end
-
-"""   
-    LFromAE(model::IsochronePotential, a, e)
-
-for isochrone analytical version, see equation (G9) in Fouvry&Prunet (2021)
+for isochrone analytical version, see equation (G9) in Fouvry & Prunet (2022)
 """
-function LFromAE(model::IsochronePotential,a::Float64,e::Float64)
-
-    rp, ra = RpRaFromAE(a,e)
+function EL_from_ae(
+    a::Float64,
+    e::Float64,
+    model::AnalyticIsochrone,
+    params::OrbitalParameters=OrbitalParameters()
+)
+    rp, ra = rpra_from_ae(a, e)
     xp, xa = (rp, ra) ./ model.bc
-    sp, sa = SpSaFromRpRa(model,rp,ra)
-    return sqrt(2)*L₀(model)*xp*xa/sqrt((1+sp)*(1+sa)*(sp+sa))
+    sp, sa = spsa_from_rpra(rp, ra, model)
+    E = E₀(model) / (sp + sa)
+    L = sqrt(2) * L₀(model) * xp * xa / sqrt((1 + sp) * (1 + sa) * (sp + sa))
+    return E, L 
 end
 
-"""
-    ELFromAE(model::IsochronePotential, a, e)
-
-for isochrone analytical version, see equation (G9) in Fouvry&Prunet (2021)
-"""
-function ELFromAE(model::IsochronePotential,a::Float64,e::Float64)
-    return EFromAE(model,a,e), LFromAE(model,a,e)
-end
-
-"""
-    JFromAE(model::IsochronePotential, a, e)
-
-for isochrone analytical version, see equation (G3) in Fouvry&Prunet (2021)
-"""
-function JFromAE(model::IsochronePotential,a::Float64,e::Float64)
-
-    E, L = ELFromAE(model,a,e)
-    return (model.G*model.M/sqrt(-2E)) - 0.5 * (L + sqrt(L*L + 4*model.G*model.M*model.bc))
-end
-
-"""
-    ComputeActionsAE(model::IsochronePotential, a, e)
-
-for isochrone analytical version, see equation (G3) in Fouvry&Prunet (2021)
-"""
-function ComputeActionsAE(model::IsochronePotential,a::Float64,e::Float64)
-
-    return JFromAE(model,a,e), LFromAE(model,a,e)
-end
-
-"""
-    αβFromAE(model::IsochronePotential, a, e)
-
-for isochrone analytical version, see equations (G5-G7) in Fouvry&Prunet (2021)
-"""
-function αβFromAE(model::IsochronePotential,a::Float64,e::Float64)
-
-    rp, ra = RpRaFromAE(a,e)
-    xp, xa = (rp, ra) ./ model.bc
-    sp,sa = SpSaFromRpRa(model,rp,ra)
-    return (2/(sp+sa))^(3/2), (1/2)*(1+(xp*xa)/((1+sp)*(1+sa)))
-end
-
-function ComputeFrequenciesAE(model::IsochronePotential,a::Float64,e::Float64)
-    
-    α, β = αβFromAE(model,a,e)
-    return FrequenciesFromαβ(α,β,Ω₀(model))
-end
-
-"""
-    ELFromαβ(model::IsochronePotential, α, β)
-
-for isochrone analytical version, 
-see equations @TOCOMPLETE in Fouvry&Prunet (2021)
-"""
-function ELFromαβ(model::IsochronePotential,α::Float64,β::Float64)
-
-    return 0.5*E₀(model)*(α)^(2/3), L₀(model)*(2.0*β-1.0)/(sqrt(β*(1.0-β)))
-end
 
 """    
-    AEFromEL(model::IsochronePotential, E, L)
-
 for isochrone analytical version, 
 see equations @TOCOMPLETE in Fouvry&Prunet (2021)
-
 @IMPROVE, uses a floor to avoid any sqrt problems with circular orbits
 """
-function AEFromEL(model::IsochronePotential,E::Float64,L::Float64)
-
-    xc = (0.5*E₀(model)/E) - 1.0
-    eccov = sqrt(max(0,1.0 - (L/L₀(model))^(2)*(1.0/xc)*(1.0+(1.0/xc))))
-    xp = sqrt(max(0.,(2.0 + xc*(1.0-eccov))*(xc*(1.0-eccov))))
-    xa = sqrt(max(0.,(2.0 + xc*(1.0+eccov))*(xc*(1.0+eccov))))
-    rp, ra = xp*model.bc, xa*model.bc
-
-    return AEFromRpRa(rp,ra)
+function ae_from_EL(
+    E::Float64,
+    L::Float64,
+    model::AnalyticIsochrone,
+    params::OrbitalParameters=OrbitalParameters()
+)
+    xc = E₀(model) / (2E) - 1
+    eccov = sqrt(max(0.0, 1 - (L / L₀(model))^2 * (1 / xc) * (1 + (1 / xc))))
+    xp = sqrt(max(0.0,(2 + xc * (1 - eccov)) * (xc * (1 - eccov))))
+    xa = sqrt(max(0.0,(2 + xc * (1 + eccov)) * (xc * (1 + eccov))))
+    rp, ra = xp * model.bc, xa * model.bc
+    return ae_from_rpra(rp, ra)
 end
 
-function ComputeAEFromFrequencies(model::IsochronePotential,Ω1::Float64,Ω2::Float64)
-    
-    # (Ω1,Ω2) ↦ (α,β), generically analytical
-    α, β = αβFromFrequencies(Ω1,Ω2,Ω₀(model))
-    # (α,β) ↦ (E,L), analytic expressions specific to isochrone potential
-    E, L = ELFromαβ(model,α,β)
-    # (E,L) ↦ (a,e), analytic expressions specific to isochrone potential
-    a, e = AEFromEL(model,E,L)
-
-    return a,e
+########################################################################
+#
+# (a,e) ↔ (J,L) mappings
+#
+########################################################################
+"""
+for isochrone analytical version, see equation (G3) in Fouvry & Prunet (2022)
+"""
+function _radial_action_from_ae(
+    a::Float64,
+    e::Float64,
+    model::AnalyticIsochrone,
+    params::OrbitalParameters=OrbitalParameters()
+)
+    E, L = EL_from_ae(a, e, model, params)
+    G, M, bc = model.G, model.M, model.bc
+    return G * M / sqrt(-2E) - (L + sqrt(L^2 + 4G * M * bc)) / 2
 end
 
+########################################################################
+#
+# (a,e) ↔ frequencies mappings: integrands
+#
+########################################################################
+"""
+the analytic expression for Theta for the isochrone profile are given in 
+Fouvry, Hamilton, Rozier, Pichon eq. (G10). It has the major advantage of 
+always being well-posed for -1<u<1
+"""
+function Θ(
+    u::Float64,
+    a::Float64,
+    e::Float64,
+    model::AnalyticIsochrone,
+    params::OrbitalParameters=OrbitalParameters()
+)
+    bc = model.bc
+    rp, ra = rpra_from_ae(a, e)
+    r = radius_from_anomaly(u,a,e)
 
-function isochronedthetaduFromrpra(r::Float64,u::Float64,rp::Float64,ra::Float64,bc::Float64=1.,M::Float64=1.,astronomicalG::Float64=1.)
+    xp, xa, xr = rp/bc, ra/bc, r/bc # Rescaled pericentre, apocentre, and radius
+    # Pre-computing
+    sqxp, sqxa, sqxr = sqrt(1 + xp^2), sqrt(1 + xa^2), sqrt(1 + xr^2) 
+    # Analytical expression of (dr/du)(1/vr), that is always well-posed
+    return (
+        3xr * sqrt(
+            (sqxr + sqxp) 
+            * (sqxr + sqxa) 
+            * (sqxp + sqxa)
+            / (xr + xp) 
+            / (xr + xa) 
+            / (4 - u^2)
+        )
+        / (sqrt(2) * Ω₀(model))
+    )
+end
+
+function dΘdu(
+    u::Float64,
+    a::Float64,
+    e::Float64,
+    model::AnalyticIsochrone,
+    params::OrbitalParameters=OrbitalParameters()
+)
+    bc = model.bc
+    rp, ra = rpra_from_ae(a, e)
+    r = radius_from_anomaly(u,a,e)
     #=
 
      the isochrone analytic Jacobian, Fouvry 21 G10
     =#
-    xp = rp/bc
-    xa = ra/bc
-    xr = r/bc
+    xp, xa, xr = rp/bc, ra/bc, r/bc # Rescaled pericentre, apocentre, and radius
     sr = sqrt(1+xr^(2))
-    Omega0 = Ω₀Isochrone(bc,M,astronomicalG)
-    Omega1,Omega2 = IsochroneOmega12FromRpRa(rp,ra,bc,M,astronomicalG)
-    sp,sa = IsochroneSpSaFromRpRa(rp,ra)
-    return (3/sqrt(2))*(Omega1/Omega0)*(xr/sqrt(4-u^(2)))*(sqrt((sr+sp)*(sr+sa)*(sp+sa))/sqrt((xr+xp)*(xr+xa)))
+    
+    Ω1, _ = frequencies_from_ae(a, e, model, params)
+    sp,sa = spsa_from_ae(rp,ra,model)
+    return (
+        (3/sqrt(2))
+        * (Ω1/Ω₀(model))
+        * (xr/sqrt(4-u^(2)))
+        * (sqrt((sr+sp)*(sr+sa)*(sp+sa))/sqrt((xr+xp)*(xr+xa)))
+    )
 end
 
+
+########################################################################
+#
+# (a, e) ↔ frequencies mappings
+#
+########################################################################
 """
-Theta function for the isochrone model
+for isochrone analytical version, see equations (G5-G7) in Fouvry&Prunet (2022)
 """
-function isochronedrduINVvrFromrpra(rp::Float64,ra::Float64,u::Float64,bc::Float64=1.,Omega0::Float64=1.)
-    a,e = AEFromRpRa(rp,ra)
-    r = ru(u,a,e)
-    xp, xa, xr = rp/bc, ra/bc, r/bc # Rescaled pericentre, apocentre, and radius
-    sqxp, sqxa, sqxr = sqrt(1.0+xp^(2)), sqrt(1.0+xa^(2)), sqrt(1.0+xr^(2)) # Pre-computing the values of sqrt(1+xp^2), sqrt(1+xa^2), and sqrt(1+xr^(2))
-    #####
-    drduINVvr = (3.0/(sqrt(2.0)))/(Omega0)*xr*sqrt(((sqxr+sqxp)*(sqxr+sqxa)*(sqxp+sqxa))/((xr+xp)*(xr+xa)*(4.0-u^(2))))# Analytical expression of (dr/du)(1/vr), that is always well-posed
-    return drduINVvr # Output
+function αβ_from_ae(
+    a::Float64,
+    e::Float64,
+    model::AnalyticIsochrone,
+    params::OrbitalParameters=OrbitalParameters()
+)
+    rp, ra = rpra_from_ae(a, e)
+    xp, xa = (rp, ra) ./ model.bc
+    sp, sa = spsa_from_rpra(rp, ra, model)
+    return (2 / (sp + sa))^(3/2), (1 + (xp * xa) / ((1 + sp) * (1 + sa))) / 2
+end
+
+function ae_from_αβ(
+    α::Float64,
+    β::Float64,
+    model::AnalyticIsochrone,
+    params::OrbitalParameters=OrbitalParameters()
+)
+    # (α,β) ↦ (E,L), analytic expressions specific to isochrone potential
+    E, L = EL_from_αβ(α, β, model, params)
+    # (E,L) ↦ (a,e), analytic expressions specific to isochrone potential
+    a, e = ae_from_EL(E, L, model, params)
+    return a, e
+end
+
+function ae_from_frequencies(
+    Ω1::Float64,
+    Ω2::Float64,
+    model::AnalyticIsochrone,
+    params::OrbitalParameters=OrbitalParameters()
+)
+    α, β = αβ_from_frequencies(Ω1, Ω2, model)
+    return ae_from_αβ(α, β, model, params)
+end
+
+function _β_from_α_circular(
+    α::Float64,
+    model::AnalyticIsochrone,
+    params::OrbitalParameters=OrbitalParameters()
+)::Float64
+    return 1/(1 + α^(2/3))
+end
+
+########################################################################
+#
+# (E,L) ↔ frequencies mappings
+#
+########################################################################
+"""
+for isochrone analytical version, see equations @TOCOMPLETE in Fouvry&Prunet (2022)
+"""
+function EL_from_αβ(
+    α::Float64,
+    β::Float64,
+    model::AnalyticIsochrone,
+    params::OrbitalParameters=OrbitalParameters()
+)
+    return 0.5 * E₀(model) * α^(2/3), L₀(model) * (2β - 1) / (sqrt(β * (1 - β)))
 end
 
 
 """
 analytic jacobian for the change of variables from E,L to α,β
+
+@WARNING: given as a function of `α` and `β`, very confusing !!
 """
-function IsochroneJacELtoαβ(α::Float64,
-                                   β::Float64,
-                                   bc::Float64=1.,
-                                   M::Float64=1.,
-                                   astronomicalG::Float64=1.)
-
-    scaleEnergy = isochroneE0(bc,M,astronomicalG)
-    scaleAction = isochroneL0(bc,M,astronomicalG)
-    Omega0      = Ω₀Isochrone(bc,M,astronomicalG)
-
-    return abs((1.0/6.0)*scaleEnergy*scaleAction/(α^(1/3)*(β*(1.0-β))^(3/2)))#*(1.0/Omega0)) # Output of the ABSOLUTE VALUE of the Jacobian. ATTENTION, contains the rescaling factor 1/Omega0
-end
-
-
-"""analytic definition of βc"""
-function IsochroneβC(x::Float64)::Float64
-    return 1/(1 + x^(2/3))
-end
-
-"""
-the analytic expression for Theta for the isochrone profile
-Fouvry, Hamilton, Rozier, Pichon eq. G10
-this has the major advantage of always being well-posed for -1<u<1
-"""
-function ThetaRpRaIsochrone(rp::Float64,ra::Float64,
-                            u::Float64;
-                            bc::Float64=1.0,Ω₀::Float64=1.0)::Float64
-
-    # compute helper quantities: used for the mapping from u
-    a,e = AEFromRpRa(rp,ra)
-    r = ru(u,a,e)
-
-    # rescaled pericentre, apocentre, and radius
-    xp, xa, xr = rp/bc, ra/bc, r/bc
-
-    # pre-compute the values of sqrt(1+xp^2), sqrt(1+xa^2), and sqrt(1+xr^(2))
-    sqxp, sqxa, sqxr = sqrt(1.0+xp^(2)), sqrt(1.0+xa^(2)), sqrt(1.0+xr^(2))
-
-    # analytical expression of (dr/du)(1/vr), that is always well-posed
-    drduINVvr = (3.0/(sqrt(2.0)))/(Ω₀)*xr*sqrt(((sqxr+sqxp)*(sqxr+sqxa)*(sqxp+sqxa))/((xr+xp)*(xr+xa)*(4.0-u^(2))))
-
-    # output
-    return drduINVvr
-
+function EL_to_αβ_jacobian(
+    α::Float64,
+    β::Float64,
+    model::AnalyticIsochrone,
+    params::OrbitalParameters=OrbitalParameters()
+)
+    return abs((1/6)* E₀(model) * L₀(model) / (α^(1/3) * (β * (1 - β))^(3/2))) 
 end
 
 
 
-
+############################################################################################
+#
+#
+# @IMPROVE: Function below not adapted to v2.0
+#
+#
+############################################################################################
 """
 # Returning the resonance frequency,
 # along the circular orbit
 """
-function OmgCircIsochrone(n1::Int64,n2::Int64,α::Float64)
-    return n1*α + n2*α*IsochroneβC(α) # Output of the circular frequency
+function _ωn(n1::Int64,n2::Int64,α::Float64)
+    return n1*α + n2*α*_β_from_α_circular(α,model,params) # Output of the circular frequency
 end
 
 

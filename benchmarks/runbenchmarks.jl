@@ -11,27 +11,26 @@ function bench()
     println("git commit: "*LibGit2.head((@__DIR__)*"/.."))
 
     # Considered potential (isochrone)
-    pot = IsochronePotential()
-    params = OrbitalParameters(Ω₀=Ω₀(pot))
+    anapot = AnalyticIsochrone()
+    numpot = NumericalIsochrone()
+    params = OrbitalParameters(Ω₀=Ω₀(numpot))
     # Considered locations
     a, e = 1.0, 0.05
     u = 0.4
-    Ω1, Ω2 = ComputeFrequenciesAE(pot,a,e)
+    Ω1, Ω2 = frequencies_from_ae(a,e,anapot)
 
     println("ANALYTICAL COMPUTATIONS:")
     println("Frequencies computation Benchmark")
-    @btime ComputeFrequenciesAE($pot,$a,$e)
+    @btime frequencies_from_ae($a,$e,$anapot)
     println("Frequencies inversion Benchmark")
-    @btime ComputeAEFromFrequencies($pot,$Ω1,$Ω2)
+    @btime ae_from_frequencies($Ω1,$Ω2,$anapot)
     println("NUMERICAL COMPUTATIONS:")
     println("Frequencies integrand computation Benchmark")
-    @btime OrbitalElements.ΘAE($pot,$u,$a,$e,$params)
+    @btime OrbitalElements.Θ($u,$a,$e,$numpot,$params)
     println("Frequencies computation Benchmark")
-    @btime ComputeFrequenciesAE($pot,$a,$e,$params)
+    @btime frequencies_from_ae($a,$e,$numpot,$params)
     println("Frequencies inversion Benchmark")
-    @btime ComputeAEFromFrequencies($pot,$Ω1,$Ω2,$params)
-    _, _, niter, _ = OrbitalElements.AEFromΩ1Ω2Brute(Ω1,Ω2,pot,params)
-    println("Number of iterations : ",niter)
+    @btime ae_from_frequencies($Ω1,$Ω2,$numpot,$params)
 end
 
 bench()

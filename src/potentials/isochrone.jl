@@ -1,42 +1,60 @@
 """
 The isochrone potential definitions
 
-  isochrone.jl is unique in that we can define many of the quantities analytically, which makes for a useful testbed for empirical potentials.
-
-  nearly all quantities for the isochrone potential can be computed analytically
-
+Isochrone is unique in that we can define almost all mappings analytically.
+The AnalyticIsochrone potential model takes advantage of these. The analytic mappings are detailed in mappings/analytic
 """
 
 #####################################
 # Isochrone structures
 #####################################
 
-"""
-Isochrone potential structure
-"""
-struct IsochronePotential <: CentralCorePotential
+abstract type IsochronePotential <: CentralCorePotential end
+struct NumericalIsochrone <: IsochronePotential
+    G::Float64      # Gravitational constant
+    M::Float64      # Total mass
+    bc::Float64     # Characteristic radius
+end
+struct AnalyticIsochrone <: IsochronePotential
     G::Float64      # Gravitational constant
     M::Float64      # Total mass
     bc::Float64     # Characteristic radius
 end
 
 """
-    IsochronePotential([, G, M, bc])
+    NumericalIsochrone([, G, M, bc])
 
-Create an Isochrone potential structure with characteristic radius `bc`, total mass `M` and gravitational constant `G`.
+create an Isochrone potential model with characteristic radius `bc`, total mass `M` and gravitational constant `G`.
+
+This isochrone model will use the default numerical computations
 """
-function IsochronePotential(;G::Float64=1.,M::Float64=1.,bc::Float64=1.)
+function NumericalIsochrone(;G::Float64=1.,M::Float64=1.,bc::Float64=1.)
     # Check for positive mass and radius
     if M<0; throw(DomainError(M, "Negative mass")); end
     if bc≤0; throw(DomainError(bc, "Negative characteristic radius")); end
 
-    return IsochronePotential(G,M,bc)
+    return NumericalIsochrone(G,M,bc)
+end
+
+"""
+    AnalyticIsochrone([, G, M, bc])
+
+create an Isochrone potential model with characteristic radius `bc`, total mass `M` and gravitational constant `G`.
+
+This isochrone model will use the analytic mappings.
+"""
+function AnalyticIsochrone(;G::Float64=1.,M::Float64=1.,bc::Float64=1.)
+    # Check for positive mass and radius
+    if M<0; throw(DomainError(M, "Negative mass")); end
+    if bc≤0; throw(DomainError(bc, "Negative characteristic radius")); end
+
+    return AnalyticIsochrone(G,M,bc)
 end
 
 #####################################
 # Potential methods for the Isochrone
 #####################################
-function ψ(model::IsochronePotential,r::Float64)
+function ψ(r::Float64,model::IsochronePotential)
     # Check for positive radius
     if r<0; throw(DomainError(r, "Negative radius")); end
 
@@ -45,7 +63,7 @@ function ψ(model::IsochronePotential,r::Float64)
     return - scale / (1.0+sqrt(1.0+x^2))
 end
 
-function dψ(model::IsochronePotential,r::Float64)
+function dψ(r::Float64,model::IsochronePotential)
     # Check for positive radius
     if r<0; throw(DomainError(r, "Negative radius")); end
 
@@ -54,7 +72,7 @@ function dψ(model::IsochronePotential,r::Float64)
     return scale / (sqrt(1.0+x^(-2))*(1.0+sqrt(1.0+x^2))^2)
 end
 
-function d2ψ(model::IsochronePotential,r::Float64)
+function d2ψ(r::Float64,model::IsochronePotential)
     # Check for positive radius
     if r<0; throw(DomainError(r, "Negative radius")); end
 

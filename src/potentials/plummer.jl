@@ -34,7 +34,7 @@ end
 #####################################
 # Potential methods for Plummer
 #####################################
-function ψ(model::PlummerPotential,r::Float64)
+function ψ(r::Float64,model::PlummerPotential)
     # Check for positive radius
     if r<0; throw(DomainError(r, "Negative radius")); end
 
@@ -43,7 +43,7 @@ function ψ(model::PlummerPotential,r::Float64)
     return - scale / sqrt(1.0+x^2)
 end
 
-function dψ(model::PlummerPotential,r::Float64)
+function dψ(r::Float64,model::PlummerPotential)
     # Check for positive radius
     if r<0; throw(DomainError(r, "Negative radius")); end
     
@@ -56,7 +56,7 @@ function dψ(model::PlummerPotential,r::Float64)
     return scale * x / (sqrt(1.0+x^2))^3
 end
 
-function d2ψ(model::PlummerPotential,r::Float64)
+function d2ψ(r::Float64,model::PlummerPotential)
     # Check for positive radius
     if r<0; throw(DomainError(r, "Negative radius")); end
 

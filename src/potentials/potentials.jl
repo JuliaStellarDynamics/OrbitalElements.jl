@@ -29,7 +29,7 @@ abstract type CentralCuspPotential <: CentralPotential end
 
 Potential value for central potential `model` at radius `r`.
 """
-function ψ(model::CentralPotential, r::Number)
+function ψ(r::Number, model::CentralPotential)
     # ... [model specific implementation] ...
 end
 
@@ -38,7 +38,7 @@ end
 
 Potential derivative value for central potential `model` at radius `r`.
 """
-function dψ(model::CentralPotential, r::Number)
+function dψ(r::Number, model::CentralPotential)
     # ... [model specific implementation] ...
 end
 
@@ -47,7 +47,7 @@ end
 
 Potential second derivative for central potential `model` at radius `r`.
 """
-function d2ψ(model::CentralPotential, r::Number)
+function d2ψ(r::Number, model::CentralPotential)
     # ... [model specific implementation] ...
 end
 

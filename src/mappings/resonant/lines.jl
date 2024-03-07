@@ -1,3 +1,11 @@
+########################################################################
+#
+# (J,L) ↦ (u,v) resonances lines in actions space
+# These methods for resonance are not use/usable
+# @IMPROVE: adapt to v2.0
+# @IMPROVE: make them accessible while allowing for other integration methods
+#
+########################################################################
 
 """
     GetResLineJL!(ω,k1,k2,model,tabresult,params)
