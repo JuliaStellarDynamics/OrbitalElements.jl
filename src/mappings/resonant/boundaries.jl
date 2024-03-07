@@ -46,7 +46,7 @@ function frequency_extrema(
     # define the function to extremise
     ωncirc(x::Float64)::Float64 = _αcircular(x, model) * (n1 + n2 * _βcircular(x, model))
     # If rmax is infinite, bisection search on a bounded interval
-    rc, rmin, rmax = paramc.rc, params.rmin, params.rmax
+    rc, rmin, rmax = params.rc, params.rmin, params.rmax
     xext = _extremise_noedges(ωncirc, rmin, min(rmax, 1e8 * rc))
     # The extreme values of n.Ω/Ω₀ is either :
     #   - on the radial line, at α = αmin or αmax
@@ -127,6 +127,7 @@ function v_boundaries(
     # βcircular as a function of αcircular
     βc(αc::Float64)::Float64 = _β_from_α_circular(αc, model, params)
 
+    n1,n2 = res.number[1],res.number[2]
     if n2 == 0 # v = β
         #####
         # (B9) Fouvry & Prunet : 1st inequality
@@ -193,7 +194,7 @@ function v_boundaries(
                 locrmin, locrmax = min(rmin, locrmin), max(rmax, locrmax)
                 vbound = _α_inner_extremum(n1, n2, model, rc, locrmin, locrmax)
                 # If we have found an extremum in the inner domain
-                if !(vbound in (αcircular(locrmin, model), αcircular(locrmax, model)))
+                if !(vbound in (_αcircular(locrmin, model), _αcircular(locrmax, model)))
                     monotonic = false
                 else 
                     monotonic = true
@@ -269,9 +270,9 @@ function _α_inner_extremum(
 
     # If the extremum is reached at the imposed maximal boundary
     # Use the true rmax (not the artificial 1.e8*rc, which is here to handle Inf)
-    if (xext == locrmax)
-        xext = rmax
-    end
+    #if (xext == locrmax)
+    #    xext = rmax
+    #end
 
     return _αcircular(xext, model)
 end
