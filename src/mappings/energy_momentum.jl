@@ -46,7 +46,7 @@ function EL_from_ae(
     end
     # Handling (a,e)-domain edges through interpolation
     # IMPORTANT : has to be before the generic computation
-    fun(atmp::Float64, etmp::Float64) = E_from_ae(atmp, etmp, model, params)
+    fun(atmp::Float64, etmp::Float64) = EL_from_ae(atmp, etmp, model, params)
     res = _interpolate_edges_ae(fun, a, e, params)
     if !isnothing(res)
         return res

@@ -266,13 +266,14 @@ function _α_inner_extremum(
     # define the function to extremise
     ωncirc(x::Float64)::Float64 = _αcircular(x, model) * (n1 + n2 * _βcircular(x, model))
     # If rmax is infinite, bisection search on a bounded interval
-    xext = _extremise_noedges(ωncirc, rmin, min(rmax, 1e8 * rc))
+    locrmax = min(rmax, 1e8 * rc)
+    xext = _extremise_noedges(ωncirc, rmin, locrmax)
 
     # If the extremum is reached at the imposed maximal boundary
-    # Use the true rmax (not the artificial 1.e8*rc, which is here to handle Inf)
-    #if (xext == locrmax)
-    #    xext = rmax
-    #end
+    # Use the true rmax (not the artificial 1e8 * rc, which is here to handle Inf)
+    if (xext == locrmax)
+       xext = rmax
+    end
 
     return _αcircular(xext, model)
 end
