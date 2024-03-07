@@ -4,6 +4,12 @@
 # @IMPROVE list untested stuff
 
 @testset "mappings" begin
+    @testset "model independent" begin
+        a, e = 1.0, 0.5
+        rp, ra = rpra_from_ae(a, e)
+        @test all(rpra_from_ae(1.0, 0.0) .≈ (1.0, 1.0))
+        @test rpra_to_ae_jacobian(rp, ra) * ae_to_rpra_jacobian(a, e) ≈ 1
+    end
     # Compare analytical to numerical results in the isochrone
     anapot = AnalyticIsochrone()
     numpot = NumericalIsochrone()

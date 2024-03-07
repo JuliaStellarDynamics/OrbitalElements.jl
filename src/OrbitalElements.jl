@@ -22,6 +22,7 @@ export rpra_from_ae, ae_from_rpra
 export EL_from_ae, actions_from_ae
 export αβ_from_ae, frequencies_from_ae
 # mappings (jacobians)
+export ae_to_rpra_jacobian, rpra_to_ae_jacobian
 # mappings (backward)
 export ae_from_EL, ae_from_actions
 export ae_from_αβ, ae_from_frequencies

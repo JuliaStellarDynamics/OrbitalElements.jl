@@ -39,7 +39,7 @@ end
 
 Jacobian of the (a,e) ↦ (rp,ra) mapping, i.e. |∂(rp,ra)/∂(a,e)|
 """
-function JacAEToRpRa(a::Float64,e::Float64)::Float64
+function ae_to_rpra_jacobian(a::Float64,e::Float64)::Float64
     _checkdomain_ae(a, e)
     return 2a
 end
