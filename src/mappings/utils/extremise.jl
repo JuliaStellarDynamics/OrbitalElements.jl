@@ -59,7 +59,6 @@ function _bisection(
             xl, fl = xm, fm # The lower point becomes the midpoint
         end
         if k == nitermax
-            warn("Maximal number of iterations reached in bisection.")
             return xm
         end
     end
@@ -84,12 +83,12 @@ function _extremise(fun::Function,
     dfun = x -> (fun(x + dx) - fun(x)) / dx
     # Searching for derivative cancellation
     # Precision on x cannot be better than dx
-    xm = try 
-        _bisection(dfun, xl, xu; tolx=dx, tolf=tolf) 
-    catch; 
-        abs(fun(xu)) < abs(fun(xl)) ? xl : xu 
+    # Asserting 0 ∈ "[df(xl),df(xu)]"
+    if dfun(xl) * dfun(xu) > 0
+        return abs(fun(xu)) < abs(fun(xl)) ? xl : xu
     end
-    return xm
+    # Otherwise bisection should work
+    return _bisection(dfun, xl, xu; tolx=dx, tolf=tolf) 
 end
 
 """

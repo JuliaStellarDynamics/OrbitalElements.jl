@@ -11,6 +11,28 @@ derivatives.
 #
 ########################################################################
 """
+    _Ω1circular(a, model)
+"""
+function _Ω1circular(a::Float64, model::Potential)::Float64
+    if a == 0.
+        return 2 * sqrt(abs(d2ψ(0., model)))
+    end
+
+    return sqrt(d2ψ(a, model) + 3 * dψ(a, model) / a)
+end
+
+"""
+    _Ω2circular(a, model)
+"""
+function _Ω2circular(a::Float64, model::Potential)::Float64
+    if (a == 0.)
+        return sqrt(abs(d2ψ(0., model)))
+    end
+
+    return sqrt(dψ(a, model)/a)
+end
+
+"""
     _αcircular(a, model)
 
 mapping from radius `a` to the dimensionless radial frequency `α` for circular orbits, 
@@ -19,11 +41,7 @@ from the epicyclic approximation
 `a` stands for the semi-major axis (equivalent to guiding radius r for a circular orbit)
 """
 function _αcircular(a::Float64, model::Potential)::Float64
-    if a == 0.
-        return 2 * sqrt(abs(d2ψ(0., model))) / frequency_scale(model)
-    end
-
-    return sqrt(d2ψ(a, model) + 3 * dψ(a, model) / a) / frequency_scale(model)
+    return _Ω1circular(a, model) / frequency_scale(model)
 end
 
 """
@@ -34,7 +52,7 @@ approximation
 
 `a` stands for the semi-major axis (equivalent to guiding radius r for a circular orbit)
 
-Careful treatment implemented for `a == Inf`.
+Careful treatment implemented for `a == Inf`. (0/0 limit)
 @IMPROVE For inner limit, has to be 1/2 for core potentials but not necessarly for cusps.
 """
 function _βcircular(a::Float64, model::Potential)::Float64
@@ -60,7 +78,7 @@ function _βcircular(a::Float64, model::Potential)::Float64
         return sqrt(1 / (3 + γ))
     end
 
-    return sqrt(dψ(a, model) / a) / (_αcircular(a, model) * frequency_scale(model))
+    return _Ω2circular(a, model) / _Ω1circular(a, model)
 end
 
 
@@ -117,7 +135,7 @@ function _radius_from_αcircular(
         return 0.
     elseif α > _αcircular(0., model)
         # @IMPROVE: better be an error (to merge with the other domain error)
-        warn("Out of bound circular frequency α. Returning r=0 anyway.")
+        println("Out of bound circular frequency α. Returning r=0 anyway.")
         return 0.
     elseif α == _αcircular(Inf, model)
         return Inf

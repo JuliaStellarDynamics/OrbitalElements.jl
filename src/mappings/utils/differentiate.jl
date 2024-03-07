@@ -52,7 +52,9 @@ function _derivatives_points_ae(
     # Check for borders and tolerance limits and adapt
     if a < tola && ap >= tola
         if a - da <= 0.
-            warn("Too low tolerance on semimajor axis for the numerical derivative step.")
+            println(
+                "Too low tolerance on semimajor axis for the numerical derivative step."
+            )
         else
             ap = a - da
             da *= -1.0
@@ -60,7 +62,9 @@ function _derivatives_points_ae(
     end
     if e < tole && ep >= tole
         if e - de < 0.
-            warn("Too low tolerance on eccentricity for the numerical derivative step.")
+            println(
+                "Too low tolerance on eccentricity for the numerical derivative step."
+            )
         else
             ep = e - de
             de *= -1.0
@@ -68,7 +72,9 @@ function _derivatives_points_ae(
     elseif ep > 1.0 - tole
         if ep > 1.0 || (e < 1.0 - tole)
             if ep > 1.0 && e - de < 1.0 - tole
-                warn("Too low tolerance on eccentricity for the numerical derivative step.")
+                println(
+                    "Too low tolerance on eccentricity for the numerical derivative step."
+                )
             else
                 ep = e - de
                 de *= -1.0

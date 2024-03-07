@@ -127,7 +127,7 @@ function v_boundaries(
     # βcircular as a function of αcircular
     βc(αc::Float64)::Float64 = _β_from_α_circular(αc, model, params)
 
-    n1,n2 = res.number[1],res.number[2]
+    n1, n2 = res.number
     if n2 == 0 # v = β
         #####
         # (B9) Fouvry & Prunet : 1st inequality
