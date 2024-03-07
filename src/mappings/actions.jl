@@ -149,7 +149,7 @@ function _initial_a_from_J(
     rootequation(a::Float64) = J - _radial_action_from_ae(a, e, model, params)
     # Tweak xmin and xmax to get the radial action in bounds
     # Safe while loop since we check that the action is indeed reachable
-    rmin, rmax = params.rmin, min(params.rmax,1.e8*params.rc)
+    rmin, rmax = params.rmin, min(params.rmax, 1.e8 * params.rc)
     while rootequation(rmin) < 0 # J(rmin) > J_objective
         rmin /= 2
     end

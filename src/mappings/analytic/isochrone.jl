@@ -41,8 +41,8 @@ function EL_from_ae(
     rp, ra = rpra_from_ae(a, e)
     xp, xa = (rp, ra) ./ model.bc
     sp, sa = spsa_from_rpra(rp, ra, model)
-    E = E₀(model) / (sp + sa)
-    L = sqrt(2) * L₀(model) * xp * xa / sqrt((1 + sp) * (1 + sa) * (sp + sa))
+    E = energy_scale(model) / (sp + sa)
+    L = sqrt(2) * momentum_scale(model) * xp * xa / sqrt((1 + sp) * (1 + sa) * (sp + sa))
     return E, L 
 end
 
@@ -58,8 +58,8 @@ function ae_from_EL(
     model::AnalyticIsochrone,
     params::OrbitalParameters=OrbitalParameters()
 )
-    xc = E₀(model) / (2E) - 1
-    eccov = sqrt(max(0.0, 1 - (L / L₀(model))^2 * (1 / xc) * (1 + (1 / xc))))
+    xc = energy_scale(model) / (2E) - 1
+    eccov = sqrt(max(0.0, 1 - (L / momentum_scale(model))^2 * (1 / xc) * (1 + (1 / xc))))
     xp = sqrt(max(0.0,(2 + xc * (1 - eccov)) * (xc * (1 - eccov))))
     xa = sqrt(max(0.0,(2 + xc * (1 + eccov)) * (xc * (1 + eccov))))
     rp, ra = xp * model.bc, xa * model.bc
@@ -119,7 +119,7 @@ function Θ(
             / (xr + xa) 
             / (4 - u^2)
         )
-        / (sqrt(2) * Ω₀(model))
+        / (sqrt(2) * frequency_scale(model))
     )
 end
 
@@ -144,7 +144,7 @@ function dΘdu(
     sp,sa = spsa_from_ae(rp,ra,model)
     return (
         (3/sqrt(2))
-        * (Ω1/Ω₀(model))
+        * (Ω1/frequency_scale(model))
         * (xr/sqrt(4-u^(2)))
         * (sqrt((sr+sp)*(sr+sa)*(sp+sa))/sqrt((xr+xp)*(xr+xa)))
     )
@@ -216,7 +216,10 @@ function EL_from_αβ(
     model::AnalyticIsochrone,
     params::OrbitalParameters=OrbitalParameters()
 )
-    return 0.5 * E₀(model) * α^(2/3), L₀(model) * (2β - 1) / (sqrt(β * (1 - β)))
+    return (
+        0.5 * energy_scale(model) * α^(2/3), 
+        momentum_scale(model) * (2β - 1) / (sqrt(β * (1 - β)))
+    )
 end
 
 
@@ -231,7 +234,15 @@ function EL_to_αβ_jacobian(
     model::AnalyticIsochrone,
     params::OrbitalParameters=OrbitalParameters()
 )
-    return abs((1/6)* E₀(model) * L₀(model) / (α^(1/3) * (β * (1 - β))^(3/2))) 
+    return abs(
+        (1/6) 
+        * energy_scale(model) 
+        * momentum_scale(model) 
+        / (
+            α^(1/3) 
+            * (β * (1 - β))^(3/2)
+        )
+    ) 
 end
 
 

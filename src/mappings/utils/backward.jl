@@ -133,7 +133,7 @@ function _newton_raphson_ae(
         # Update guesses
         anew, enew = _next_guess_ae(aguess, eguess, adir, edir, params)
         aguess, eguess = anew, enew
-        v1, v2, ∂v1∂a, ∂v2∂a, ∂v1∂e, ∂v2∂e = mjacobian(aguess,eguess)
+        v1, v2, ∂v1∂a, ∂v2∂a, ∂v1∂e, ∂v2∂e = mjacobian(aguess, eguess)
 
         tol = (v1goal - v1)^2 + (v2goal - v2)^2
         if (tol < (params.invε)^2)

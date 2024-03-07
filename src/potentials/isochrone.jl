@@ -89,24 +89,24 @@ end
 #####################################
 # Scales for the Isochrone
 #####################################
-function Ω₀(model::IsochronePotential)
+function frequency_scale(model::IsochronePotential)
     return sqrt(model.G*model.M/(model.bc^3))
 end
 
 """
-    E₀(model::IsochronePotential)
-
 for isochrone, see Fouvry 21 (appendix G).
 """
-function E₀(model::IsochronePotential)
+function energy_scale(model::IsochronePotential)
     return -model.G*model.M/model.bc
 end
 
 """
-    L₀(model::IsochronePotential)
-
 for isochrone, see Fouvry 21 (appendix G)
 """
-function L₀(model::IsochronePotential)
+function momentum_scale(model::IsochronePotential)
     return sqrt(model.G*model.M*model.bc)
+end
+
+function radial_scale(model::IsochronePotential)
+    return model.bc
 end

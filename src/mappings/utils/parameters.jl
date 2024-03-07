@@ -8,14 +8,13 @@ const DEFAULT_TOLECC = 0.01
 const DEFAULT_TOLA   = 0.1
 const DEFAULT_EDGE   = 0.01
 const DEFAULT_NINT   = 32
-const DEFAULT_RMIN   = 0.
 const DEFAULT_RC     = 1.
+const DEFAULT_RMIN   = 0.
 const DEFAULT_RMAX   = Inf
 const DEFAULT_TOL    = 1.e-12
 const DEFAULT_DA     = 1.e-4
 const DEFAULT_DE     = 1.e-4
 const DEFAULT_ITERMAX= 100
-const DEFAULT_Ω0     = 1.0
 
 
 """
@@ -24,11 +23,9 @@ const DEFAULT_Ω0     = 1.0
 """
 struct OrbitalParameters
 
-    Ω₀::Float64       # characteristic frequency of the system
+    rc::Float64       # radial scale of the system
     rmin::Float64     # the minimum radius considered for the system
     rmax::Float64     # the maximum radius considered for the system
-
-    rc::Float64       # characteristic size of the system: below this, eccentricity tolerance starts to increase
 
     EDGE::Float64     # the guard against the edges of [-1,1] integration boundaries
     TOLECC::Float64   # the eccentricity tolerance
@@ -44,15 +41,14 @@ struct OrbitalParameters
 end
 
 """
-    OrbitalParameters([,Ω₀,rmin,rmax,EDGE,TOLECC,TOLA,NINT,da,de,ITERMAX,invε])
+    OrbitalParameters([,rmin,rmax,EDGE,TOLECC,TOLA,NINT,da,de,ITERMAX,invε])
 
 creates an OrbitalParameters structure with the defined values (which all have a default value)
 """
-function OrbitalParameters(
-    ;Ω₀::Float64=DEFAULT_Ω0,
+function OrbitalParameters(;
+    rc::Float64=DEFAULT_RC,
     rmin::Float64=DEFAULT_RMIN,
     rmax::Float64=DEFAULT_RMAX,
-    rc::Float64=DEFAULT_RC,
     EDGE::Float64=DEFAULT_EDGE,
     TOLECC::Float64=DEFAULT_TOLECC,
     TOLA::Float64=DEFAULT_TOLA,
@@ -63,10 +59,9 @@ function OrbitalParameters(
     invε::Float64=DEFAULT_TOL
 )
     return OrbitalParameters(
-        Ω₀,
+        rc,
         rmin,
         rmax,
-        rc,
         EDGE,
         TOLECC,
         TOLA,

@@ -181,7 +181,7 @@ function _initial_a_from_E(
 
     # Tweak xmin and xmax to get the energy in bounds
     # Safe while loop since we check that the energy is indeed reachable
-    rmin, rmax = params.rmin, min(params.rmax,1.e8*params.rc)
+    rmin, rmax = params.rmin, min(params.rmax, 1.e8 * params.rc)
     while ψ(rmin, model) > E
         rmin /= 2
     end
@@ -232,7 +232,7 @@ function _initial_a_from_L(
     end
     # Tweak xmin and xmax to get the angular momentum in bounds
     # Safe while loop since we check that the angular momentum is indeed reachable
-    rmin, rmax = params.rmin, min(params.rmax,1.e8*params.rc)
+    rmin, rmax = params.rmin, min(params.rmax, 1.e8 * params.rc)
     while rootequation(rmin) < 0 # L(rmin) > objective_L
         rmin /= 2
     end

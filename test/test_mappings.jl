@@ -13,7 +13,7 @@
     # Compare analytical to numerical results in the isochrone
     anapot = AnalyticIsochrone()
     numpot = NumericalIsochrone()
-    params = OrbitalParameters(Ω₀=Ω₀(numpot))
+    params = OrbitalParameters(rc=radial_scale(numpot))
     tol =  1.e-6
     @testset "forward" begin
         a, e = 1.0, 0.5
@@ -51,6 +51,15 @@
         @test all(isapprox.(ae_from_frequencies(Ω1, Ω2, anapot), (a, e), atol=tol))
         @test all(isapprox.(ae_from_frequencies(Ω1, Ω2, numpot, params), (a, e), atol=tol))
     end
-    @testset "resonance" begin 
+    @testset "resonant" begin
+        # Compare analytical to numerical results in the isochrone
+        anapot = AnalyticIsochrone()
+        numpot = NumericalIsochrone()
+        params = OrbitalParameters(rc=radial_scale(numpot))
+        numres = Resonance(-1,2,numpot,params)
+        # Forward/backward
+        a, e = 1.0, 0.5
+        α, β = αβ_from_ae(a, e, numpot, params)
+        # @IMPROVE: to continue !
     end
 end

@@ -27,9 +27,10 @@
             @test d2ψ(1.,model) ≈ 6-17sqrt(2)/4
             @test d2ψ(Inf,model) == 0.
             # Check scale functions
-            @test Ω₀(model) ≈ 1.
-            @test E₀(model) ≈ -1.
-            @test L₀(model) ≈ 1.
+            @test frequency_scale(model) ≈ 1.
+            @test energy_scale(model) ≈ -1.
+            @test momentum_scale(model) ≈ 1.
+            @test radial_scale(model) ≈ 1.
         end
         @testset "numerical" begin
             # Wrong model characteristic values
@@ -63,9 +64,10 @@
         @test d2ψ(1.,model) ≈ -sqrt(2)/8
         @test d2ψ(Inf,model) == 0.
         # Check scale functions
-        @test Ω₀(model) ≈ 2.
-        @test E₀(model) ≈ -1.
-        @test L₀(model) ≈ 1.
+        @test frequency_scale(model) ≈ 2.
+        @test energy_scale(model) ≈ -1.
+        @test momentum_scale(model) ≈ 1.
+        @test radial_scale(model) ≈ 1.
     end
     @testset "mestel" begin
         @testset "true" begin
@@ -87,7 +89,8 @@
             @test d2ψ(1.,model) ≈ -1.
             @test d2ψ(Inf,model) == 0.
             # Check scale functions
-            @test Ω₀(model) ≈ 1.
+            @test frequency_scale(model) ≈ 1.
+            @test radial_scale(model) ≈ 1.
         end
         @testset "tapered" begin
             # Tapered Mestel potential with default values
@@ -108,7 +111,8 @@
             @test d2ψ(1.,model) ≈ -1.
             @test d2ψ(Inf,model) == 0.
             # Check scale functions
-            @test Ω₀(model) ≈ 1.
+            @test frequency_scale(model) ≈ 1.
+            @test radial_scale(model) ≈ 1.
         end
     end
 end

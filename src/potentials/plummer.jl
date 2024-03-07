@@ -73,24 +73,24 @@ end
 #####################################
 # Scales for Plummer
 #####################################
-function Ω₀(model::PlummerPotential)
+function frequency_scale(model::PlummerPotential)
     return 2*sqrt(model.G*model.M/(model.bc^3))
 end
 
 """
-    E₀(model::PlummerPotential)
-
 for Plummer, see Tep+ 22 (equation E2).
 """
-function E₀(model::PlummerPotential)
+function energy_scale(model::PlummerPotential)
     return -model.G*model.M/model.bc
 end
 
 """
-    L₀(model::PlummerPotential)
-
 for Plummer, see Tep+ 22 (equation E2).
 """
-function L₀(model::PlummerPotential)
+function momentum_scale(model::PlummerPotential)
     return sqrt(model.G*model.M*model.bc)
+end
+
+function radial_scale(model::PlummerPotential)
+    return model.bc
 end

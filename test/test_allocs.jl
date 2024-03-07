@@ -5,7 +5,7 @@
 @testset "allocs" begin
     anapot = AnalyticIsochrone()
     numpot = NumericalIsochrone()
-    params = OrbitalParameters(Ω₀=Ω₀(numpot))
+    params = OrbitalParameters(rc=radial_scale(numpot))
     @testset "forward" begin
         a, e = 1.0, 0.5
         # E, L

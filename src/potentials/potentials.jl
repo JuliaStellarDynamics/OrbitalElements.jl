@@ -25,56 +25,65 @@ abstract type CentralCuspPotential <: CentralPotential end
 # Generic functions (not methods)
 #####################################
 """
-    ψ(model::CentralPotential, r)
+    ψ(r, model::Potential)
 
 Potential value for central potential `model` at radius `r`.
 """
-function ψ(r::Number, model::CentralPotential)
+function ψ(r::Number, model::Potential)
     # ... [model specific implementation] ...
 end
 
 """
-    dψ(model::CentralPotential, r)
+    dψ(r, model::Potential)
 
 Potential derivative value for central potential `model` at radius `r`.
 """
-function dψ(r::Number, model::CentralPotential)
+function dψ(r::Number, model::Potential)
     # ... [model specific implementation] ...
 end
 
 """
-    d2ψ(model::CentralPotential, r)
+    d2ψ(r, model::Potential)
 
 Potential second derivative for central potential `model` at radius `r`.
 """
-function d2ψ(r::Number, model::CentralPotential)
+function d2ψ(r::Number, model::Potential)
     # ... [model specific implementation] ...
 end
 
 """
-    Ω₀(model::Potential)
+    frequency_scale(model::Potential)
 
 Frequency scale associated to the potential `model`.
 """
-function Ω₀(model::Potential)
+function frequency_scale(model::Potential)
     # ... [model specific implementation] ...
 end
 
 """
-    E₀(model::Potential)
+    energy_scale(model::Potential)
 
 Energy scale associated to the potential `model`.
 """
-function E₀(model::Potential)
+function energy_scale(model::Potential)
     # ... [model specific implementation] ...
 end
 
 """
-    L₀(model::Potential)
+    momentum_scale(model::Potential)
 
 Angular momentum scale associated to the potential `model`.
 """
-function L₀(model::Potential)
+function momentum_scale(model::Potential)
+    # ... [model specific implementation] ...
+end
+
+"""
+    radial_scale(model::Potential)
+
+Radial scale associated to the potential `model`.
+"""
+function radial_scale(model::Potential)
     # ... [model specific implementation] ...
 end
 

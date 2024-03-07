@@ -10,17 +10,17 @@ include("plummerutils/Inversion.jl")
 """
 the raw Theta function From Tep et al. 2022, equation F9
 """
-function PlummerTheta(u::Float64, sp::Float64, sa::Float64,Ω₀::Float64)
+function PlummerTheta(u::Float64, sp::Float64, sa::Float64, Ω0::Float64)
     A = sp * (u+2.0)*(u-1.0)^2 - sa*(u-2.0)*(u+1.0)^2
     B = sp * (u^3-3.0*u+6.0) - sa*(u^3-3.0*u-6.0)
 
-    return (2.0/Ω₀ * 3.0/(4.0*sqrt(2.0)) * sqrt(sa*sp*(sa+sp))/sqrt(4.0-u^2)
+    return (2.0/Ω0 * 3.0/(4.0*sqrt(2.0)) * sqrt(sa*sp*(sa+sp))/sqrt(4.0-u^2)
             * A^(1.5)/sqrt(sa*sp*A + B))
 end
 
 
 
-function dThetadsp(u::Float64, sp::Float64, sa::Float64,Ω₀::Float64)
+function dThetadsp(u::Float64, sp::Float64, sa::Float64, Ω0::Float64)
 
     num = (3 *(4 *sp^3 *(-1 + u)^2 *(12 - 3 *u^2 + 2 *u^3 + u^4) +
            sa *sp^2 *(108 - 120 *u - 27 *u^2 + 40 *u^3 + 18 *u^4 - 3 *u^6 +
@@ -37,10 +37,10 @@ function dThetadsp(u::Float64, sp::Float64, sa::Float64,Ω₀::Float64)
            sp *(2 - 3 *u + u^3)))))* (sa^2* sp *(2 + 3 *u - u^3) +
            sp *(6 - 3* u + u^3) + sa *(6 + 3*u - u^3 + sp^2 *(2 - 3 *u + u^3))))
 
-    return 2.0/Ω₀ * num/den
+    return 2.0/Ω0 * num/den
 end
 
-function dThetadsa(u::Float64, sp::Float64, sa::Float64,Ω₀::Float64)
+function dThetadsa(u::Float64, sp::Float64, sa::Float64, Ω0::Float64)
 
     num = (3 *(-4 + u^2) *(3 *sa^4 *sp *(-2 + u)^2 *(1 + u)^4 +
            sp^3 *(-1 + u)^2 *(12 - 3 *u^2 + 2 *u^3 + u^4) -
@@ -57,17 +57,17 @@ function dThetadsa(u::Float64, sp::Float64, sa::Float64,Ω₀::Float64)
            sa *(-6 - 3* u + u^3 - sp^2 *(2 - 3 *u + u^3))))/(
            sa *sp* (sa + sp) *(sa *(-2 + u) *(1 + u)^2 - sp *(2 - 3 *u + u^3)))))^(3/2))
 
-    return 2.0/Ω₀ * num/den
+    return 2.0/Ω0 * num/den
 end
 
 
 """
 the wrapped Theta function
 """
-function ΘRpRaPlummer(u::Float64, rp::Float64, ra::Float64, bc::Float64, Ω₀::Float64)
+function ΘRpRaPlummer(u::Float64, rp::Float64, ra::Float64, bc::Float64, Ω0::Float64)
     sp,sa = SpSaFromRpRa(rp,ra,bc)
 
-    return PlummerTheta(u,sp,sa,Ω₀)
+    return PlummerTheta(u,sp,sa,Ω0)
 
 end
 
@@ -75,10 +75,10 @@ end
 """
 the wrapped Theta derivative function
 """
-function dΘRpRaPlummer(u::Float64, rp::Float64, ra::Float64, bc::Float64, Ω₀::Float64)
+function dΘRpRaPlummer(u::Float64, rp::Float64, ra::Float64, bc::Float64, Ω0::Float64)
     sp,sa = SpSaFromRpRa(rp,ra,bc)
 
-    return PlummerTheta(u,sp,sa,Ω₀),dThetadsp(u,sp,sa,Ω₀),dThetadsa(u,sp,sa,Ω₀)
+    return PlummerTheta(u,sp,sa,Ω0),dThetadsp(u,sp,sa,Ω0),dThetadsa(u,sp,sa,Ω0)
 
 end
 
@@ -155,13 +155,13 @@ function PlummerOmega12FromRpRa(rp::Float64,ra::Float64,bc::Float64=1.,M::Float6
     # compute the helpful coordinate for Plummer
     sp,sa = SpSaFromRpRa(rp,ra,bc)
 
-    Ω₀ = Ω₀Plummer(bc,M,G)
+    Ω0 = frequency_scale(model)
     Eval,Lval = PlummerELFromSpSa(sp, sa, bc=bc ,M=M,G=G)
 
     function u3func(u::Float64)
         # push integration forward on three different quantities: Θ(u),Θ(u)/r^2(u),Θ(u)*vr(u)
 
-        th = ΘRpRaPlummer(u, rp, ra, bc, Ω₀)
+        th = ΘRpRaPlummer(u, rp, ra, bc, Ω0)
 
         return (th,
                 th/(RFromURpRa(u, rp, ra, bc)^2),
@@ -193,11 +193,8 @@ end
 
 
 function PlummerAlphaBetaFromRpRa(rp::Float64,ra::Float64,bc::Float64=1.,M::Float64=1.,G::Float64=1.;NINT=32)
-
-    Ω₀ = Ω₀Plummer(bc,M,G)
     Ω1,Ω2 = PlummerOmega12FromRpRa(rp,ra,bc,M,G,NINT=NINT)
-
-    return Ω1/Ω₀,Ω2/Ω1
+    return Ω1/frequency_scale(model), Ω2/Ω1
 end
 
 function PlummerAlphaBetaFromEL(E::Float64, L::Float64, nbu::Int64 = 300, eps::Float64=10^(-5), Lcutoff::Float64=0.00005;bc::Float64=1.0,M::Float64=1.0,G::Float64=1.0)
@@ -225,7 +222,7 @@ end
 function BetaFromRpRalogIntegral(rp::Float64, ra::Float64, nbv::Int64 = 100, eps::Float64=10^(-5),
             Lcutoff::Float64=0.00005;bc::Float64=1.0,M::Float64=1.0,G::Float64=1.0)
 
-    Ω₀ = Ω₀Plummer(bc,M,G)
+    Ω0 = frequency_scale(model)
     E, L = PlummerELFromRpRa(rp,ra,bc=bc,M=M,G=G)
 
     if (L >= Lcutoff)
@@ -244,7 +241,7 @@ function BetaFromRpRalogIntegral(rp::Float64, ra::Float64, nbv::Int64 = 100, eps
             u = exp(v)-1.0
             su = SFromUAE(u,sma,ecc)
             ru = RFromS(su,bc)
-            jac = PlummerTheta(u,sp,sa,Ω₀)
+            jac = PlummerTheta(u,sp,sa,Ω0)
             if (rp != 0.0) # not radial
                 beta += jac*exp(v)/ru^2
             end
@@ -255,7 +252,7 @@ function BetaFromRpRalogIntegral(rp::Float64, ra::Float64, nbv::Int64 = 100, eps
         u = uminPlusOne/2.0
         su = SFromUAE(u,sma,ecc)
         ru = RFromS(su,bc)
-        beta += (uminPlusOne)*L*PlummerTheta(u,sp,sa,Ω₀)/(pi*ru^2)
+        beta += (uminPlusOne)*L*PlummerTheta(u,sp,sa,Ω0)/(pi*ru^2)
 
         return beta
 
@@ -278,7 +275,7 @@ function BetaFromRpRalogIntegral(rp::Float64, ra::Float64, nbv::Int64 = 100, eps
             u = exp(v)-1.0
             su = SFromUAE(u,smacut,ecccut)
             ru = RFromS(su,bc)
-            jac = PlummerTheta(u,spcut,sacut,Ω₀)
+            jac = PlummerTheta(u,spcut,sacut,Ω0)
             if (rp != 0.0) # not radial
                 betacut += jac*exp(v)/ru^2
             end
@@ -289,7 +286,7 @@ function BetaFromRpRalogIntegral(rp::Float64, ra::Float64, nbv::Int64 = 100, eps
         u = uminPlusOne/2.0
         su = SFromUAE(u,smacut,ecccut)
         ru = RFromS(su,bc)
-        betacut += (uminPlusOne)*Lcutoff*PlummerTheta(u,spcut,sacut,Ω₀)/(pi*ru^2)
+        betacut += (uminPlusOne)*Lcutoff*PlummerTheta(u,spcut,sacut,Ω0)/(pi*ru^2)
 
         # use linear taylor expansion near L=0
         # (beta-0.5)/(betacut-0.5) = L/Lcut, hence

@@ -26,7 +26,7 @@ model = NumericalIsochrone(G=G, M=M, bc=bc)
 analytic_model = AnalyticIsochrone(G=G, M=M, bc=bc)
 
 # Creating the parameter structure
-params = OrbitalParameters(Ω₀=Ω₀(model))
+params = OrbitalParameters(rc=radial_scale(model))
 
 # Points (line of constant semi-major axis)
 println("Compute frequencies ... ")

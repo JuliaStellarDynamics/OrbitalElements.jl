@@ -60,11 +60,15 @@ end
 #####################################
 # Scales for Mestel
 #####################################
-function Ω₀(model::MestelPotential)
+function frequency_scale(model::MestelPotential)
     return model.V0 / model.R0
 end
 
-# @IMPROVE define E₀ and L₀ scales
+function radial_scale(model::MestelPotential)
+    return model.R0
+end
+
+# @IMPROVE define energy and momentum scales
 
 
 #####################################
@@ -136,8 +140,12 @@ end
 #####################################
 # Scales for tapered Mestel
 #####################################
-function Ω₀(model::TaperedMestel)
+function frequency_scale(model::TaperedMestel)
     return model.V0 / model.R0
 end
 
-# @IMPROVE define E₀ and L₀ scales
+function radial_scale(model::TaperedMestel)
+    return model.R0
+end
+
+# @IMPROVE define energy and momentum scales

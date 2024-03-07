@@ -69,7 +69,7 @@ end
 """
     uv_to_αβ_jacobian(u, v, resonance)
 
-jacobian of the (u,v) ↦ (α,β) mapping, i.e. 2/(ωmax-ωmin) * |∂(α,β)/∂(u,v)|
+jacobian of the (u,v) ↦ (α,β) mapping, i.e. |∂(α,β)/∂(u,v)|
 """
 function uv_to_αβ_jacobian(u::Float64,v::Float64,res::Resonance)::Float64
     n1, n2 = res.number
@@ -96,13 +96,13 @@ translate a complex frequency into a resonant rescaled frequency.
 See equation (B3) in Fouvry & Prunet (2022)
 
 @ASSUMPTION:
-    - ω is dimensionless, that is, rescaled by Ω₀ already.
+    - ω is dimensionless, that is, rescaled by [`frequency_scale(model)`](@ref) already.
 """
 function rescaled_ϖ(
     ω::Number,
     n1::Int64,
     n2::Int64,
-    model::CentralPotential,
+    model::Potential,
     params::OrbitalParameters=OrbitalParameters()
 )
     ωmin, ωmax = frequency_extrema(n1, n2, model, params)

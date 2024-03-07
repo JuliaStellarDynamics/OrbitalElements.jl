@@ -26,7 +26,7 @@ function αβ_from_frequencies(
     Ω2::Float64,
     model::Potential
 )::Tuple{Float64,Float64}
-    return αβ_from_frequencies(Ω1, Ω2, Ω₀(model))
+    return αβ_from_frequencies(Ω1, Ω2, frequency_scale(model))
 end
 
 
@@ -43,7 +43,7 @@ function frequencies_from_αβ(
     Ω2::Float64,
     model::Potential
 )::Tuple{Float64,Float64}
-    return frequencies_from_αβ(Ω1, Ω2, Ω₀(model))
+    return frequencies_from_αβ(Ω1, Ω2, frequency_scale(model))
 end
 
 """
@@ -67,7 +67,7 @@ function _dfrequencies_from_dαβ(
     dβ::Float64,
     model::Potential
 )::Tuple{Float64,Float64}
-    return _dfrequencies_from_dαβ(α, β, dα, dβ, Ω₀(model))
+    return _dfrequencies_from_dαβ(α, β, dα, dβ, frequency_scale(model))
 end
 
 ########################################################################
@@ -121,7 +121,7 @@ function αβ_from_ae(
     end
     accum1, accum2 = _integrate_simpson(invαβ_integrands, params.NINT)
     _, L = EL_from_ae(a, e, model, params)
-    α = pi / (Ω₀(model) * accum1)
+    α = pi / (frequency_scale(model) * accum1)
     β = e == 1 ? 1/2 : (L / pi) * accum2
     return α, β
 end
@@ -254,10 +254,10 @@ function ae_from_frequencies(
     # @IMPROVE: use the stronger constraint.
     # @IMPROVE: use default rmin, rmax (should not matter)
     acirc = _radius_from_αcircular(
-        Ω1/Ω₀(model), 
+        Ω1/frequency_scale(model), 
         model, 
         params.rmin, 
-        min(params.rmax, 1e8*params.rc)
+        min(params.rmax, 1e8 * params.rc)
     )
     # and start from ecc=0.5
     # @IMPROVE, is there a more optimal starting eccentricity?
@@ -279,7 +279,8 @@ function ae_from_αβ(
     # get the circular orbit (maximum radius) for a given Ω₁,Ω₂. 
     # @IMPROVE: use the stronger constraint.
     # @IMPROVE: use default rmin, rmax (should not matter)
-    acirc = _radius_from_αcircular(α, model, params.rmin, min(params.rmax, 1e8*params.rc))
+    rmax = min(params.rmax, 1e8 * params.rc)
+    acirc = _radius_from_αcircular(α, model, params.rmin, rmax)
     # and start from ecc=0.5
     # @IMPROVE, is there a more optimal starting eccentricity?
     ainit, einit = acirc, 0.5

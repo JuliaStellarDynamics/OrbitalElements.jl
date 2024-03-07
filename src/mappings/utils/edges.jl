@@ -75,7 +75,7 @@ function _interpolate_edges_ae(
 ) where {F0 <: Function}
 
     _checkdomain_ae(a,e)
-    tola, tole = params.TOLA, _eccentricity_tolerance(a,params.rc,params.TOLECC)
+    tola, tole = params.TOLA, _eccentricity_tolerance(a, params.rc, params.TOLECC)
     
     if 0 < a < tola
         # 2nd order interpolation

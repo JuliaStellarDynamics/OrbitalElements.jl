@@ -19,11 +19,11 @@ from the epicyclic approximation
 `a` stands for the semi-major axis (equivalent to guiding radius r for a circular orbit)
 """
 function _αcircular(a::Float64, model::Potential)::Float64
-    if (a == 0.)
-        return 2 * sqrt(abs(d2ψ(0., model))) / Ω₀(model)
+    if a == 0.
+        return 2 * sqrt(abs(d2ψ(0., model))) / frequency_scale(model)
     end
 
-    return sqrt(d2ψ(a, model) + 3 * dψ(a, model) / a) / Ω₀(model)
+    return sqrt(d2ψ(a, model) + 3 * dψ(a, model) / a) / frequency_scale(model)
 end
 
 """
@@ -33,19 +33,39 @@ mapping from radius `a` to frequency ratio `β` for circular orbits, from the ep
 approximation
 
 `a` stands for the semi-major axis (equivalent to guiding radius r for a circular orbit)
+
+Careful treatment implemented for `a == Inf`.
 @IMPROVE For inner limit, has to be 1/2 for core potentials but not necessarly for cusps.
 """
 function _βcircular(a::Float64, model::Potential)::Float64
-    if (a == 0.)
+    if a == 0.
         return 1/2
     end
+    # At a == Inf, βcircular is 0 / 0 = NaN. (dψ(x)→0, for x→∞)
+    # Cure this by estimating the potential derivative growth rate at infinity and 
+    # replace by this equivalent.
+    # dψ(x) = c x^γ (for x→∞) (⟹ d2ψ(x) = c γ x^(γ-1))
+    # ⟹ βcircular(x) = sqrt(c x^γ / x) / sqrt(c γ x^(γ-1) + 3 c x^γ / x)  (for x→∞)
+    #                 = 
+    if a == Inf
+        # Estimate growth rate γ of dψ(x)≈x^γ in the outskirts
+        rc = radial_scale(model)
+        x1, x2 = 1e8 * rc, 1e9 * rc
+        γ = round(log(dψ(x2, model) / dψ(x1, model)) / log(x2 / x1))
+        if isnan(γ)
+            error("Unable to estimate the growth rate of the potential.")
+        elseif γ <= -3
+            return Inf
+        end
+        return sqrt(1 / (3 + γ))
+    end
 
-    return sqrt(dψ(a, model) / a) / (_αcircular(a, model) * Ω₀(model))
+    return sqrt(dψ(a, model) / a) / (_αcircular(a, model) * frequency_scale(model))
 end
 
 
 """
-    _β_from_α_circular(α, model, params)
+    _β_from_α_circular(α, model[, params])
 
 mapping from dimensionless radial frequency `α to frequency ratio `β` for circular orbits
 """
@@ -59,23 +79,10 @@ function _β_from_α_circular(
         α,
         model,
         params.rmin,
-        min(params.rmax,1.e8*params.rc),
+        min(params.rmax, 1.e8 * params.rc),
         eps(Float64),
         eps(Float64)
     )
-
-    # @IMPROVE: explain !!
-    if rcirc == Inf
-        # Estimate growth rate γ of dψ(x)≈x^γ in the outskirts
-        x1, x2 = 1e8*params.rc, 1e9*params.rc
-        γ = round(log(dψ(x2, model) / dψ(x1, model)) / log(x2 / x1))
-        if isnan(γ)
-            error("Unable to estimate the growth rate of the potential.")
-        elseif γ <= -3
-            return Inf
-        end
-        return sqrt(1 / (3 + γ))
-    end
 
     return _βcircular(rcirc, model)
 end
