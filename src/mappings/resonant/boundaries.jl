@@ -43,26 +43,34 @@ function frequency_extrema(
     model::Potential,
     params::OrbitalParameters=OrbitalParameters()
 )::Tuple{Float64,Float64}
-    # define the function to extremise
-    ωncirc(x::Float64)::Float64 = _αcircular(x, model) * (n1 + n2 * _βcircular(x, model))
+    # define the function to extremise, i.e., the adimensional resonant frequency along 
+    # the circular line.
+    # Works better with n⋅Ω/Ω₀ than n₁α+n₂αβ
+    # (+ avoid useless computations in the generic case)
+    function _ωncirc(r::Float64)::Float64
+        return (
+            (n1 * _Ω1circular(r, model) + n2 * _Ω2circular(r, model))
+            / frequency_scale(model)
+        )
+    end
     # If rmax is infinite, bisection search on a bounded interval
     rc, rmin, rmax = params.rc, params.rmin, params.rmax
-    xext = _extremise_noedges(ωncirc, rmin, min(rmax, 1e8 * rc))
+    xext = _extremise_noedges(_ωncirc, rmin, min(rmax, 1e8 * rc))
     # The extreme values of n.Ω/Ω₀ is either :
     #   - on the radial line, at α = αmin or αmax
     #   - along the circular velocity (extreme α included)
     αmin, αmax = αminmax(model, params)
     ωmin = min(
-        ωncirc(xext),
-        ωncirc(rmin),
-        ωncirc(rmax), 
+        _ωncirc(xext),
+        _ωncirc(rmin),
+        _ωncirc(rmax), 
         (n1 + n2 / 2) * αmin,
         (n1 + n2 / 2) * αmax
     )
     ωmax = max(
-        ωncirc(xext),
-        ωncirc(rmin),
-        ωncirc(rmax),
+        _ωncirc(xext),
+        _ωncirc(rmin),
+        _ωncirc(rmax),
         (n1 + n2 / 2) * αmin,
         (n1 + n2 / 2) * αmax
     )
@@ -253,7 +261,8 @@ end
 """
     _α_inner_extremum(n1, n2, model, params)
 
-extremum for the resonance variable `v` (`α` for ``n2 \\neq 0``) inside `]rmin,rmax[`.
+location `α` of the extremum of the resonance frequency along the circular line limited to 
+`]rmin,rmax[` .
 """
 function _α_inner_extremum(
     n1::Int64,
@@ -263,11 +272,19 @@ function _α_inner_extremum(
     rmin::Float64,
     rmax::Float64
 )::Float64
-    # define the function to extremise
-    ωncirc(x::Float64)::Float64 = _αcircular(x, model) * (n1 + n2 * _βcircular(x, model))
+    # define the function to extremise, i.e., the adimensional resonant frequency along 
+    # the circular line.
+    # Works better with n⋅Ω/Ω₀ than n₁α+n₂αβ
+    # (+ avoid useless computations in the generic case)
+    function _ωncirc(r::Float64)::Float64
+        return (
+            (n1 * _Ω1circular(r, model) + n2 * _Ω2circular(r, model))
+            / frequency_scale(model)
+        )
+    end
     # If rmax is infinite, bisection search on a bounded interval
     locrmax = min(rmax, 1e8 * rc)
-    xext = _extremise_noedges(ωncirc, rmin, locrmax)
+    xext = _extremise_noedges(_ωncirc, rmin, locrmax)
 
     # If the extremum is reached at the imposed maximal boundary
     # Use the true rmax (not the artificial 1e8 * rc, which is here to handle Inf)

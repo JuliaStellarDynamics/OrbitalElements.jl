@@ -103,11 +103,11 @@ function _extremise_noedges(
     tolx::Float64=1000.0*eps(Float64)
 )
     dx = 1e-3
-    dfxl, dfxu = fun(xl + dx) - fun(xl), fun(xl + dx) - fun(xl)
+    dfxl, dfxu = fun(xl + dx) - fun(xl), fun(xu + dx) - fun(xu)
 
     while (dfxl == 0.) || (dfxu == 0.)
-        dx *= 10
-        dfxl, dfxu = fun(xl + dx) - fun(xl), fun(xl + dx) - fun(xl)
+        dx *= 2
+        dfxl, dfxu = fun(xl + dx) - fun(xl), fun(xu + dx) - fun(xu)
     end
 
     xm = _extremise(fun, xl, xu, dx=dx, tolf=0.)
@@ -115,7 +115,9 @@ function _extremise_noedges(
     if xm == xl || xm == xu
         return xm
     else
-        xm = _extremise(fun, xm-dx, xm+dx, dx=tolx, tolf=0.)
+        # Look in refined region with smaller finite difference parameter.
+        # Make sure we're not looking outside the original boundaries.
+        xm = _extremise(fun, max(xm-dx, xl), min(xm+dx, xu), dx=tolx, tolf=0.)
         return xm
     end
 end
