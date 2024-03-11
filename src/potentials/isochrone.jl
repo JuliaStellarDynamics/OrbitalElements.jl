@@ -2,7 +2,9 @@
 The isochrone potential definitions
 
 Isochrone is unique in that we can define almost all mappings analytically.
-The AnalyticIsochrone potential model takes advantage of these. The analytic mappings are detailed in mappings/analytic
+The AnalyticIsochrone potential model takes advantage of these. The analytic mappings are 
+detailed in mappings/analytic.
+Most equations can be found in Fouvry, Hamilton, Rozier & Pichon (2021), Appendix G
 """
 
 #####################################
@@ -24,8 +26,6 @@ end
 """
     NumericalIsochrone([, G, M, bc])
 
-create an Isochrone potential model with characteristic radius `bc`, total mass `M` and gravitational constant `G`.
-
 This isochrone model will use the default numerical computations
 """
 function NumericalIsochrone(;G::Float64=1.,M::Float64=1.,bc::Float64=1.)
@@ -39,9 +39,7 @@ end
 """
     AnalyticIsochrone([, G, M, bc])
 
-create an Isochrone potential model with characteristic radius `bc`, total mass `M` and gravitational constant `G`.
-
-This isochrone model will use the analytic mappings.
+This isochrone model will use the full analytic mappings.
 """
 function AnalyticIsochrone(;G::Float64=1.,M::Float64=1.,bc::Float64=1.)
     # Check for positive mass and radius
@@ -94,14 +92,14 @@ function frequency_scale(model::IsochronePotential)
 end
 
 """
-for isochrone, see Fouvry 21 (appendix G).
+for isochrone, see Fouvry+21 (appendix G).
 """
 function energy_scale(model::IsochronePotential)
     return -model.G*model.M/model.bc
 end
 
 """
-for isochrone, see Fouvry 21 (appendix G)
+for isochrone, see Fouvry+21 (appendix G)
 """
 function momentum_scale(model::IsochronePotential)
     return sqrt(model.G*model.M*model.bc)

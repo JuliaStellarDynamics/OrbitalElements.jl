@@ -33,7 +33,7 @@ end
 """
     frequency_extrema(n1,n2,model,params)
 
-minimal and maximal "frequency" for a given resonance.
+minimal and maximal (dimensionless) "frequency" for a given resonance `ωmin, ωmax = minmax(n⋅Ω/Ω₀)`
 
 @ASSUMPTION: Frequency domain truncated at `αmin` and `αmax` set by `rmax` and `rmin`
 """

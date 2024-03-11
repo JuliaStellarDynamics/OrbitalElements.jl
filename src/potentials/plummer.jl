@@ -3,32 +3,49 @@ The plummer potential definitions
 
   plummer.jl is an example of how to implement a simple new function and derivatives.
   a frequency scaling is also required.
-
 """
 
 #####################################
 # Plummer structures
 #####################################
-"""
-Plummer potential structure
-"""
-struct PlummerPotential <: CentralCorePotential
+abstract type PlummerPotential <: CentralCorePotential end
+struct NumericalPlummer <: PlummerPotential
+    G::Float64      # Gravitational constant
+    M::Float64      # Total mass
+    bc::Float64     # Characteristic radius
+end
+struct SemiAnalyticPlummer <: PlummerPotential
     G::Float64      # Gravitational constant
     M::Float64      # Total mass
     bc::Float64     # Characteristic radius
 end
 
 """
-    PlummerPotential([, G, M, bc])
+    NumericalPlummer([, G, M, bc])
 
-Create a Plummer potential structure with characteristic radius `bc` total mass `M` and gravitational constant `G`.
+This plummer model will use the default numerical computations
 """
-function PlummerPotential(;G::Float64=1.,M::Float64=1.,bc::Float64=1.)
+function NumericalPlummer(;G::Float64=1.,M::Float64=1.,bc::Float64=1.)
     # Check for positive mass and radius
     if M<0; throw(DomainError(M, "Negative mass")); end
     if bc≤0; throw(DomainError(bc, "Negative characteristic radius")); end
 
-    return PlummerPotential(G,M,bc)
+    return NumericalPlummer(G,M,bc)
+end
+
+"""
+    SemiAnalyticPlummer([, G, M, bc])
+
+This Plummer model will use the semi-analytic mappings with an anomaly 
+such that the frequency integrand [`Θ(u, a, e, ...)`](@ref) is known.
+The frequencies are still computed through numerical integration of this integrand.
+"""
+function SemiAnalyticPlummer(;G::Float64=1.,M::Float64=1.,bc::Float64=1.)
+    # Check for positive mass and radius
+    if M<0; throw(DomainError(M, "Negative mass")); end
+    if bc≤0; throw(DomainError(bc, "Negative characteristic radius")); end
+
+    return SemiAnalyticPlummer(G,M,bc)
 end
 
 #####################################

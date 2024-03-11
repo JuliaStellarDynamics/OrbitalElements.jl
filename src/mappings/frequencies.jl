@@ -276,10 +276,10 @@ function ae_from_αβ(
     model::Potential,
     params::OrbitalParameters=OrbitalParameters()
 )::Tuple{Float64,Float64}
-    # get the circular orbit (maximum radius) for a given Ω₁,Ω₂. 
+    # get the circular orbit (maximum radius) for a given α. 
     # @IMPROVE: use the stronger constraint.
     # @IMPROVE: use default rmin, rmax (should not matter)
-    rmax = min(params.rmax, 1e8 * params.rc)
+    rmax = min(params.rmax, 1e8 * radial_scale(model))
     acirc = _radius_from_αcircular(α, model, params.rmin, rmax)
     # and start from ecc=0.5
     # @IMPROVE, is there a more optimal starting eccentricity?

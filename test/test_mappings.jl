@@ -60,6 +60,7 @@
         # Forward/backward
         a, e = 1.0, 0.5
         α, β = αβ_from_ae(a, e, numpot, params)
+        n1, n2 = -1, 2
         # @IMPROVE: to continue !
     end
 end

@@ -64,7 +64,7 @@ function _βcircular(a::Float64, model::Potential)::Float64
     # replace by this equivalent.
     # dψ(x) = c x^γ (for x→∞) (⟹ d2ψ(x) = c γ x^(γ-1))
     # ⟹ βcircular(x) = sqrt(c x^γ / x) / sqrt(c γ x^(γ-1) + 3 c x^γ / x)  (for x→∞)
-    #                 = 
+    #                 = 1 / sqrt(3 + γ)
     if a == Inf
         # Estimate growth rate γ of dψ(x)≈x^γ in the outskirts
         rc = radial_scale(model)
