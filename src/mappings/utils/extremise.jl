@@ -105,6 +105,8 @@ function _extremise_noedges(
     dx = 1e-3
     dfxl, dfxu = fun(xl + dx) - fun(xl), fun(xu + dx) - fun(xu)
 
+    # @WARNING: This could be an infinite loop for an exactly constant function
+    # @IMPROVE: Prevent falling in this for constant functions ?
     while (dfxl == 0.) || (dfxu == 0.)
         dx *= 2
         dfxl, dfxu = fun(xl + dx) - fun(xl), fun(xu + dx) - fun(xu)

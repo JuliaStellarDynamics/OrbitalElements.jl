@@ -115,8 +115,8 @@ function αβ_from_ae(
     # currently using Simpson's 1/3 rule only (hard-coded)
     # @IMPROVE: free the integration scheme, i.e., make it a parameter
     function invαβ_integrands(u::Float64)::Tuple{Float64,Float64}
-        # push integration forward on two different quantities: Θ(u),Θ(u)/r^2(u)
-        integrand = Θ(u,a,e,model,params)
+        # push integration forward on two different quantities: Θ(u), Θ(u)/r^2(u)
+        integrand = Θ(u, a, e, model, params)
         return integrand, integrand / (radius_from_anomaly(u, a, e)^2)
     end
     accum1, accum2 = _integrate_simpson(invαβ_integrands, params.NINT)

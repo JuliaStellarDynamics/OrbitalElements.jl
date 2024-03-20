@@ -27,6 +27,7 @@ See, e.g., equation (65) in Hamilton et al. (2018).
 
 @IMPROVE: right now the edge handling procedure is hard-coded. Should incorparate it in the
 OrbitalParameters structure (not only the tolerances)
+@IMPROVE: provide stable expressions at infinity
 """
 function EL_from_ae(
     a::Float64,

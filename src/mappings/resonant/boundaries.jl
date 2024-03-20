@@ -43,6 +43,11 @@ function frequency_extrema(
     model::Potential,
     params::OrbitalParameters=OrbitalParameters()
 )::Tuple{Float64,Float64}
+    # For resonance number (0, 0)
+    # Avoid infinite loop in `_extremise_noedges` with the flat function `_ωncirc = 0.`
+    if n1 == 0 && n2 == 0
+        return 0.0, 0.0
+    end
     # define the function to extremise, i.e., the adimensional resonant frequency along 
     # the circular line.
     # Works better with n⋅Ω/Ω₀ than n₁α+n₂αβ
@@ -108,6 +113,9 @@ function Resonance(
     ωmin, ωmax = frequency_extrema(n1, n2, model, params)
     return Resonance((n1, n2), (ωmin, ωmax))
 end
+
+frequency_extrema(res::Resonance) = res.frequency_extrema
+resonance_number(res::Resonance) = res.number
 
 ########################################################################
 #

@@ -8,6 +8,8 @@
     _anomaly_from_radius(r, model::IsochronePotential)
 
 anomaly independent of the orbit (only radius dependent) for isochrone.
+
+@IMPROVE: confusing names ! anomaly `s` vs Henon anomaly `u`.
 """
 function _anomaly_from_radius(r::Float64, model::IsochronePotential)
     x = r / radial_scale(model) # dimensionless radius
@@ -15,9 +17,11 @@ function _anomaly_from_radius(r::Float64, model::IsochronePotential)
 end
 
 """
-    _radius_from_anomaly(r, model::IsochronePotential)
+    _radius_from_anomaly(anomaly, model::IsochronePotential)
 
 anomaly independent of the orbit (only radius dependent) for isochrone.
+
+@IMPROVE: confusing names ! anomaly `s` vs Henon anomaly `u`.
 """
 function _radius_from_anomaly(anomaly::Float64, model::IsochronePotential)
     x = sqrt(anomaly^2 - 1) # dimensionless radius
@@ -31,7 +35,7 @@ extremal anomalies of the orbit with pericentre `rp` and apocentre `ra`.
 """
 function _spsa_from_rpra(rp::Float64, ra::Float64, model::IsochronePotential)
     # Broadcast the anomaly over peri and apocenter (allocation-free)
-    sp, sa = map((r -> _anomaly_from_radius(r,model)), (rp, ra))
+    sp, sa = map((r -> _anomaly_from_radius(r, model)), (rp, ra))
     return sp, sa
 end
 
@@ -80,16 +84,16 @@ end
 
 """
 for isochrone analytical version
-@IMPROVE: need to be defined for the isochrone !
+@IMPROVE: Define it for the isochrone !
 """
-function ae_to_EL_jacobian(
-    a::Float64,
-    e::Float64,
-    model::AnalyticIsochrone,
-    params::OrbitalParameters=OrbitalParameters()
-)
-    error("not analytically defined for isochrone")
-end
+# function ae_to_EL_jacobian(
+#     a::Float64,
+#     e::Float64,
+#     model::AnalyticIsochrone,
+#     params::OrbitalParameters=OrbitalParameters()
+# )
+#     error("not analytically defined for isochrone")
+# end
 
 ########################################################################
 #
@@ -122,6 +126,9 @@ Fouvry, Hamilton, Rozier, Pichon eq. (G10). It has the major advantage of
 always being well-posed for -1<u<1
 
 @QUESTION: is `u` Hénon's anomaly here ?
+@WARNING: might need to redefine radius_from_anomaly for the isochrone/plummer anomaly `s`.
+Could return false results ! In practice in not used for mappings. But possible issues 
+when using with linear response computations !
 """
 function Θ(
     u::Float64,
@@ -130,47 +137,24 @@ function Θ(
     model::AnalyticIsochrone,
     params::OrbitalParameters=OrbitalParameters()
 )
-    r = radius_from_anomaly(u,a,e)
+    r = radius_from_anomaly(u, a, e)
     rp, ra = rpra_from_ae(a, e)
     # dimensionless pericentre, apocentre, and radius
     xr, xp, xa = (r, rp, ra) ./ radial_scale(model)
-    sqxp, sqxa, sqxr = sqrt(1 + xp^2), sqrt(1 + xa^2), sqrt(1 + xr^2) 
+    sr = _anomaly_from_radius(r, model)
+    sp, sa = _spsa_from_rpra(rp, ra, model)
+
     # Analytical expression of (dr/du)(1/vr), that is always well-posed
     return (
         3xr * sqrt(
-            (sqxr + sqxp) 
-            * (sqxr + sqxa) 
-            * (sqxp + sqxa)
+            (sr + sp) 
+            * (sr + sa) 
+            * (sp + sa)
             / (xr + xp) 
             / (xr + xa) 
             / (4 - u^2)
         )
         / (sqrt(2) * frequency_scale(model))
-    )
-end
-
-function _dΘdu(
-    u::Float64,
-    a::Float64,
-    e::Float64,
-    model::AnalyticIsochrone,
-    params::OrbitalParameters=OrbitalParameters()
-)
-    r = radius_from_anomaly(u,a,e)
-    rp, ra = rpra_from_ae(a, e)
-    # dimensionless pericentre, apocentre, and radius
-    xr, xp, xa = (r, rp, ra) ./ radial_scale(model)
-    sr = sqrt(1 + xr^2)
-    
-    Ω1, _ = frequencies_from_ae(a, e, model, params)
-    sp, sa = _spsa_from_rpra(rp, ra, model)
-
-    # the isochrone analytic Jacobian, eq. (G10) in Fouvry & Prunet (2021) - arXiv
-    return (
-        (3/sqrt(2))
-        * (Ω1/frequency_scale(model))
-        * (xr/sqrt(4-u^(2)))
-        * (sqrt((sr+sp)*(sr+sa)*(sp+sa))/sqrt((xr+xp)*(xr+xa)))
     )
 end
 
@@ -180,19 +164,16 @@ end
 #
 ########################################################################
 function _Ω1circular(a::Float64, model::AnalyticIsochrone)::Float64
-    x = a / radial_scale(model) # Dimensionless radius
     anomaly = _anomaly_from_radius(a, model)
     return frequency_scale(model) / anomaly^(3/2)
 end
 
 function _Ω2circular(a::Float64, model::AnalyticIsochrone)::Float64
-    x = a / radial_scale(model) # Dimensionless radius
     anomaly = _anomaly_from_radius(a, model)
     return frequency_scale(model) / (sqrt(anomaly) * (1 + anomaly))
 end
 
 function _βcircular(a::Float64, model::AnalyticIsochrone)::Float64
-    x = a / radial_scale(model) # Dimensionless radius
     anomaly = _anomaly_from_radius(a, model)
     # Cure at a == Inf, βcircular is 0 / 0 = NaN.
     if a == Inf
@@ -446,7 +427,7 @@ function v_boundaries(
     if n1 == 0
         if omgl * omgr < 0.0 # We can search for a root
             # Finding the transition coordinate
-            vlim = bisection(v -> _ωn_circular(v) - exph, αmin, αcentre)
+            vlim = _bisection(v -> _ωn_circular(v) - exph, αmin, αcentre)
             vm = max(vm, vlim) # Updating vm
         end
         #####
@@ -459,7 +440,7 @@ function v_boundaries(
     if Delta <= 0 # There is no extrema along circular orbits
         if omgl * omgr < 0.0 # We can search for a root
             # Finding the transition coordinate
-            vlim = bisection(v -> _ωn_circular(v) - exph, αmin, αcentre)
+            vlim = _bisection(v -> _ωn_circular(v) - exph, αmin, αcentre)
             if n1 * n2 > 0
                 vm = max(vm, vlim) # Updating vm
             elseif n1 * n2 < 0
@@ -480,7 +461,7 @@ function v_boundaries(
         if qmax <= qc
             if omgl * omgr < 0.0 # We can search for a root
                 # Finding the transition coordinate
-                vlim = bisection(v -> _ωn_circular(v) - exph, αmin, αcentre)
+                vlim = _bisection(v -> _ωn_circular(v) - exph, αmin, αcentre)
                 if n1*n2 > 0
                     vm = max(vm, vlim) # Updating vm
                 elseif n1*n2 < 0
@@ -496,7 +477,7 @@ function v_boundaries(
         elseif 2.0 <= qmax
             if omgl * omgr < 0.0 # We can search for a root
                 # Finding the transition coordinate
-                vlim = bisection(v -> _ωn_circular(v) - exph, αmin, αcentre)
+                vlim = _bisection(v -> _ωn_circular(v) - exph, αmin, αcentre)
                 if n1 * n2 > 0
                     vp = min(vp, vlim) # Updating vp
                 elseif n1 * n2 < 0
@@ -525,23 +506,23 @@ function v_boundaries(
                 #####
                 if omgLEFT <= exph <= omgMIDD
                     # Finding the transition
-                    vlim = bisection(v -> _ωn_circular(v) - exph, αmin, vmax)
+                    vlim = _bisection(v -> _ωn_circular(v) - exph, αmin, vmax)
                     vm = max(vm, vlim) # Updating vm
                 end
                 if omgRGHT <= exph <= omgMIDD
                     # Finding the transition
-                    vlim = bisection(v -> _ωn_circular(v) - exph, vmax, αcentre)
+                    vlim = _bisection(v -> _ωn_circular(v) - exph, vmax, αcentre)
                     vp = min(vp,vlim) # Updating vp
                 end
             elseif n1 > 0 && n2 < 0
                 if omgMIDD <= exph <= omgLEFT
                     # Finding the transition
-                    vlim = bisection(v -> _ωn_circular(v) - exph, αmin, vmax)
+                    vlim = _bisection(v -> _ωn_circular(v) - exph, αmin, vmax)
                     vm = max(vm, vlim) # Updating vm
                 end
                 if omgMIDD <= exph <= omgRGHT
                     # Finding the transition
-                    vlim = bisection(v -> _ωn_circular(v) - exph, vmax, αcentre)
+                    vlim = _bisection(v -> _ωn_circular(v) - exph, vmax, αcentre)
                     vp = min(vp, vlim) # Updating vp
                 end
             elseif n1 > 0 && n2 > 0

@@ -1,407 +1,203 @@
 
-#####################################
-# Analytical functions for Plummer
-#####################################
-
-include("plummerutils/CoordinateTransforms.jl")
-include("plummerutils/ActionGradient.jl")
-include("plummerutils/Inversion.jl")
-
+########################################################################
+#
+# Appropriate reduced coordinates
+#
+# @IMPROVE: Merge with Isochrone !! Remove code duplicates
+#           + Confusing names among anomalies: use s for this specific anomaly ?      
+#
+#
+########################################################################
 """
-the raw Theta function From Tep et al. 2022, equation F9
+    _anomaly_from_radius(r, model::PlummerPotential)
+
+anomaly independent of the orbit (only radius dependent) for Plummer.
+
+@IMPROVE: confusing names ! anomaly `s` vs Henon anomaly `u`.
 """
-function PlummerTheta(u::Float64, sp::Float64, sa::Float64, Ω0::Float64)
-    A = sp * (u+2.0)*(u-1.0)^2 - sa*(u-2.0)*(u+1.0)^2
-    B = sp * (u^3-3.0*u+6.0) - sa*(u^3-3.0*u-6.0)
-
-    return (2.0/Ω0 * 3.0/(4.0*sqrt(2.0)) * sqrt(sa*sp*(sa+sp))/sqrt(4.0-u^2)
-            * A^(1.5)/sqrt(sa*sp*A + B))
-end
-
-
-
-function dThetadsp(u::Float64, sp::Float64, sa::Float64, Ω0::Float64)
-
-    num = (3 *(4 *sp^3 *(-1 + u)^2 *(12 - 3 *u^2 + 2 *u^3 + u^4) +
-           sa *sp^2 *(108 - 120 *u - 27 *u^2 + 40 *u^3 + 18 *u^4 - 3 *u^6 +
-           3 *sp^2 *(-1 + u)^4 *(2 + u)^2) -
-           2 *sa^2 *sp *(-6 - 3 *u + u^3) *(6 - 3 *u + u^3 +
-           sp^2 *(2 - 3 *u + u^3)) -
-           sa^3 *(-2 + u) *(1 + u)^2 *(6 + 3* u - u^3 + sp^2 *(6 - 3 *u + u^3))))
-
-    den = (8 *sqrt(2)* sp *(sa +
-           sp) *sqrt(-(((-4 + u^2) *(sa^2 *sp *(-2 + u) *(1 + u)^2 -
-           sp *(6 - 3 *u + u^3) +
-           sa *(-6 - 3 *u + u^3 - sp^2 *(2 - 3* u + u^3))))/(
-           sa *sp *(sa + sp) *(sa *(-2 + u) *(1 + u)^2 -
-           sp *(2 - 3 *u + u^3)))))* (sa^2* sp *(2 + 3 *u - u^3) +
-           sp *(6 - 3* u + u^3) + sa *(6 + 3*u - u^3 + sp^2 *(2 - 3 *u + u^3))))
-
-    return 2.0/Ω0 * num/den
-end
-
-function dThetadsa(u::Float64, sp::Float64, sa::Float64, Ω0::Float64)
-
-    num = (3 *(-4 + u^2) *(3 *sa^4 *sp *(-2 + u)^2 *(1 + u)^4 +
-           sp^3 *(-1 + u)^2 *(12 - 3 *u^2 + 2 *u^3 + u^4) -
-           2 *sa *sp^2 *(-36 + 9 *u^2 - 6 *u^4 + u^6) -
-           2 *sa^3 *(-2 + u) *(1 + u)^2 *(12 + 6 *u - 2 *u^3 +
-           sp^2 *(6 - 3 *u + u^3)) +
-           sa^2 *sp *(108 + 120 *u - 27 *u^2 - 40*u^3 + 18 *u^4 - 3 *u^6 -
-           sp^2 *(-12 + 12 *u + 9 *u^2 - 4 *u^3 - 6 *u^4 + u^6))))
-
-    den = (8 *sqrt(2)*
-           sa^2 *sp *(sa + sp)^2 *(sa *(-2 + u) *(1 + u)^2 -
-           sp *(2 - 3 *u + u^3)) *(-(((-4 + u^2) *(sa^2 *sp *(-2 + u) *(1 + u)^2 -
-           sp *(6 - 3* u + u^3) +
-           sa *(-6 - 3* u + u^3 - sp^2 *(2 - 3 *u + u^3))))/(
-           sa *sp* (sa + sp) *(sa *(-2 + u) *(1 + u)^2 - sp *(2 - 3 *u + u^3)))))^(3/2))
-
-    return 2.0/Ω0 * num/den
-end
-
-
-"""
-the wrapped Theta function
-"""
-function ΘRpRaPlummer(u::Float64, rp::Float64, ra::Float64, bc::Float64, Ω0::Float64)
-    sp,sa = SpSaFromRpRa(rp,ra,bc)
-
-    return PlummerTheta(u,sp,sa,Ω0)
-
-end
-
-
-"""
-the wrapped Theta derivative function
-"""
-function dΘRpRaPlummer(u::Float64, rp::Float64, ra::Float64, bc::Float64, Ω0::Float64)
-    sp,sa = SpSaFromRpRa(rp,ra,bc)
-
-    return PlummerTheta(u,sp,sa,Ω0),dThetadsp(u,sp,sa,Ω0),dThetadsa(u,sp,sa,Ω0)
-
+function _anomaly_from_radius(r::Float64, model::PlummerPotential)
+    x = r / radial_scale(model) # dimensionless radius
+    return sqrt(1 + x^2)
 end
 
 """
-translate From (sp,sa) to (E,L)
+    _radius_from_anomaly(anomaly, model::PlummerPotential)
+
+anomaly independent of the orbit (only radius dependent) for Plummer.
+
+@IMPROVE: confusing names ! anomaly `s` vs Henon anomaly `u`.
 """
-function PlummerELFromSpSa(sp::Float64, sa::Float64;bc::Float64=1.,M::Float64=1.,G::Float64=1.)
-
-    E0 = PlummerE0(bc,M,G)
-    L0 = PlummerL0(bc,M,G)
-
-    E = E0/sp - E0*(sa^2-1.0)/(sa*sp*(sa+sp))
-    L = L0*sqrt(2.0*(sp^2-1.0)*(sa^2-1.0)/(sa*sp*(sa+sp)))
-
-    return E, L
+function _radius_from_anomaly(anomaly::Float64, model::SemiAnalyticPlummer)
+    x = sqrt(anomaly^2 - 1) # dimensionless radius
+    return radial_scale(model) * x
 end
 
 """
-translate From (rp,ra) to (E,L)
+    _spsa_from_rpra(rp, ra, model::PlummerPotential)
+
+extremal anomalies of the orbit with pericentre `rp` and apocentre `ra`.
 """
-function PlummerELFromRpRa(rp::Float64, ra::Float64;bc::Float64=1.,M::Float64=1.,G::Float64=1.)
-
-    sp,sa = SpSaFromRpRa(rp,ra,bc)
-
-    return PlummerELFromSpSa(sp,sa, bc=bc ,M=M,G=G)
-
+function _spsa_from_rpra(rp::Float64, ra::Float64, model::SemiAnalyticPlummer)
+    # Broadcast the anomaly over peri and apocenter (allocation-free)
+    sp, sa = map((r -> _anomaly_from_radius(r, model)), (rp, ra))
+    return sp, sa
 end
 
-"""Vrad()
-SQUARED vr, radial velocity for computing action
-as a function of (a,e)
 """
-function PlummerVradAE(u::Float64,
-                       a::Float64,
-                       e::Float64,
-                       bc::Float64=1.,M::Float64=1.,G::Float64=1.)
+    _rpra_from_spsa(sp, sa, model::PlummerPotential)
 
-    rp,ra = RpRaFromAE(a,e)
-
-    Eval,Lval = PlummerELFromRpRa(rp, ra, bc=bc ,M=M,G=G)
-
-    r = RFromURpRa(u, rp, ra, bc)
-
-    vrSQ = 2(E-ψPlummer(r,bc,M,G)) - (L^2)/(r^2)
-
-    return vrSQ
-
-end
-
-"""Vrad()
-SQUARED vr, radial velocity for computing action
-as a function of (a,e)
+the orbit pericentre `rp` and apocentre `ra` from extremal anomalies.
 """
-function PlummerVradRpRa(u::Float64,
-                         rp::Float64,
-                         ra::Float64,
-                         bc::Float64=1.,M::Float64=1.,G::Float64=1.)
-
-    # something is weird in here with bc scaling?
-    Eval,Lval = PlummerELFromRpRa(rp, ra, bc=bc ,M=M,G=G)
-
-    r = RFromURpRa(u, rp, ra, bc)
-
-    vrSQ = 2(Eval-ψPlummer(r,bc,M,G)) - (Lval^2)/(r^2)
-
-    return vrSQ
-
+function _rpra_from_spsa(sp::Float64, sa::Float64, model::SemiAnalyticPlummer)
+    # Broadcast the anomaly over peri and apocenter (allocation-free)
+    rp, ra = map((s -> _radius_from_anomaly(s, model)), (sp, sa))
+    return rp, ra
 end
 
-
-
-function PlummerOmega12FromRpRa(rp::Float64,ra::Float64,bc::Float64=1.,M::Float64=1.,G::Float64=1.;NINT=32,action::Bool=false)
-
-    # compute the helpful coordinate for Plummer
-    sp,sa = SpSaFromRpRa(rp,ra,bc)
-
-    Ω0 = frequency_scale(model)
-    Eval,Lval = PlummerELFromSpSa(sp, sa, bc=bc ,M=M,G=G)
-
-    function u3func(u::Float64)
-        # push integration forward on three different quantities: Θ(u),Θ(u)/r^2(u),Θ(u)*vr(u)
-
-        th = ΘRpRaPlummer(u, rp, ra, bc, Ω0)
-
-        return (th,
-                th/(RFromURpRa(u, rp, ra, bc)^2),
-                th*PlummerVradRpRa(u,rp,ra,bc,M,G))
-
-    end
-
-    accum = UnitarySimpsonIntegration(u3func,NINT)
-
-    #return the values
-    Ω1inv     = (1/pi)*accum[1]
-    Ω1        = 1/Ω1inv
-    Ω2        = Lval*accum[2]*(1/pi)*Ω1
-    actionj   = (1/pi)*accum[3]
-
-    # be careful with Ω2 if near radial: use analytic relation
-    #if e>(1-TOLECC)
-    #    Ω2 = 0.5*Ω1
-    #else
-    #    Ω2 = Lval*accum[2]*(1/pi)*Ω1
-    #end
-
-    if action
-        return Ω1,Ω2,actionj
-    else
-        return Ω1,Ω2
-    end
+########################################################################
+#
+# (a,e) ↔ (E,L) mappings
+#
+########################################################################
+"""
+for Plummer analytical version, see equation @ADDREFERENCE
+"""
+function EL_from_ae(
+    a::Float64,
+    e::Float64,
+    model::SemiAnalyticPlummer,
+    params::OrbitalParameters=OrbitalParameters()
+)
+    rp, ra = rpra_from_ae(a, e)
+    sp, sa = _spsa_from_rpra(rp, ra, model) # extremal anomalies on the orbit
+    Ẽ = 1 / sp - (sa^2 - 1) / (sa * sp * (sa + sp)) # dimensionless energy
+    L̃ = sqrt(2 * (sp^2 - 1) * (sa^2 - 1) / (sa * sp * (sa + sp))) # dimensionless momentum
+    return energy_scale(model) * Ẽ, momentum_scale(model) * L̃ 
 end
 
-
-function PlummerAlphaBetaFromRpRa(rp::Float64,ra::Float64,bc::Float64=1.,M::Float64=1.,G::Float64=1.;NINT=32)
-    Ω1,Ω2 = PlummerOmega12FromRpRa(rp,ra,bc,M,G,NINT=NINT)
-    return Ω1/frequency_scale(model), Ω2/Ω1
+"""    
+for Plummer semi-analytical version, can be found by 1D-bisection instead of 2D inversion scheme.
+"""
+function ae_from_EL(
+    E::Float64,
+    L::Float64,
+    model::SemiAnalyticPlummer,
+    params::OrbitalParameters=OrbitalParameters()
+)
+    sp, sa = _spsa_from_EL(E, L, model, params)
+    rp, ra = _rpra_from_spsa(sp, sa, model)
+    return ae_from_rpra(rp, ra)
 end
 
-function PlummerAlphaBetaFromEL(E::Float64, L::Float64, nbu::Int64 = 300, eps::Float64=10^(-5), Lcutoff::Float64=0.00005;bc::Float64=1.0,M::Float64=1.0,G::Float64=1.0)
-    sp, sa = SpSaFromEL(E,L,bc=bc,M=M,G=G) # inversion step using bisection
-    rp, ra = RpRaFromSpSa(sp,sa,bc) # exact mapping
+function _spsa_from_EL(
+    E::Float64,
+    L::Float64,
+    model::SemiAnalyticPlummer,
+    params::OrbitalParameters=OrbitalParameters()
+)
+    Ẽ = E / energy_scale(model) # dimensionless energy
+    L̃ = L / momentum_scale(model) # dimensionless angular momentum
 
-    if (L >= 0.05)
-        return PlummerAlphaBetaFromRpRa(rp,ra,bc,M,G,NINT=nbu)
-    else
-        alpha, _ = PlummerAlphaBetaFromRpRa(rp,ra,bc,M,G,NINT=nbu)
-        beta = BetaFromRpRalogIntegral(rp,ra,nbu,eps,Lcutoff,bc=bc,M=M,G=G)
-        return alpha, beta
-    end
-end
-
-
-function BetaFromELlogIntegral(E::Float64, L::Float64, nbv::Int64 = 100, eps::Float64=10^(-5),
-            Lcutoff::Float64=0.00005;bc::Float64=1.0,M::Float64=1.0,G::Float64=1.0)
-    sp, sa = SpSaFromEL(E,L,bc=bc,M=M,G=G)
-    rp, ra = RpRaFromSpSa(sp,sa,bc)
-    return BetaFromRpRalogIntegral(rp,ra,nbv,eps,Lcutoff)
-end
-
-
-function BetaFromRpRalogIntegral(rp::Float64, ra::Float64, nbv::Int64 = 100, eps::Float64=10^(-5),
-            Lcutoff::Float64=0.00005;bc::Float64=1.0,M::Float64=1.0,G::Float64=1.0)
-
-    Ω0 = frequency_scale(model)
-    E, L = PlummerELFromRpRa(rp,ra,bc=bc,M=M,G=G)
-
-    if (L >= Lcutoff)
-        sp, sa = SpSaFromRpRa(rp,ra,bc)
-        sma, ecc = AEFromSpSa(sp,sa)
-        uminPlusOne = eps*(sp^2-1.0)^2/(3.0*(sa-1.0))
-
-        vmin = log(eps) + 4.0*log(rp) - (log(3.0) + log(sa-1.0))
-
-
-        beta = 0.0
-
-
-        for iv=1:nbv
-            v = vmin + (log(2.0)-vmin)/nbv * (iv-0.5)
-            u = exp(v)-1.0
-            su = SFromUAE(u,sma,ecc)
-            ru = RFromS(su,bc)
-            jac = PlummerTheta(u,sp,sa,Ω0)
-            if (rp != 0.0) # not radial
-                beta += jac*exp(v)/ru^2
-            end
-        end
-        beta *= (log(2.0)-vmin)/nbv * (L/pi)
-
-        # Leftover integral
-        u = uminPlusOne/2.0
-        su = SFromUAE(u,sma,ecc)
-        ru = RFromS(su,bc)
-        beta += (uminPlusOne)*L*PlummerTheta(u,sp,sa,Ω0)/(pi*ru^2)
-
-        return beta
-
-    elseif (L != 0.0)
-
-        # compute beta(Lcutoff)
-
-        spcut, sacut = SpSaFromEL(E,Lcutoff,bc=bc,M=M,G=G)
-        rpcut, racut = RpRaFromSpSa(spcut,sacut,bc)
-        smacut, ecccut = AEFromSpSa(spcut,sacut)
-
-        uminPlusOne = eps*(spcut^2-1.0)^2/(3.0*(sacut-1.0))
-
-        vmin = log(eps) + 4.0*log(rpcut) - (log(3.0) + log(sacut-1.0))
-
-
-        betacut = 0.0
-        for iv=1:nbv
-            v = vmin + (log(2.0)-vmin)/nbv * (iv-0.5)
-            u = exp(v)-1.0
-            su = SFromUAE(u,smacut,ecccut)
-            ru = RFromS(su,bc)
-            jac = PlummerTheta(u,spcut,sacut,Ω0)
-            if (rp != 0.0) # not radial
-                betacut += jac*exp(v)/ru^2
-            end
-        end
-        betacut *= (log(2.0)-vmin)/nbv * (Lcutoff/pi)
-
-        # Leftover integral
-        u = uminPlusOne/2.0
-        su = SFromUAE(u,smacut,ecccut)
-        ru = RFromS(su,bc)
-        betacut += (uminPlusOne)*Lcutoff*PlummerTheta(u,spcut,sacut,Ω0)/(pi*ru^2)
-
-        # use linear taylor expansion near L=0
-        # (beta-0.5)/(betacut-0.5) = L/Lcut, hence
-        # beta = 0.5 + L/Lcut * (betacut-0.5)
-
-        beta = 0.5 + (betacut-0.5)*L/Lcutoff
-
-        return beta
-
-    else # radial orbits
-        beta = 0.5 # approximate by the limit. should be find a better taylor expansion?
-
-        return beta
-    end
-
-
-end
-
-
-
-function ELFromAlphaBeta(alpha::Float64, beta::Float64, nbu::Int64 = 100, eps::Float64=4.0*10^(-10), nbStepMax::Int64=10;bc::Float64=1.0,M::Float64=1.0,G::Float64=1.0)
-
-    alphac = AlphaCirc(beta)
-    #println((alphac,beta))
-
-    if (alpha == alphac)
-        return ELCirc(beta)
-    else
-        if (beta == 0.5)
-            return ELRadial(alpha)
-        else
-            return ELArbitrary(alpha,beta,alphac,nbu,eps,nbStepMax,bc=bc,M=M,G=G)
-        end
-    end
-end
-
-
-
-function Sc(tE::Float64)
-    t1 = 1.0/(6.0*tE)
-    t2 = (1.0+54.0*tE^2)/(216.0*tE^3)
-    t3 = (1.0/(4.0*tE)) * sqrt(1.0+1.0/(27.0*tE^2))
-    return t1 + cbrt(t2+t3) + cbrt(t2-t3)
-end
-
-function tEta(s::Float64, tE::Float64)
-    return (s^2 - 1.0)*(1.0/s - tE)
-end
-
-function Lc(E::Float64,E0::Float64,L0::Float64)
-
-    tE = E/E0
-    if (tE == 1.0)
-        return 0.0
-    else
-        return L0 * sqrt(abs(2*tEta(Sc(tE),tE)))
-    end
-
-end
-
-function SpSaFromEL(E::Float64, L::Float64;bc::Float64,M::Float64=1.,G::Float64=1.)
-    # Use bissection
-    # We know that 1 < sp < sc and sc < sa < E0/E for bound non-circular non-radial orbits
-    # upper bound should be E0/E + 1 in order to get a proper bracket
-    # should find some proper cutoff for quasi circular orbits
-
-
-    E0 = PlummerE0(bc,M,G)
-    L0 = PlummerL0(bc,M,G)
-
-
-    tE = E/E0
-    tL = L/L0
-
-#    println((E,L))
-
-    if (tE >= 0.0) # bound orbits
-        sc = Sc(tE)
-        if (L >= Lc(E,E0,L0)) # circular orbit (inequality to take care of small Float errors)
-            return sc, sc
-        elseif (L == 0.0) # radial orbit
-            return 1.0, 1.0/tE
-        else # arbitrary orbit
-            fct = (s -> tE*s^3 - s^2 + (0.5*tL^2-tE)*s + 1.0)
-            if (abs(fct(sc)) <= 10^(-10)) # quasi circular
-                return sc, sc
-            else # not quasi-circular
-
-                # find sp
-                if (abs(fct(1.0)) <= 10.0*eps(Float64))
-                    sp = 1.0
-                else
-                    sp = bisection(fct,1.0,sc)
-                end
-
-                #find sa
-                if (abs(fct(1.0/tE)) <= 10.0*eps(Float64))
-                    sa = 1.0/tE
-                else
-                    sa = bisection(fct,sc,1.0/tE+1)
-                end
-
-                return sp, sa
-            end
-        end
-    else # unbound orbits
-        if (L == 0.0) # radial orbits
+    # Edge cases
+    # @ADDREFERENCE for this cryptic formula to find root from
+    rootequation = (s -> Ẽ * s^3 - s^2 + ((L̃^2) / 2 - Ẽ) * s + 1)
+    if Ẽ <= 0 # unbounded orbits
+        if L̃ == 0 # radial orbits
             return 1.0, Inf
         else # arbitrary orbit
-            fct = (s -> tE*s^3 - s^2 + (0.5*tL^2-tE)*s + 1.0)
-            sp = bisection(fct,1.0,1.0/(0.5*tL^2-tE))
+            sp = _bisection(rootequation, 1.0, 2 / (L̃^2 - 2Ẽ))
             return sp, Inf
-
         end
+    elseif L̃ == 0 # radial orbit
+        return 1.0, 1 / Ẽ
     end
 
+    #  Generic case: bounded orbits
+    # 1 < sp < sc and sc < sa < E0/E with sc the circular anomaly
+    # @ADDREFERENCE for this cryptic formulae
+    # Anomaly of the circular orbit of energy E
+    x1, x2, x3 = 1 / (6Ẽ), (1 + 54Ẽ^2) / (216Ẽ^3), sqrt(1 + 1 / (27Ẽ^2)) / (4Ẽ)
+    scircular = x1 + ∛(x2 + x3) + ∛(x2 - x3)
+    η̃ = (scircular^2 - 1) * (1 / scircular - Ẽ)
+    L̃circular = Ẽ == 1 ? 0.0 : sqrt(abs(2η̃))
+    if L̃ >= L̃circular # circular orbits
+        # @IMPROVE: inequality to take care of small Float errors, not ideal
+        # should find some proper cutoff for quasi circular orbits
+        return scircular, scircular
+    end
 
+    sp = _bisection(rootequation, 1.0, scircular)
+    # upper bound should be E0/E + 1 in order to get a proper bracket
+    sa = _bisection(rootequation, scircular, 1 + 1/Ẽ)
+    return sp, sa
+end
+
+########################################################################
+#
+# (a,e) ↔ frequencies mappings: integrands
+#
+########################################################################
+"""
+the analytic expression for Theta for the Plummer profile are given in 
+Tep et al. 2022 eq. (F9). It has the major advantage of 
+always being well-posed for -1<u<1
+
+@QUESTION: is `u` hard-coded as Hénon's anomaly here ?
+"""
+function Θ(
+    u::Float64,
+    a::Float64,
+    e::Float64,
+    model::SemiAnalyticPlummer,
+    params::OrbitalParameters=OrbitalParameters()
+)
+    rp, ra = rpra_from_ae(a, e) # peri and apocentre
+    sp, sa = _spsa_from_rpra(rp, ra, model) # extremal anomalies
+    
+    # Analytical expression of (dr/du)(1/vr), that is always well-posed
+    # see equation (F9) in Tep et al. (2022).
+    tep_a = sp * (u + 2) * (u - 1)^2 - sa * (u - 2) * (u + 1)^2
+    tep_b = sp * (u^3 - 3u + 6) - sa * (u^3 - 3u - 6)
+
+    return (
+        3 
+        * sqrt(sa * sp * (sa + sp))
+        * tep_a^(3/2)
+        / sqrt(sa * sp * tep_a + tep_b)
+        / sqrt(4 - u^2)
+        / (2 * sqrt(2) * frequency_scale(model))
+    )
+end
+
+########################################################################
+#
+# (a, e) ↔ frequencies mappings: circular
+#
+########################################################################
+function _Ω1circular(a::Float64, model::SemiAnalyticPlummer)::Float64
+    x = a / radial_scale(model) # Dimensionless radius
+    anomaly = _anomaly_from_radius(a, model)
+    return frequency_scale(model) * sqrt(4 + x^2) / (2 * anomaly^(5/2))
+end
+
+function _Ω2circular(a::Float64, model::SemiAnalyticPlummer)::Float64
+    anomaly = _anomaly_from_radius(a, model)
+    return frequency_scale(model) / (2 * anomaly^(3/2))
+end
+
+function _βcircular(a::Float64, model::SemiAnalyticPlummer)::Float64
+    x = a / radial_scale(model) 
+    return sqrt(1 - 3 / (4 + x^2))
+end
+
+function _β_from_α_circular(
+    α::Float64,
+    model::SemiAnalyticPlummer,
+    params::OrbitalParameters=OrbitalParameters()
+)::Float64
+    # Circular orbits: 
+    # α = (1 - β^2)^(3/4) / (2 * 3^(3/4) * β^(5/2))
+    # use bisection on this function directly
+    rootequation(β::Float64) = (1 - β^2)^(3/4) / (2 * 3^(3/4) * β^(5/2)) - α
+    return _bisection(rootequation, 1/2, 1)
 end

@@ -53,16 +53,17 @@ _henond4f(u::Float64)::Float64 = 0.
 """
     radius_from_anomaly(u, a, e)
 
-mapping from u->r in Henon variables.
+mapping from anomaly to radius. Default is Henon anomaly.
 
 @IMPROVE: right now, Hénon anomaly is hard-coded.
 """
-radius_from_anomaly(u::Float64,a::Float64,e::Float64)::Float64 = a * (1 + e * _henonf(u))
-
+function radius_from_anomaly(u::Float64, a::Float64, e::Float64)::Float64
+    return a * (1 + e * _henonf(u))
+end
 """
-    radius_from_anomaly_derivative(u, a, e)
+    radius_from_anomaly_derivative(u, a, e, model)
 
-mapping from u->r in Henon variables
+derivative of the mapping from anomaly to radius. Default is Henon anomaly.
 
 @IMPROVE: right now, Hénon anomaly is hard-coded.
 """

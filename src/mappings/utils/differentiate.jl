@@ -37,6 +37,7 @@ ap, da, ep, de
     i.e. switch points are part of the standard case (not the border ones)
 
 @IMPROVE: Can we do something about the warnings?
+@IMPROVE: Should be a function of the dimensionless semimajor axes
 """
 function _derivatives_points_ae(
     a::Float64,
@@ -93,6 +94,7 @@ compute the numerical derivative of any function of semimajor axis and eccentric
 naive right finite differences.
 
 @IMPROVE: diffentiation scheme is hard-coded. Make it a parameter
+@IMPROVE: Should be a function of the dimensionless semimajor axis
 """
 function _derivatives_ae(
     fun::F0,
@@ -101,7 +103,9 @@ function _derivatives_ae(
     params::OrbitalParameters=OrbitalParameters()
 ) where {F0 <: Function}
     # Numerical derivative points
-    tola, tole = params.TOLA,_eccentricity_tolerance(a, params.rc, params.TOLECC)
+    # @IMPROVE: For now patched with the parameter rc, but the semimajor axes should be 
+    # adimensional
+    tola, tole = params.TOLA,_eccentricity_tolerance(a/params.rc, params.TOLECC)
     ap, da, ep, de = _derivatives_points_ae(a, e, params.da, params.de, tola, tole)
     
     floc = fun(a, e) # Both derivatives

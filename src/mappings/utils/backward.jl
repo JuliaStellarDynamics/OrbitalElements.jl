@@ -43,6 +43,8 @@ end
 Determine the next guess point in the Newton-Rahpson algorithm
 given the current point `(acur, ecur)` and the direction `(adir, edir)`,
 dealing with boundary crossing
+
+@IMPROVE: Should be a function of the dimensionless semimajor axis
 """
 function _next_guess_ae(
     acur::Float64,
@@ -64,7 +66,9 @@ function _next_guess_ae(
     # Take the point in the middle of the current point and the border in the increment direction
     # (Dividing the increment length until being in the domain can lead to unexpected behaviour :
     # new point too close to the border where inversion can be impossible).
-    tola, tole = params.TOLA, _eccentricity_tolerance(acur, params.rc, params.TOLECC)
+    # @IMPROVE: For now patched with the parameter rc, but the semimajor axes should be 
+    # adimensional
+    tola, tole = params.TOLA, _eccentricity_tolerance(acur/params.rc, params.TOLECC)
     if acur + adir < tola || ecur + edir < tole || ecur + edir > 1.0-tole
 
         # Fraction of the direction to reach the border

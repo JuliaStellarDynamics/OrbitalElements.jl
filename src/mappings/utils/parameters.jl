@@ -12,8 +12,8 @@ const DEFAULT_RC     = 1.
 const DEFAULT_RMIN   = 0.
 const DEFAULT_RMAX   = Inf
 const DEFAULT_TOL    = 1.e-12
-const DEFAULT_DA     = 1.e-4
-const DEFAULT_DE     = 1.e-4
+const DEFAULT_DA     = 1.e-5
+const DEFAULT_DE     = 1.e-5
 const DEFAULT_ITERMAX= 100
 
 
@@ -29,7 +29,8 @@ struct OrbitalParameters
 
     EDGE::Float64     # the guard against the edges of [-1,1] integration boundaries
     TOLECC::Float64   # the eccentricity tolerance
-    TOLA::Float64     # the semi-major axis tolerance
+    # @IMPROVE: should be dimensionless semimajor axis !
+    TOLA::Float64     # the semi-major axis tolerance 
 
     NINT::Int64       # step size number to compute orbit values (steps from pericentre to apocentre)
 
@@ -43,7 +44,8 @@ end
 """
     OrbitalParameters([,rmin,rmax,EDGE,TOLECC,TOLA,NINT,da,de,ITERMAX,invε])
 
-creates an OrbitalParameters structure with the defined values (which all have a default value)
+creates an OrbitalParameters structure with the defined values
+(which all have a default value)
 """
 function OrbitalParameters(;
     rc::Float64=DEFAULT_RC,

@@ -133,6 +133,8 @@ same as `Θ(...)` for u close to +1,-1 (curing the 0/0 limit at peri/apocentre)
 @IMPROVE: the expansion is trying both Taylor expansion and, if fails, extrapolation with 
 particular care need at boundary switch. Fix it to use only one.
 @IMPROVE: find a better name
+@WARNING: This function will return garbage when called for a model which does not use 
+Henon anomaly !
 """
 function _Θedge(
     u::Float64,
@@ -145,7 +147,7 @@ function _Θedge(
     # which boundary are we close to?
     ul = (u > 0.) ? 1.0 : -1.0
     # compute the corresponding radius value
-    rl = radius_from_anomaly(ul,a,e)
+    rl = radius_from_anomaly(ul, a, e)
     # compute energy and angular momentum from the potential (allow for expansions)
     _, L = EL_from_ae(a, e, model, params)
     # compute the derivatives of the effective potential
@@ -200,7 +202,7 @@ end
 ########################################################################
 
 """
-    _Θ_derivatives_ae(u, a, e, modelparams)
+    _Θ_derivatives_ae(u, a, e, model, params)
 
 numerical differentiation of Θ w.r.t. semimajor axis and eccentricity
 

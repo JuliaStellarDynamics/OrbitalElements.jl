@@ -2,6 +2,7 @@
 #
 # (J,L) ↦ (u,v) resonances lines in actions space
 # These methods for resonance are not use/usable
+# @WARNING: This file is not included in the main code anyway !
 # @IMPROVE: adapt to v2.0
 # @IMPROVE: make them accessible while allowing for other integration methods
 # @IMPROVE: Blue style
