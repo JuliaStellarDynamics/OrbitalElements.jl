@@ -152,7 +152,7 @@ function v_boundaries(
         #####
         # (B9) Fouvry & Prunet : 2nd inequality
         #####
-        vmax = βc(hval/n1)
+        vmax = n1 == 0 ? vmin : βc(hval/n1)
     else # v = α
 
         #####

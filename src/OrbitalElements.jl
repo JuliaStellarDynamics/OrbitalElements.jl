@@ -48,6 +48,8 @@ export αβ_to_frequencies_jacobian, frequencies_to_αβ_jacobian
 # Resonant mappings structures
 export Resonance
 # Resonant mappings functions
+export resonance_number, frequency_extrema
+export v_boundaries
 export αβ_from_uv, uv_from_αβ
 export uv_to_αβ_jacobian
 

@@ -390,7 +390,7 @@ function v_boundaries(
     # For n2=0, the boundary takes a simple form
     if n2 == 0
         vm = 0.5 # Minimum bound
-        vp = _β_from_α_circular(exph/n1, model) # Maximum bound
+        vp = n1 == 0 ? vm : _β_from_α_circular(exph/n1, model) # Maximum bound
         return vm, vp # Output
     end
     #####

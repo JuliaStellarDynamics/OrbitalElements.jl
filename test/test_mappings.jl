@@ -52,11 +52,15 @@
             end
         end
     end
-    # Range test
+    # Range test semi-major axis, eccentricity
     aregular = 0.1:0.1:10.
     aborder = 0.:0.005:0.1
     eregular = 0.1:0.01:0.9
     eborders = Iterators.flatten((0.:0.005:0.1,0.9:0.005:1.0))
+    # Range test resonances and resonant variable u
+    resonances_n = -5:5
+    # @IMPROVE: The analytic resonant mapping are not good at the edge !
+    resonances_u = -0.995:0.005:0.995
     #################################
     # Isochrone Analytic vs Numerical
     #################################
@@ -77,11 +81,11 @@
                     ana(a, e) = fun(a, e, anapot, anaparams)
                     num(a, e) = fun(a, e, numpot, numparams)
                     @testset "regular" begin
-                        tol =  1.e-6
+                        tol = 1.e-6
                         compare_mappings(ana, num, aregular, eregular; atol=tol, rtol=tol)
                     end
                     @testset "borders" begin
-                        tol =  1.e-3
+                        tol = 1.e-3
                         compare_mappings(ana, num, aborder, eregular; atol=tol, rtol=tol)
                         compare_mappings(ana, num, aregular, eborders; atol=tol, rtol=tol)
                         compare_mappings(ana, num, aborder, eborders; atol=tol, rtol=tol)
@@ -105,13 +109,13 @@
                             forward(a, e) = forwardfun(a, e, pot, params)
                             backward(E, L) = backwardfun(E, L, pot, params)
                             @testset "regular" begin
-                                tol =  1.e-6
+                                tol = 1.e-6
                                 test_backwardmapping(
                                     forward, backward, aregular, eregular, tol
                                 )
                             end
                             @testset "borders" begin
-                                tol =  1.e-3
+                                tol = 1.e-3
                                 test_backwardmapping(
                                     forward, backward, aregular, eborders, tol
                                     )
@@ -129,13 +133,41 @@
             end
         end
         @testset "resonant" begin
-            # Compare analytical to numerical results in the isochrone
-            anapot = AnalyticIsochrone()
-            numpot = NumericalIsochrone()
-            params = OrbitalParameters(rc=radial_scale(numpot))
-            
             @testset "frequency_extrema" begin
-                
+                tol = 1.e-6
+                for n1 in resonances_n
+                    for n2 in resonances_n
+                        anares = Resonance(n1, n2, anapot, anaparams)
+                        numres = Resonance(n1, n2, numpot, numparams)
+                        @test all(
+                            isapprox.(
+                                frequency_extrema(anares),
+                                frequency_extrema(numres),
+                                atol=tol, 
+                                rtol=tol
+                            )
+                        )
+                    end
+                end
+            end
+            @testset "vboundaries" begin
+                tol = 1.e-5
+                for n1 in resonances_n
+                    for n2 in resonances_n
+                        anares = Resonance(n1, n2, anapot, anaparams)
+                        numres = Resonance(n1, n2, numpot, numparams)
+                        for u in resonances_u
+                            @test all(
+                                isapprox.(
+                                    v_boundaries(u, anares, anapot, anaparams),
+                                    v_boundaries(u, numres, numpot, numparams),
+                                    atol=tol, 
+                                    rtol=tol
+                                )
+                            )
+                        end
+                    end
+                end
             end
             numres = Resonance(-1, 2, numpot, numparams)
             # Forward/backward
