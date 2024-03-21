@@ -36,7 +36,7 @@ end
 frequencies from frequency ratios
 """
 function frequencies_from_αβ(α::Float64, β::Float64, Ω0::Float64)::Tuple{Float64,Float64}
-    return Ω0*α, Ω0*α*β
+    return Ω0 * α, Ω0 * α * β
 end
 function frequencies_from_αβ(
     Ω1::Float64,
@@ -46,28 +46,70 @@ function frequencies_from_αβ(
     return frequencies_from_αβ(Ω1, Ω2, frequency_scale(model))
 end
 
+########################################################################
+#
+# (α,β) ↔ (Ω1,Ω2) mappings: derivatives and jacobian
+#
+########################################################################
 """
-    _dfrequencies_from_dαβ(α, β, dα, dβ, model)
+    αβ_from_frequencies_derivatives(Ω1, Ω2, model)
 
-convert frequencies ratios derivatives to frequencies derivatives.
+same as `αβ_from_frequencies` plus mapping derivatives.
 """
-function _dfrequencies_from_dαβ(
-    α::Float64,
-    β::Float64,
-    dα::Float64,
-    dβ::Float64,
-    Ω0::Float64
-)::Tuple{Float64,Float64}
-    return Ω0 * dα, Ω0 * (dα * β + α * dβ)
-end
-function _dfrequencies_from_dαβ(
-    α::Float64,
-    β::Float64,
-    dα::Float64,
-    dβ::Float64,
+function αβ_from_frequencies_derivatives(
+    Ω1::Float64,
+    Ω2::Float64,
     model::Potential
-)::Tuple{Float64,Float64}
-    return _dfrequencies_from_dαβ(α, β, dα, dβ, frequency_scale(model))
+)::Tuple{Float64,Float64,Float64,Float64,Float64,Float64}
+
+    α, β = αβ_from_frequencies(Ω1, Ω2, model)
+    ∂α∂Ω1, ∂β∂Ω1 = 1 / frequency_scale(model), -Ω2 / Ω1^2
+    ∂α∂Ω2, ∂β∂Ω2 = 0.0, 1 / Ω1
+    return α, β, ∂α∂Ω1, ∂β∂Ω1, ∂α∂Ω2, ∂β∂Ω2
+end
+
+"""
+    frequencies_from_αβ_derivatives(α, β, model)
+
+same as `frequencies_from_αβ` plus mapping derivatives.
+"""
+function frequencies_from_αβ_derivatives(
+    α::Float64,
+    β::Float64,
+    model::Potential
+)::Tuple{Float64,Float64,Float64,Float64,Float64,Float64}
+
+    Ω0 = frequency_scale(model)
+    Ω1, Ω2 = frequencies_from_αβ(α, β, Ω0)
+    ∂Ω1∂α, ∂Ω2∂α = Ω0 .* (1, β)
+    ∂Ω1∂β, ∂Ω2∂β = Ω0 .* (0, α)
+    return Ω1, Ω2, ∂Ω1∂α, ∂Ω2∂α, ∂Ω1∂β, ∂Ω2∂β
+end
+
+"""
+    frequencies_to_αβ_jacobian(Ω1, Ω2, model)
+
+jacobian of the (Ω1,Ω2) ↦ (α,β) mapping, i.e. |∂(α,β)/∂(Ω1,Ω2)|.
+"""
+function frequencies_to_αβ_jacobian(
+    Ω1::Float64,
+    Ω2::Float64,
+    model::Potential
+)
+    return abs(1 / (frequency_scale(model) * Ω1))
+end
+
+"""
+    αβ_to_frequencies_jacobian(α, β, model)
+
+jacobian of the (α,β) ↦ (Ω1,Ω2) mapping, i.e. |∂(Ω1,Ω2)/∂(α,β)|.
+"""
+function αβ_to_frequencies_jacobian(
+    α::Float64,
+    β::Float64,
+    model::Potential
+)
+    return abs(frequency_scale(model)^2 * α)
 end
 
 ########################################################################
@@ -150,7 +192,7 @@ end
 """
     αβ_from_ae_derivatives(a, e, model[, params])
 
-same as αβ_from_ae plus mapping derivatives.
+same as `αβ_from_ae` plus mapping derivatives.
 
 @IMPROVE: right now the edge handling procedure is hard-coded. Should incorparate it in the
 OrbitalParameters structure (not only the tolerances)
@@ -185,11 +227,10 @@ function frequencies_from_ae_derivatives(
     params::OrbitalParameters=OrbitalParameters()
 )::Tuple{Float64,Float64,Float64,Float64,Float64,Float64}
     α, β, ∂α∂a, ∂β∂a, ∂α∂e, ∂β∂e = αβ_from_ae_derivatives(a, e, model, params)
-
-    Ω1, Ω2 = frequencies_from_αβ(α, β, model)
-    ∂Ω1∂a, ∂Ω2∂a = _dfrequencies_from_dαβ(α, β, ∂α∂a, ∂β∂a, model)
-    ∂Ω1∂e, ∂Ω2∂e = _dfrequencies_from_dαβ(α, β, ∂α∂e, ∂β∂e, model)
-
+    Ω1, Ω2, ∂Ω1∂α, ∂Ω2∂α, ∂Ω1∂β, ∂Ω2∂β = frequencies_from_αβ_derivatives(α, β, model)
+    # Chain rule
+    ∂Ω1∂a, ∂Ω2∂a = ∂Ω1∂α * ∂α∂a + ∂Ω1∂β * ∂β∂a, ∂Ω2∂α * ∂α∂a + ∂Ω2∂β * ∂β∂a
+    ∂Ω1∂e, ∂Ω2∂e = ∂Ω1∂α * ∂α∂e + ∂Ω1∂β * ∂β∂e, ∂Ω2∂α * ∂α∂e + ∂Ω2∂β * ∂β∂e
     return Ω1, Ω2, ∂Ω1∂a, ∂Ω2∂a, ∂Ω1∂e, ∂Ω2∂e
 end
 
@@ -232,7 +273,7 @@ function ae_to_frequencies_jacobian(
     params::OrbitalParameters=OrbitalParameters()
 )::Float64
     # calculate the frequency derivatives
-    _, _, ∂Ω1∂a, ∂Ω2∂a, ∂Ω1∂e, ∂Ω2∂e = frequencies_from_ae_derivatives(model, a, e, params)
+    _, _, ∂Ω1∂a, ∂Ω2∂a, ∂Ω1∂e, ∂Ω2∂e = frequencies_from_ae_derivatives(a, e, model, params)
     return abs(∂Ω1∂a * ∂Ω2∂e - ∂Ω2∂a * ∂Ω1∂e)
 end
 

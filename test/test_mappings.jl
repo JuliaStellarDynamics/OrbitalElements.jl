@@ -93,6 +93,33 @@
                 end
             end
         end
+        @testset "derivatives/jacobians" begin
+            for (mapping, fun) in [
+                ("EL", EL_from_ae_derivatives),
+                ("ELjacobian", ae_to_EL_jacobian),
+                ("frequencies", frequencies_from_ae_derivatives),
+                ("frequenciesjacobian", ae_to_frequencies_jacobian)
+            ]
+                @testset "$mapping" begin
+                    # Defining the mappings to compare
+                    ana(a, e) = fun(a, e, anapot, anaparams)
+                    num(a, e) = fun(a, e, numpot, numparams)
+                    @testset "regular" begin
+                        tol = 1.e-4
+                        compare_mappings(ana, num, aregular, eregular; atol=tol, rtol=tol)
+                    end
+                    # @IMPROVE: for now still issues on the borders !
+                    # @testset "borders" begin
+                    #     tol = 1.e-2
+                    #     compare_mappings(ana, num, aregular, eborders; atol=tol, rtol=tol)
+                    #     # @IMPROVE: for now still issues in the centre !
+                    #     # compare_mappings(ana, num, aborder, eregular; atol=tol, rtol=tol)
+                    #     # compare_mappings(ana, num, aborder, eborders; atol=tol, rtol=tol)
+                    # end
+                end
+            end
+            # @IMPROVE: add comparison between internal and external derivatives
+        end
         @testset "backward" begin
             for (version, pot, params) in [
                 ("analytic", anapot, anaparams), 

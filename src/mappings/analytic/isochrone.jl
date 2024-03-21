@@ -86,7 +86,7 @@ end
 for isochrone analytical version
 @IMPROVE: Define it for the isochrone !
 """
-# function ae_to_EL_jacobian(
+# function EL_from_ae_derivatives(
 #     a::Float64,
 #     e::Float64,
 #     model::AnalyticIsochrone,
@@ -258,25 +258,44 @@ function ae_from_frequencies(
     return ae_from_αβ(α, β, model, params)
 end
 
+function ae_to_αβ_jacobian(
+    a::Float64,
+    e::Float64,
+    model::AnalyticIsochrone,
+    params::OrbitalParameters=OrbitalParameters()
+)
+    jacaetoEL = ae_to_EL_jacobian(a, e, model, params)
+    E, L = EL_from_ae(a, e, model, params)
+    jacELtoαβ = _EL_to_αβ_jacobian(E, L, model, params)
+    # Chain rule
+    return jacaetoEL * jacELtoαβ
+end
+
 function ae_to_frequencies_jacobian(
     a::Float64,
     e::Float64,
     model::AnalyticIsochrone,
     params::OrbitalParameters=OrbitalParameters()
 )
-    error("not analytically defined for isochrone")
+    jacaetoαβ = ae_to_αβ_jacobian(a, e, model, params)
+    α, β = αβ_from_ae(a, e, model, params)
+    jacαβtofrequencies = αβ_to_frequencies_jacobian(α, β, model)
+    # Chain rule
+    return jacaetoαβ * jacαβtofrequencies
 end
 
 
 ########################################################################
 #
 # (E,L) ↔ frequencies mappings
-# @WARNING: This is specific to isochrone, not defined for other (non-analytic) potentials. However we use them inside the (exported) analytic mappings
+# @WARNING: This is specific to isochrone, not defined for other (non-analytic) potentials. 
+# However we use them inside the (exported) analytic mappings
 # We do not export these functions! 
 #
 ########################################################################
 """
-for isochrone analytical version, see equations @TOCOMPLETE in Fouvry+21
+analytical isochrone energy and angular momentum as a function of frequency ratios
+see equations @TOCOMPLETE in Fouvry+21
 """
 function _EL_from_αβ(
     α::Float64,
@@ -291,12 +310,23 @@ function _EL_from_αβ(
 end
 
 """
-analytic jacobian for the change of variables from `(E,L)` to `(α,β)`
-
-@WARNING: given as a function of `α` and `β`, very confusing !!
-but used internally
+analytical isochrone frequency ratios as a function of energy and angular momentum
 """
-function _EL_to_αβ_jacobian_from_αβ(
+function _αβ_from_EL(
+    E::Float64,
+    L::Float64,
+    model::AnalyticIsochrone,
+    params::OrbitalParameters=OrbitalParameters()
+)
+    # Dimensionless energy and momentum
+    Ẽ, L̃ = E / energy_scale(model), L / momentum_scale(model) 
+    return 2Ẽ^(3/2), (1 + 1 / sqrt(1 + 4 / L̃^2)) / 2
+end
+
+"""
+analytic jacobian of the (α,β) ↦ (E,L) mapping, i.e. |∂(E,L)/∂(α,β)|.
+"""
+function _αβ_to_EL_jacobian(
     α::Float64,
     β::Float64,
     model::AnalyticIsochrone,
@@ -305,6 +335,27 @@ function _EL_to_αβ_jacobian_from_αβ(
     return abs(
         energy_scale(model) * momentum_scale(model) 
         / (6 * α^(1/3) * (β * (1 - β))^(3/2))
+    )
+end
+
+"""
+analytic jacobian of the (E,L) ↦ (α,β) mapping, i.e. |∂(α,β)/∂(E,L)|.
+"""
+function _EL_to_αβ_jacobian(
+    E::Float64,
+    L::Float64,
+    model::AnalyticIsochrone,
+    params::OrbitalParameters=OrbitalParameters()
+)
+    Ẽ, L̃ = E / energy_scale(model), L / momentum_scale(model)
+    return abs(
+        6 * sqrt(2Ẽ)
+        / (
+            energy_scale(model) 
+            * momentum_scale(model)
+            * (1 + 4 / L̃^2)^(3/2)
+            * L̃^3
+        )
     )
 end
 
@@ -367,6 +418,7 @@ for isochrone analytical version, only the cut in `αmin` (i.e., `params.rmax`) 
 @IMPROVE add the cut in the centre (`αmax`, i.e., `params.rmin`). Caution with extrema 
 search: probably not just replacing `αcentre` by `αmax`
 @IMPROVE: Lot of code duplicates in this function.
+@IMPROVE: Does not work on some edge cases (e.g. res=(-5,-5) and u=-1)
 """
 function v_boundaries(
     u::Float64,
