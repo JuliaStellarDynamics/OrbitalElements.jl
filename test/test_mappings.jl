@@ -119,6 +119,7 @@
                 end
             end
             # @IMPROVE: add comparison between internal and external derivatives
+            # when internal derivatives will be accessible
         end
         @testset "backward" begin
             for (version, pot, params) in [
@@ -218,6 +219,23 @@
                                 )
                             )
                         end
+                    end
+                end
+            end
+            @testset "forward/backward" begin
+                tol = 1.e-6
+                for n1 in resonances_n
+                    for n2 in resonances_n
+                        anares = Resonance(n1, n2, anapot, anaparams)
+                        numres = Resonance(n1, n2, numpot, numparams)
+                        @test all(
+                            isapprox.(
+                                frequency_extrema(anares),
+                                frequency_extrema(numres),
+                                atol=tol, 
+                                rtol=tol
+                            )
+                        )
                     end
                 end
             end
