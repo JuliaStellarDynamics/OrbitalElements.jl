@@ -196,12 +196,31 @@
                     end
                 end
             end
-            numres = Resonance(-1, 2, numpot, numparams)
-            # Forward/backward
-            a, e = 1.0, 0.5
-            α, β = αβ_from_ae(a, e, numpot, numparams)
-            # @IMPROVE: to continue !
-    
+            @testset "lines" begin
+                tol = 1.e-3
+                # @IMPROVE: we avoid frequency 0.0 because it fails for some resonances!
+                test_frequencies = -2.0:0.6:2.0
+                for n1 in resonances_n
+                    for n2 in resonances_n
+                        anares = Resonance(n1, n2, anapot, anaparams)
+                        numres = Resonance(n1, n2, numpot, numparams)
+                        for ω in test_frequencies
+                            @test all(
+                                isapprox.(
+                                    actions_resonance_line(
+                                        ω, anares, anapot, anaparams
+                                    ),
+                                    actions_resonance_line(
+                                        ω, numres, numpot, numparams
+                                    ),
+                                    atol=tol, 
+                                    rtol=tol
+                                )
+                            )
+                        end
+                    end
+                end
+            end
         end
     end
     #################################

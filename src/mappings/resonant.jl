@@ -1,4 +1,9 @@
 
+########################################################################
+#
+# resonance variables ↔ frequency ratios : Boundaries
+#
+########################################################################
 include("resonant/boundaries.jl")
 ########################################################################
 #
@@ -87,31 +92,38 @@ end
 #
 ########################################################################
 """
-    rescaled_ϖ(ω, resonance)
-    rescaled_ϖ(ω, ωmin, ωmax)
-    rescaled_ϖ(ω, n1, n2, model, params)
+    rescaled_ϖ(ω̃, resonance)
+    rescaled_ϖ(ω̃, ωmin, ωmax)
+    rescaled_ϖ(ω̃, n1, n2, model, params)
 
-translate a complex frequency into a resonant rescaled frequency.
+translate a complex frequency `ω̃` into a resonant rescaled frequency.
 
 See equation (B3) in Fouvry & Prunet (2022)
 
 @ASSUMPTION:
-    - ω is dimensionless, that is, rescaled by [`frequency_scale(model)`](@ref) already.
+    - `ω̃` is dimensionless, that is, already rescaled by [`frequency_scale(model)`](@ref).
 """
 function rescaled_ϖ(
-    ω::Number,
+    ω̃::Number,
     n1::Int64,
     n2::Int64,
     model::Potential,
     params::OrbitalParameters=OrbitalParameters()
 )
     ωmin, ωmax = frequency_extrema(n1, n2, model, params)
-    return rescaled_ϖ(ω, ωmin, ωmax)
+    return rescaled_ϖ(ω̃, ωmin, ωmax)
 end
-function rescaled_ϖ(ω::Number,res::Resonance)
+function rescaled_ϖ(ω̃::Number, res::Resonance)
     ωmin, ωmax = res.frequency_extrema
-    return (2ω - ωmax - ωmin)/(ωmax - ωmin)
+    return rescaled_ϖ(ω̃, ωmin, ωmax)
 end
-function rescaled_ϖ(ω::Number,ωmin::Float64,ωmax::Float64)
-    return (2ω - ωmax - ωmin)/(ωmax - ωmin)
+function rescaled_ϖ(ω̃::Number, ωmin::Float64, ωmax::Float64)
+    return (2ω̃ - ωmax - ωmin)/(ωmax - ωmin)
 end
+
+########################################################################
+#
+# resonance lines in action space
+#
+########################################################################
+include("resonant/lines.jl")

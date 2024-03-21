@@ -56,6 +56,8 @@ export resonance_number, frequency_extrema
 export v_boundaries
 export αβ_from_uv, uv_from_αβ
 export uv_to_αβ_jacobian
+# Resonance lines helpers
+export actions_resonance_line, actions_resonance_line!
 
 # methods
 export OrbitalParameters
