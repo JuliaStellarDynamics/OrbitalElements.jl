@@ -39,20 +39,20 @@ function αβ_from_ae_internal_derivatives(
     # @IMPROVE: EDGE could be adaptive based on circularity and small-ness of rperi
 
     # WARNING !! Strong assumption:
-    # r(u) = a(1+ef(u))
-    function u6func(u::Float64)
+    # r(u) = a(1+e * _henonf(w))
+    function w6func(w::Float64)
         # push integration forward on eight different quantities:
         # 1. Θ                          → α
         # 2. Θ/r^2                      → β
         # 3. ∂Θ/∂a                      → ∂α∂a
         # 4. ∂Θ/∂e                      → ∂α∂e
         # 5. ∂Θ/∂a/r^2                  → ∂β∂a
-        # 6. (∂Θ/∂e - 2af(u)Θ/r )/r^2   → ∂β∂e
+        # 6. (∂Θ/∂e - 2af(w)Θ/r )/r^2   → ∂β∂e
 
-        integrand = Θ(u, a, e, model, params)
-        ∂Θ∂a, ∂Θ∂e = _Θ_derivatives_ae(u, a, e, model, params)
+        integrand = Θ(w, a, e, model, params)
+        ∂Θ∂a, ∂Θ∂e = _Θ_derivatives_ae(w, a, e, model, params)
 
-        r = radius_from_anomaly(u, a, e)
+        r = radius_from_anomaly(w, a, e, model, params)
 
         return (
             integrand,
@@ -60,11 +60,11 @@ function αβ_from_ae_internal_derivatives(
             ∂Θ∂a,
             ∂Θ∂e,
             ∂Θ∂a / (r^2),
-            (∂Θ∂e - 2a * _henonf(u) * Θ / r) / (r^2)
+            (∂Θ∂e - 2a * _henonf(w) * Θ / r) / (r^2)
         )
     end
 
-    accum1, accum2, accum3, accum4, accum5, accum6 = _integrate_simpson(u6func, params.NINT)
+    accum1, accum2, accum3, accum4, accum5, accum6 = _integrate_simpson(w6func, params.NINT)
     _, Lval, _, ∂L∂a, _, ∂L∂e = EL_from_ae_derivatives(a, e, model, params)
     # α
     Ω0 = frequency_scale(model)

@@ -4,12 +4,12 @@
 abstract type OrbitalDistribution end
 
 abstract type SphericalDistribution <: OrbitalDistribution end
-abstract type EnergySphericalDF <: SphericalDistribution end
-abstract type ActionsSphericalDF <: SphericalDistribution end
+abstract type EnergySphericalDistribution <: SphericalDistribution end
+abstract type ActionsSphericalDistribution <: SphericalDistribution end
 
 abstract type RazorThinDistribution <: OrbitalDistribution end
-abstract type EnergyRazorDF <: RazorThinDistribution end
-abstract type ActionsRazorDF <: RazorThinDistribution end
+abstract type EnergyRazorDistribution <: RazorThinDistribution end
+abstract type ActionsRazorDistribution <: RazorThinDistribution end
 
 
 #####################################

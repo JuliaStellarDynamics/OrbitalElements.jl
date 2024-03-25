@@ -10,39 +10,39 @@ Mainly in 3 places: `Θ_edge`, `ru` and `drdu`
 #
 ########################################################################
 """
-    henonf(u)
+    henonf(x)
 
 the henon anomaly increment
 """
-_henonf(u::Float64)::Float64 = u * (1.5 - 0.5 * u^2)
+_henonf(x::Float64)::Float64 = x * (1.5 - 0.5 * x^2)
 
 """
-    henondf(u)
+    henondf(x)
 
 the derivative of the henon anomaly increment
 """
-_henondf(u::Float64)::Float64 = 1.5 * (1.0 - u^2)
+_henondf(x::Float64)::Float64 = 1.5 * (1.0 - x^2)
 
 """
-    henond2f(u)
+    henond2f(x)
 
 the second derivative of the henon anomaly increment
 """
-_henond2f(u::Float64)::Float64 = -3u
+_henond2f(x::Float64)::Float64 = -3x
 
 """
-    henond3f(u)
+    henond3f(x)
 
 the third derivative of the henon anomaly increment
 """
-_henond3f(u::Float64)::Float64 = -3.
+_henond3f(x::Float64)::Float64 = -3.
 
 """
-    henond4f(u)
+    henond4f(x)
 
 the fourth derivative of the henon anomaly increment
 """
-_henond4f(u::Float64)::Float64 = 0.
+_henond4f(x::Float64)::Float64 = 0.
 
 
 ########################################################################
@@ -51,22 +51,35 @@ _henond4f(u::Float64)::Float64 = 0.
 #
 ########################################################################
 """
-    radius_from_anomaly(u, a, e)
+    radius_from_anomaly(u, a, e, model[, params])
 
 mapping from anomaly to radius. Default is Henon anomaly.
 
 @IMPROVE: right now, Hénon anomaly is hard-coded.
 """
-function radius_from_anomaly(u::Float64, a::Float64, e::Float64)::Float64
-    return a * (1 + e * _henonf(u))
+function radius_from_anomaly(
+    w::Float64,
+    a::Float64,
+    e::Float64,
+    model::Potential,
+    params::OrbitalParameters=OrbitalParameters()
+)::Float64
+    return a * (1 + e * _henonf(w))
 end
+
 """
-    radius_from_anomaly_derivative(u, a, e, model)
+    radius_from_anomaly_derivative(u, a, e, model[, params])
 
 derivative of the mapping from anomaly to radius. Default is Henon anomaly.
 
 @IMPROVE: right now, Hénon anomaly is hard-coded.
 """
-function radius_from_anomaly_derivative(u::Float64,a::Float64,e::Float64)::Float64
-    return a * e * _henondf(u)
+function radius_from_anomaly_derivative(
+    w::Float64,
+    a::Float64,
+    e::Float64,
+    model::Potential,
+    params::OrbitalParameters=OrbitalParameters()
+)::Float64
+    return a * e * _henondf(w)
 end

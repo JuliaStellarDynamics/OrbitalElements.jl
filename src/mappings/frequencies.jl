@@ -140,7 +140,7 @@ function αβ_from_ae(
 )::Tuple{Float64,Float64}
     # Edge cases
     if a == 0 || e == 0 # Inner or circular frequencies
-        return _αcircular(a, model), _βcircular(a, model)
+        return _αcircular(a, model, params), _βcircular(a, model, params)
     end
     # Handling (a,e)-domain edges through interpolation
     # IMPORTANT : has to be before the generic computation
@@ -159,7 +159,8 @@ function αβ_from_ae(
     function invαβ_integrands(u::Float64)::Tuple{Float64,Float64}
         # push integration forward on two different quantities: Θ(u), Θ(u)/r^2(u)
         integrand = Θ(u, a, e, model, params)
-        return integrand, integrand / (radius_from_anomaly(u, a, e)^2)
+        r = radius_from_anomaly(u, a, e, model, params)
+        return integrand, integrand / r^2
     end
     accum1, accum2 = _integrate_simpson(invαβ_integrands, params.NINT)
     _, L = EL_from_ae(a, e, model, params)
@@ -294,12 +295,8 @@ function ae_from_frequencies(
     # get the circular orbit (maximum radius) for a given Ω₁,Ω₂. 
     # @IMPROVE: use the stronger constraint.
     # @IMPROVE: use default rmin, rmax (should not matter)
-    acirc = _radius_from_αcircular(
-        Ω1/frequency_scale(model), 
-        model, 
-        params.rmin, 
-        min(params.rmax, 1e8 * params.rc)
-    )
+    α = Ω1 / frequency_scale(model)
+    acirc = _radius_from_αcircular(α, model, params)
     # and start from ecc=0.5
     # @IMPROVE, is there a more optimal starting eccentricity?
     ainit, einit = acirc, 0.5
@@ -319,9 +316,7 @@ function ae_from_αβ(
 )::Tuple{Float64,Float64}
     # get the circular orbit (maximum radius) for a given α. 
     # @IMPROVE: use the stronger constraint.
-    # @IMPROVE: use default rmin, rmax (should not matter)
-    rmax = min(params.rmax, 1e8 * radial_scale(model))
-    acirc = _radius_from_αcircular(α, model, params.rmin, rmax)
+    acirc = _radius_from_αcircular(α, model, params)
     # and start from ecc=0.5
     # @IMPROVE, is there a more optimal starting eccentricity?
     ainit, einit = acirc, 0.5

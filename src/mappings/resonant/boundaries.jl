@@ -8,26 +8,16 @@ Boundaries for the resonance variables
 #
 ########################################################################
 """
-    αminmax(model[, rmin, rmax])
     αminmax(model, params)
 
 maximal and minimal considered radial (dimensionless) frequency
 
 @ASSUMPTION: [`αcircular`](@ref) is a decreasing function of radius
 """
-function αminmax(
-    model::Potential;
-    rmin::Float64=0.,
-    rmax::Float64=Inf
-)::Tuple{Float64,Float64}
-
-    @assert rmin < rmax "rmin >= rmax in αminmax function"
+function αminmax(model::Potential, params::OrbitalParameters)::Tuple{Float64,Float64}
     # Assumption :
     # Ω1circular is a decreasing function of radius
-    return _αcircular(rmax, model), _αcircular(rmin, model)
-end
-function αminmax(model::Potential, params::OrbitalParameters)::Tuple{Float64,Float64}
-    return αminmax(model,rmin=params.rmin,rmax=params.rmax)
+    return _αcircular(params.rmax, model, params), _αcircular(params.rmin, model, params)
 end
 
 """
@@ -36,6 +26,7 @@ end
 minimal and maximal (dimensionless) "frequency" for a given resonance `ωmin, ωmax = minmax(n⋅Ω/Ω₀)`
 
 @ASSUMPTION: Frequency domain truncated at `αmin` and `αmax` set by `rmax` and `rmin`
+@IMPROVE radius is dimensional quantity, we should not be extremizing on it
 """
 function frequency_extrema(
     n1::Int64,
@@ -52,9 +43,10 @@ function frequency_extrema(
     # the circular line.
     # Works better with n⋅Ω/Ω₀ than n₁α+n₂αβ
     # (+ avoid useless computations in the generic case)
+    # @IMPROVE radius is dimensional quantity, we should not be extremizing on it
     function _ωncirc(r::Float64)::Float64
         return (
-            (n1 * _Ω1circular(r, model) + n2 * _Ω2circular(r, model))
+            (n1 * _Ω1circular(r, model, params) + n2 * _Ω2circular(r, model, params))
             / frequency_scale(model)
         )
     end
@@ -133,17 +125,17 @@ function v_boundaries(
     model::CentralPotential,
     params::OrbitalParameters=OrbitalParameters()
 )::Tuple{Float64,Float64}
-    rc, rmin, rmax = params.rc, params.rmin, params.rmax
+    rmin, rmax = params.rmin, params.rmax
     αmin, αmax = αminmax(model, params)
 
     # ωn(u) : value of the resonance line
-    ωmin, ωmax = res.frequency_extrema
+    ωmin, ωmax = frequency_extrema(res)
     hval = _ωn(u, ωmin, ωmax)
 
     # βcircular as a function of αcircular
     βc(αc::Float64)::Float64 = _β_from_α_circular(αc, model, params)
 
-    n1, n2 = res.number
+    n1, n2 = resonance_number(res)
     if n2 == 0 # v = β
         #####
         # (B9) Fouvry & Prunet : 1st inequality
@@ -197,10 +189,10 @@ function v_boundaries(
             monotonic = true
         else
             # First look for vbound in the asked boundary
-            vbound = _α_inner_extremum(n1, n2, model, rc, rmin, rmax)
+            vbound = _α_inner_extremum(res, rmin, rmax, model, params)
 
             # Extreme boundary to look for vbound
-            locrmin, locrmax = 0., Inf
+            locrmin, locrmax = 0.0, Inf
 
             if (vbound != αmin) && (vbound != αmax)
                 monotonic = false
@@ -208,9 +200,13 @@ function v_boundaries(
                 # If vbound not in the asked boundary
                 # verify that it should indeed not exist
                 locrmin, locrmax = min(rmin, locrmin), max(rmax, locrmax)
-                vbound = _α_inner_extremum(n1, n2, model, rc, locrmin, locrmax)
+                vbound = _α_inner_extremum(res, locrmin, locrmax, model, params)
                 # If we have found an extremum in the inner domain
-                if !(vbound in (_αcircular(locrmin, model), _αcircular(locrmax, model)))
+                if !(vbound in (
+                    _αcircular(locrmin, model, params), 
+                    _αcircular(locrmax, model, params)
+                    )
+                )
                     monotonic = false
                 else 
                     monotonic = true
@@ -267,38 +263,43 @@ end
 
 
 """
-    _α_inner_extremum(n1, n2, model, params)
+    _α_inner_extremum(res, rmin, rmax, model[, params])
 
 location `α` of the extremum of the resonance frequency along the circular line limited to 
-`]rmin,rmax[` .
+`]rmin,rmax[`.
+
+Importantly allows to search for rmin and rmax different from the ones in params.
+
+@IMPROVE radius is dimensional quantity, we should not be extremizing on it
 """
 function _α_inner_extremum(
-    n1::Int64,
-    n2::Int64,
-    model::Potential,
-    rc::Float64,
+    res::Resonance,
     rmin::Float64,
-    rmax::Float64
+    rmax::Float64,
+    model::Potential,
+    params::OrbitalParameters=OrbitalParameters()
 )::Float64
     # define the function to extremise, i.e., the adimensional resonant frequency along 
     # the circular line.
     # Works better with n⋅Ω/Ω₀ than n₁α+n₂αβ
     # (+ avoid useless computations in the generic case)
+    n1, n2 = resonance_number(res)
+    # @IMPROVE radius is dimensional quantity, we should not be extremizing on it
     function _ωncirc(r::Float64)::Float64
         return (
-            (n1 * _Ω1circular(r, model) + n2 * _Ω2circular(r, model))
+            (n1 * _Ω1circular(r, model, params) + n2 * _Ω2circular(r, model, params))
             / frequency_scale(model)
         )
     end
     # If rmax is infinite, bisection search on a bounded interval
-    locrmax = min(rmax, 1e8 * rc)
+    locrmax = min(rmax, 1e8 * radial_scale(model))
     xext = _extremise_noedges(_ωncirc, rmin, locrmax)
 
     # If the extremum is reached at the imposed maximal boundary
     # Use the true rmax (not the artificial 1e8 * rc, which is here to handle Inf)
-    if (xext == locrmax)
+    if xext == locrmax
        xext = rmax
     end
 
-    return _αcircular(xext, model)
+    return _αcircular(xext, model, params)
 end

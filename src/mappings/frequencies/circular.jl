@@ -11,41 +11,53 @@ derivatives.
 #
 ########################################################################
 """
-    _Ω1circular(a, model)
+    _Ω1circular(r, model[, params])
 """
-function _Ω1circular(a::Float64, model::Potential)::Float64
-    if a == 0.
-        return 2 * sqrt(abs(d2ψ(0., model)))
+function _Ω1circular(
+    r::Float64,
+    model::Potential,
+    params::OrbitalParameters=OrbitalParameters()
+)::Float64
+    if r == 0
+        return 2 * sqrt(abs(d2ψ(r, model)))
     end
 
-    return sqrt(d2ψ(a, model) + 3 * dψ(a, model) / a)
+    return sqrt(d2ψ(r, model) + 3 * dψ(r, model) / r)
 end
 
 """
-    _Ω2circular(a, model)
+    _Ω2circular(a, model[, params])
 """
-function _Ω2circular(a::Float64, model::Potential)::Float64
-    if (a == 0.)
-        return sqrt(abs(d2ψ(0., model)))
+function _Ω2circular(
+    r::Float64,
+    model::Potential,
+    params::OrbitalParameters=OrbitalParameters()
+)::Float64
+    if r == 0
+        return sqrt(abs(d2ψ(r, model)))
     end
 
-    return sqrt(dψ(a, model)/a)
+    return sqrt(dψ(r, model) / r)
 end
 
 """
-    _αcircular(a, model)
+    _αcircular(a, model[, params])
 
 mapping from radius `a` to the dimensionless radial frequency `α` for circular orbits, 
 from the epicyclic approximation
 
 `a` stands for the semi-major axis (equivalent to guiding radius r for a circular orbit)
 """
-function _αcircular(a::Float64, model::Potential)::Float64
-    return _Ω1circular(a, model) / frequency_scale(model)
+function _αcircular(
+    r::Float64,
+    model::Potential,
+    params::OrbitalParameters=OrbitalParameters()
+)::Float64
+    return _Ω1circular(r, model, params) / frequency_scale(model)
 end
 
 """
-    _βcircular(a, model)
+    _βcircular(a, model[, params])
 
 mapping from radius `a` to frequency ratio `β` for circular orbits, from the epicyclic
 approximation
@@ -55,17 +67,21 @@ approximation
 Careful treatment implemented for `a == Inf`. (0/0 limit)
 @IMPROVE For inner limit, has to be 1/2 for core potentials but not necessarly for cusps.
 """
-function _βcircular(a::Float64, model::Potential)::Float64
-    if a == 0.
+function _βcircular(
+    r::Float64,
+    model::Potential,
+    params::OrbitalParameters=OrbitalParameters()
+)::Float64
+    if r == 0
         return 1/2
     end
-    # At a == Inf, βcircular is 0 / 0 = NaN. (dψ(x)→0, for x→∞)
+    # At r == Inf, βcircular is 0 / 0 = NaN. (dψ(x)→0, for x→∞)
     # Cure this by estimating the potential derivative growth rate at infinity and 
     # replace by this equivalent.
     # dψ(x) = c x^γ (for x→∞) (⟹ d2ψ(x) = c γ x^(γ-1))
     # ⟹ βcircular(x) = sqrt(c x^γ / x) / sqrt(c γ x^(γ-1) + 3 c x^γ / x)  (for x→∞)
     #                 = 1 / sqrt(3 + γ)
-    if a == Inf
+    if r == Inf
         # Estimate growth rate γ of dψ(x)≈x^γ in the outskirts
         rc = radial_scale(model)
         x1, x2 = 1e8 * rc, 1e9 * rc
@@ -78,7 +94,7 @@ function _βcircular(a::Float64, model::Potential)::Float64
         return sqrt(1 / (3 + γ))
     end
 
-    return _Ω2circular(a, model) / _Ω1circular(a, model)
+    return _Ω2circular(r, model, params) / _Ω1circular(r, model, params)
 end
 
 
@@ -93,16 +109,8 @@ function _β_from_α_circular(
     params::OrbitalParameters=OrbitalParameters()
 )::Float64
     # get the radius corresponding to the circular orbit
-    rcirc = _radius_from_αcircular(
-        α,
-        model,
-        params.rmin,
-        min(params.rmax, 1.e8 * params.rc),
-        eps(Float64),
-        eps(Float64)
-    )
-
-    return _βcircular(rcirc, model)
+    rcirc = _radius_from_αcircular(α, model, params, eps(Float64), eps(Float64))
+    return _βcircular(rcirc, model, params)
 end
 
 
@@ -112,45 +120,54 @@ end
 #
 ########################################################################
 """
-    _radius_from_αcircular(α, model[, rmin, rmax, tolx, tolf])
+    _radius_from_αcircular(α, model[, params, tolr, tolf])
 
 backwards mapping from `αcircular` to radius
 
-can tune [rmin,rmax] for extra optimisation (but not needed)
 @ASSUMPTION: `αcircular` is a decreasing function of radius
 @WARNING: For α larger than the frequency in the center, we do not return an error, while
 we probably should.
+@IMPROVE: radius is dimensional quantity, we should not be extremizing on it
+@IMPROVE: ultimately, tolr and tolf should be inside parameters (maybe inside the 
+backward method parameters)
 """
 function _radius_from_αcircular(
     α::Float64,
     model::Potential,
-    rmin::Float64=0.,
-    rmax::Float64=1.,
+    params::OrbitalParameters=OrbitalParameters(),
     tolr::Float64=1000.0*eps(Float64),
     tolf::Float64=1000.0*eps(Float64)
 )::Float64
     # Edge cases
-    if α < _αcircular(Inf, model)
+    if α < _αcircular(Inf, model, params)
         throw(DomainError(α, "Out of bound frequency α"))
-        return 0.
-    elseif α > _αcircular(0., model)
+        return 0.0
+    elseif α > _αcircular(0.0, model, params)
         # @IMPROVE: better be an error (to merge with the other domain error)
         println("Out of bound circular frequency α. Returning r=0 anyway.")
-        return 0.
-    elseif α == _αcircular(Inf, model)
+        return 0.0
+    elseif α == _αcircular(Inf, model, params)
         return Inf
-    elseif α == _αcircular(0., model)
-        return 0.
+    elseif α == _αcircular(0.0, model, params)
+        return 0.0
     end
 
-    # Tweak xmin and xmax to get the frequencies in bounds
+    rmin, rmax = 0.0, radial_scale(model)
+    # Tweak rmin and rmax to get the frequencies in bounds
     # Safe while loop since we check that the frequency is indeed reachable
-    while α > _αcircular(rmin, model)
+    while α > _αcircular(rmin, model, params)
         rmin /= 2
     end
-    while α < _αcircular(rmax, model)
+    while α < _αcircular(rmax, model, params)
         rmax *= 2
     end
     # use bisection to find the circular orbit radius corresponding to given frequency
-    return _bisection(r -> _αcircular(r, model) - α, rmin, rmax, tolx=tolr, tolf=tolf)
+    # @IMPROVE radius is dimensional quantity, we should not be extremizing on it
+    return _bisection(
+        r -> _αcircular(r, model, params) - α,
+        rmin,
+        rmax,
+        tolx=tolr,
+        tolf=tolf
+    )
 end

@@ -1,4 +1,7 @@
 
+# Include effecitve anomalies
+include("analytic/anomalies.jl")
+
 # Include Isochrone analytic mapping methods
 include("analytic/isochrone.jl")
 

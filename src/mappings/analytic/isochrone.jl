@@ -1,43 +1,5 @@
 
-########################################################################
-#
-# Appropriate reduced coordinates
-#
-########################################################################
-"""
-    _anomaly_from_radius(r, model::IsochronePotential)
 
-anomaly independent of the orbit (only radius dependent) for isochrone.
-
-@IMPROVE: confusing names ! anomaly `s` vs Henon anomaly `u`.
-"""
-function _anomaly_from_radius(r::Float64, model::IsochronePotential)
-    x = r / radial_scale(model) # dimensionless radius
-    return sqrt(1 + x^2)
-end
-
-"""
-    _radius_from_anomaly(anomaly, model::IsochronePotential)
-
-anomaly independent of the orbit (only radius dependent) for isochrone.
-
-@IMPROVE: confusing names ! anomaly `s` vs Henon anomaly `u`.
-"""
-function _radius_from_anomaly(anomaly::Float64, model::IsochronePotential)
-    x = sqrt(anomaly^2 - 1) # dimensionless radius
-    return radial_scale(model) * x
-end
-
-"""
-    _spsa_from_rpra(rp, ra, model::IsochronePotential)
-
-extremal anomalies of the orbit with pericentre `rp` and apocentre `ra`.
-"""
-function _spsa_from_rpra(rp::Float64, ra::Float64, model::IsochronePotential)
-    # Broadcast the anomaly over peri and apocenter (allocation-free)
-    sp, sa = map((r -> _anomaly_from_radius(r, model)), (rp, ra))
-    return sp, sa
-end
 
 ########################################################################
 #
@@ -55,7 +17,7 @@ function EL_from_ae(
 )
     rp, ra = rpra_from_ae(a, e)
     xp, xa = (rp, ra) ./ radial_scale(model) # dimensionless radius
-    sp, sa = _spsa_from_rpra(rp, ra, model) # extremal anomalies on the orbit
+    sp, sa = _spsa_from_rpra(rp, ra, model, params) # extremal anomalies on the orbit
     Ẽ = 1 / (sp + sa) # dimensionless energy
     L̃ = sqrt(2) * xp * xa / sqrt((1 + sp) * (1 + sa) * (sp + sa)) # dimensionless momentum
     return energy_scale(model) * Ẽ, momentum_scale(model) * L̃ 
@@ -124,11 +86,6 @@ end
 the analytic expression for Theta for the isochrone profile are given in 
 Fouvry, Hamilton, Rozier, Pichon eq. (G10). It has the major advantage of 
 always being well-posed for -1<u<1
-
-@QUESTION: is `u` Hénon's anomaly here ?
-@WARNING: might need to redefine radius_from_anomaly for the isochrone/plummer anomaly `s`.
-Could return false results ! In practice in not used for mappings. But possible issues 
-when using with linear response computations !
 """
 function Θ(
     u::Float64,
@@ -137,21 +94,21 @@ function Θ(
     model::AnalyticIsochrone,
     params::OrbitalParameters=OrbitalParameters()
 )
-    r = radius_from_anomaly(u, a, e)
+    r = radius_from_anomaly(u, a, e, model, params)
     rp, ra = rpra_from_ae(a, e)
     # dimensionless pericentre, apocentre, and radius
-    xr, xp, xa = (r, rp, ra) ./ radial_scale(model)
-    sr = _anomaly_from_radius(r, model)
-    sp, sa = _spsa_from_rpra(rp, ra, model)
+    x, xp, xa = (r, rp, ra) ./ radial_scale(model)
+    s = _s_from_r(r, model, params)
+    sp, sa = _spsa_from_rpra(rp, ra, model, params)
 
     # Analytical expression of (dr/du)(1/vr), that is always well-posed
     return (
         3xr * sqrt(
-            (sr + sp) 
-            * (sr + sa) 
+            (s + sp) 
+            * (s + sa) 
             * (sp + sa)
-            / (xr + xp) 
-            / (xr + xa) 
+            / (x + xp) 
+            / (x + xa) 
             / (4 - u^2)
         )
         / (sqrt(2) * frequency_scale(model))
@@ -163,24 +120,36 @@ end
 # (a, e) ↔ frequencies mappings: circular
 #
 ########################################################################
-function _Ω1circular(a::Float64, model::AnalyticIsochrone)::Float64
-    anomaly = _anomaly_from_radius(a, model)
-    return frequency_scale(model) / anomaly^(3/2)
+function _Ω1circular(
+    r::Float64,
+    model::AnalyticIsochrone,
+    params::OrbitalParameters=OrbitalParameters()
+)::Float64
+    s = _s_from_r(r, model, params)
+    return frequency_scale(model) / s^(3/2)
 end
 
-function _Ω2circular(a::Float64, model::AnalyticIsochrone)::Float64
-    anomaly = _anomaly_from_radius(a, model)
-    return frequency_scale(model) / (sqrt(anomaly) * (1 + anomaly))
+function _Ω2circular(
+    r::Float64,
+    model::AnalyticIsochrone,
+    params::OrbitalParameters=OrbitalParameters()
+)::Float64
+    s = _s_from_r(r, model, params)
+    return frequency_scale(model) / (sqrt(s) * (1 + s))
 end
 
-function _βcircular(a::Float64, model::AnalyticIsochrone)::Float64
-    anomaly = _anomaly_from_radius(a, model)
+function _βcircular(
+    r::Float64,
+    model::AnalyticIsochrone,
+    params::OrbitalParameters=OrbitalParameters()
+)::Float64
+    s = _s_from_r(r, model, params)
     # Cure at a == Inf, βcircular is 0 / 0 = NaN.
-    if a == Inf
+    if r == Inf
         return one(a)
     end
 
-    return anomaly / (1 + anomaly)
+    return s / (1 + s)
 end
 
 """
@@ -191,7 +160,7 @@ function _β_from_α_circular(
     model::AnalyticIsochrone,
     params::OrbitalParameters=OrbitalParameters()
 )::Float64
-    # Circular orbits: anomaly = α^(-2/3)
+    # Circular orbits: s = α^(-2/3)
     # and 1 / (1 + 1/x) = x / (1 + x)
     return 1/(1 + α^(2/3))
 end
@@ -199,14 +168,13 @@ end
 function _radius_from_αcircular(
     α::Float64,
     model::AnalyticIsochrone,
-    rmin::Float64=0.,
-    rmax::Float64=1.,
+    params::OrbitalParameters=OrbitalParameters(),
     tolr::Float64=1000.0*eps(Float64),
     tolf::Float64=1000.0*eps(Float64)
 )::Float64
-    # Circular orbits: α = anomaly^(-3/2)
-    anomaly = α^(-2/3)
-    return _radius_from_anomaly(anomaly, model)
+    # Circular orbits: α = s^(-3/2)
+    s = α^(-2/3)
+    return _r_from_s(s, model, params)
 end
 
 ########################################################################
@@ -225,7 +193,7 @@ function αβ_from_ae(
 )
     rp, ra = rpra_from_ae(a, e)
     xp, xa = (rp, ra) ./ radial_scale(model)
-    sp, sa = _spsa_from_rpra(rp, ra, model)
+    sp, sa = _spsa_from_rpra(rp, ra, model, params)
     return (2 / (sp + sa))^(3/2), (1 + (xp * xa) / ((1 + sp) * (1 + sa))) / 2
 end
 
@@ -264,6 +232,7 @@ function ae_to_αβ_jacobian(
     model::AnalyticIsochrone,
     params::OrbitalParameters=OrbitalParameters()
 )
+    # @IMPROVE: uses the generic (non-analytic) version for now
     jacaetoEL = ae_to_EL_jacobian(a, e, model, params)
     E, L = EL_from_ae(a, e, model, params)
     jacELtoαβ = _EL_to_αβ_jacobian(E, L, model, params)

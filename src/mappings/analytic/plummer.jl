@@ -1,58 +1,8 @@
-
-########################################################################
-#
-# Appropriate reduced coordinates
-#
-# @IMPROVE: Merge with Isochrone !! Remove code duplicates
-#           + Confusing names among anomalies: use s for this specific anomaly ?      
 #
 #
-########################################################################
-"""
-    _anomaly_from_radius(r, model::PlummerPotential)
-
-anomaly independent of the orbit (only radius dependent) for Plummer.
-
-@IMPROVE: confusing names ! anomaly `s` vs Henon anomaly `u`.
-"""
-function _anomaly_from_radius(r::Float64, model::PlummerPotential)
-    x = r / radial_scale(model) # dimensionless radius
-    return sqrt(1 + x^2)
-end
-
-"""
-    _radius_from_anomaly(anomaly, model::PlummerPotential)
-
-anomaly independent of the orbit (only radius dependent) for Plummer.
-
-@IMPROVE: confusing names ! anomaly `s` vs Henon anomaly `u`.
-"""
-function _radius_from_anomaly(anomaly::Float64, model::SemiAnalyticPlummer)
-    x = sqrt(anomaly^2 - 1) # dimensionless radius
-    return radial_scale(model) * x
-end
-
-"""
-    _spsa_from_rpra(rp, ra, model::PlummerPotential)
-
-extremal anomalies of the orbit with pericentre `rp` and apocentre `ra`.
-"""
-function _spsa_from_rpra(rp::Float64, ra::Float64, model::SemiAnalyticPlummer)
-    # Broadcast the anomaly over peri and apocenter (allocation-free)
-    sp, sa = map((r -> _anomaly_from_radius(r, model)), (rp, ra))
-    return sp, sa
-end
-
-"""
-    _rpra_from_spsa(sp, sa, model::PlummerPotential)
-
-the orbit pericentre `rp` and apocentre `ra` from extremal anomalies.
-"""
-function _rpra_from_spsa(sp::Float64, sa::Float64, model::SemiAnalyticPlummer)
-    # Broadcast the anomaly over peri and apocenter (allocation-free)
-    rp, ra = map((s -> _radius_from_anomaly(s, model)), (sp, sa))
-    return rp, ra
-end
+# This follows K.Tep implementation in CARP
+#
+#
 
 ########################################################################
 #
@@ -69,14 +19,15 @@ function EL_from_ae(
     params::OrbitalParameters=OrbitalParameters()
 )
     rp, ra = rpra_from_ae(a, e)
-    sp, sa = _spsa_from_rpra(rp, ra, model) # extremal anomalies on the orbit
+    sp, sa = _spsa_from_rpra(rp, ra, model, params) # extremal anomalies on the orbit
     Ẽ = 1 / sp - (sa^2 - 1) / (sa * sp * (sa + sp)) # dimensionless energy
     L̃ = sqrt(2 * (sp^2 - 1) * (sa^2 - 1) / (sa * sp * (sa + sp))) # dimensionless momentum
     return energy_scale(model) * Ẽ, momentum_scale(model) * L̃ 
 end
 
 """    
-for Plummer semi-analytical version, can be found by 1D-bisection instead of 2D inversion scheme.
+for Plummer semi-analytical version, can be found by 1D-bisection instead of 
+2D inversion scheme.
 """
 function ae_from_EL(
     E::Float64,
@@ -85,7 +36,7 @@ function ae_from_EL(
     params::OrbitalParameters=OrbitalParameters()
 )
     sp, sa = _spsa_from_EL(E, L, model, params)
-    rp, ra = _rpra_from_spsa(sp, sa, model)
+    rp, ra = _rpra_from_spsa(sp, sa, model, params)
     return ae_from_rpra(rp, ra)
 end
 
@@ -142,31 +93,68 @@ the analytic expression for Theta for the Plummer profile are given in
 Tep et al. 2022 eq. (F9). It has the major advantage of 
 always being well-posed for -1<u<1
 
-@QUESTION: is `u` hard-coded as Hénon's anomaly here ?
+@QUESTION: is `w` hard-coded as Hénon's anomaly here ?
 """
 function Θ(
-    u::Float64,
+    w::Float64,
     a::Float64,
     e::Float64,
     model::SemiAnalyticPlummer,
     params::OrbitalParameters=OrbitalParameters()
 )
     rp, ra = rpra_from_ae(a, e) # peri and apocentre
-    sp, sa = _spsa_from_rpra(rp, ra, model) # extremal anomalies
+    sp, sa = _spsa_from_rpra(rp, ra, model, params) # extremal anomalies
     
-    # Analytical expression of (dr/du)(1/vr), that is always well-posed
+    # Analytical expression of (dr/dw)(1/vr), that is always well-posed
     # see equation (F9) in Tep et al. (2022).
-    tep_a = sp * (u + 2) * (u - 1)^2 - sa * (u - 2) * (u + 1)^2
-    tep_b = sp * (u^3 - 3u + 6) - sa * (u^3 - 3u - 6)
+    tep_a = sp * (w + 2) * (w - 1)^2 - sa * (w - 2) * (w + 1)^2
+    tep_b = sp * (w^3 - 3w + 6) - sa * (w^3 - 3w - 6)
 
     return (
         3 
         * sqrt(sa * sp * (sa + sp))
         * tep_a^(3/2)
         / sqrt(sa * sp * tep_a + tep_b)
-        / sqrt(4 - u^2)
+        / sqrt(4 - w^2)
         / (2 * sqrt(2) * frequency_scale(model))
     )
+end
+
+# @IMPROVE:  we do not cure the β computation for near radial orbits using logarithmic 
+# sampling near pericentre as in K.Tep's CARP algorithm. For this case the tolerance
+# on eccentricity should be increased, at least, to 0.1.
+
+########################################################################
+#
+# (a,e) ↦ actions mapping
+#
+########################################################################
+# With this anomaly the usual radial action computation is not a good idea.
+# Rather use the cured Θ definition than dr/dw
+function _radial_action_from_ae(
+    a::Float64,
+    e::Float64,
+    model::SemiAnalyticPlummer,
+    params::OrbitalParameters=OrbitalParameters()
+)::Float64
+    # Edge cases
+    if a == 0 || e == 0
+        return 0.0
+    end
+    # Handling (a,e)-domain edges through interpolation
+    # IMPORTANT : has to be before the generic computation
+    fun(atmp::Float64, etmp::Float64) = _radial_action_from_ae(atmp, etmp, model, params)
+    res = _interpolate_edges_ae(fun, a, e, params)
+    if !isnothing(res)
+        return res
+    end
+    # Generic computations
+    function action_integrand(w::Float64)::Float64
+        drdw_over_vrad = Θ(w, a, e, model, params)
+        vrad = radial_velocity(w, a, e, model, params)
+        return drdw_over_vrad * vrad^2
+    end
+    return (1 / pi) * _integrate_simpson(action_integrand, params.NINT)
 end
 
 ########################################################################
@@ -174,19 +162,31 @@ end
 # (a, e) ↔ frequencies mappings: circular
 #
 ########################################################################
-function _Ω1circular(a::Float64, model::SemiAnalyticPlummer)::Float64
-    x = a / radial_scale(model) # Dimensionless radius
-    anomaly = _anomaly_from_radius(a, model)
-    return frequency_scale(model) * sqrt(4 + x^2) / (2 * anomaly^(5/2))
+function _Ω1circular(
+    r::Float64,
+    model::SemiAnalyticPlummer,
+    params::OrbitalParameters=OrbitalParameters()
+)::Float64
+    x = r / radial_scale(model) # dimensionless radius
+    s = _s_from_r(r, model, params)
+    return frequency_scale(model) * sqrt(4 + x^2) / (2 * s^(5/2))
 end
 
-function _Ω2circular(a::Float64, model::SemiAnalyticPlummer)::Float64
-    anomaly = _anomaly_from_radius(a, model)
-    return frequency_scale(model) / (2 * anomaly^(3/2))
+function _Ω2circular(
+    r::Float64,
+    model::SemiAnalyticPlummer,
+    params::OrbitalParameters=OrbitalParameters()
+)::Float64
+    s = _s_from_r(r, model)
+    return frequency_scale(model) / (2 * s^(3/2))
 end
 
-function _βcircular(a::Float64, model::SemiAnalyticPlummer)::Float64
-    x = a / radial_scale(model) 
+function _βcircular(
+    r::Float64,
+    model::SemiAnalyticPlummer,
+    params::OrbitalParameters=OrbitalParameters()
+)::Float64
+    x = r / radial_scale(model) 
     return sqrt(1 - 3 / (4 + x^2))
 end
 

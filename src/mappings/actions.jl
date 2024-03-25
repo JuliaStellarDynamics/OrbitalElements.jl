@@ -19,7 +19,7 @@ function _radial_action_from_ae(
 )::Float64
     # Edge cases
     if a == 0 || e == 0
-        return 0.
+        return 0.0
     end
     # Handling (a,e)-domain edges through interpolation
     # IMPORTANT : has to be before the generic computation
@@ -29,13 +29,14 @@ function _radial_action_from_ae(
         return res
     end
     # Generic computations
-    function action_integrand(u::Float64)::Float64
-        drdu = radius_from_anomaly_derivative(u, a, e)
-        vrad = radial_velocity(u, a, e, model, params)
-        return drdu * vrad
+    function action_integrand(w::Float64)::Float64
+        drdw = radius_from_anomaly_derivative(w, a, e, model, params)
+        vrad = radial_velocity(w, a, e, model, params)
+        return drdw * vrad
     end
     return (1 / pi) * _integrate_simpson(action_integrand, params.NINT)
 end
+
 """
     actions_from_ae(a, e, model[, params])
 
@@ -57,7 +58,6 @@ end
 # (a,e) ↦ (J,L) mapping: derivatives
 #
 ########################################################################
-
 """
     actions_from_ae_derivatives(a, e, model[, params])
 
@@ -91,8 +91,6 @@ end
 # actions ↦ (a,e) mapping
 #
 ########################################################################
-
-
 """
     ae_from_actions(J, L, model[, params])
 """
@@ -126,6 +124,8 @@ semi-major axis to find a initial guess for semimajor axis.
 
 @IMPROVE: huge duplicates with [`_radius_from_αcircular`](@ref) and other initial 
 guess functions
+@IMPROVE: ultimately, tolr and tolf should be inside parameters (maybe inside the 
+backward method parameters)
 """
 function _initial_a_from_J(
     J::Float64,

@@ -15,7 +15,6 @@ Strategies:
 # (a,e) ↦ (E,L) mapping
 #
 ########################################################################
-
 """
     EL_from_ae(a, e, model[, params])
 
@@ -64,7 +63,6 @@ end
 # (a,e) ↦ (E,L) mapping: derivatives
 #
 ########################################################################
-
 """
     EL_from_ae_derivatives(a, e, model[, params])
 
@@ -93,13 +91,11 @@ function EL_from_ae_derivatives(
     return E, L, ∂E∂a, ∂L∂a, ∂E∂e, ∂L∂e
 end
 
-
 ########################################################################
 #
 # (a,e) ↦ (E,L) mapping: jacobian
 #
 ########################################################################
-
 """
     ae_to_EL_jacobian(a, e, model[, params])
 
@@ -143,7 +139,6 @@ function ae_from_EL(
     return a, e
 end
 
-
 ########################################################################
 #
 # (E,L) ↦ (a,e) mapping: initial guess
@@ -160,6 +155,8 @@ to find a initial guess for semimajor axis.
 (at fixed eccentricity)
 @IMPROVE: huge duplicates with [`_radius_from_αcircular`](@ref) and other initial 
 guess functions
+@IMPROVE: ultimately, tolr and tolf should be inside parameters (maybe inside the 
+backward method parameters)
 """
 function _initial_a_from_E(
     E::Float64,
@@ -207,6 +204,8 @@ semi-major axis to find a initial guess for semimajor axis.
 
 @IMPROVE: huge duplicates with [`_radius_from_αcircular`](@ref) and other initial 
 guess functions
+@IMPROVE: ultimately, tolr and tolf should be inside parameters (maybe inside the 
+backward method parameters)
 """
 function _initial_a_from_L(
     L::Float64,

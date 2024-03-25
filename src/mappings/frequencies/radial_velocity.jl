@@ -55,14 +55,14 @@ end
 #
 ########################################################################
 """
-    _radial_velocity(u, a, e, model[, params])
+    _radial_velocity(w, a, e, model[, params])
 
-radial velocity as a function of the orbital constants (a,e) and the anomaly u.
+radial velocity as a function of the orbital constants (a,e) and the anomaly w.
 
 @IMPROVE: Quite naive negative/infinite velocity handling.
 """
 function radial_velocity(
-    u::Float64,
+    w::Float64,
     a::Float64,
     e::Float64,
     model::Potential,
@@ -71,7 +71,7 @@ function radial_velocity(
 
     E, L = EL_from_ae(a, e, model, params)
 
-    r = radius_from_anomaly(u, a, e)
+    r = radius_from_anomaly(w, a, e, model, params)
 
     vrSQ = 2(E - _ψeff(r, L, model))
 
@@ -85,11 +85,11 @@ end
 
 ########################################################################
 #
-# Θ(u) (frequencies integrand anomaly)
+# Θ(w) (frequencies integrand anomaly)
 #
 ########################################################################
 """
-    Θ(u, a, e, model[, params])
+    Θ(w, a, e, model[, params])
 
 cured inverse radial velocity, Θ(u) = (dr/du)/v_rad, at anomaly `u` on orbit `(a,e)`.
 
@@ -99,7 +99,7 @@ particular care need at boundary switch. Fix it to use only one.
 @IMPROVE: find a better name
 """
 function Θ(
-    u::Float64,
+    w::Float64,
     a::Float64,
     e::Float64,
     model::Potential,
@@ -109,12 +109,12 @@ function Θ(
     # use the expanded approximation
     # CAUTION: 1-(1-EDGE) < EDGE is true ...
     # To prevent this → EDGE - eps(Float64)
-    if 1.0 - abs(u) < params.EDGE - eps(Float64)
-        return _Θedge(u, a, e, model, params)
+    if 1.0 - abs(w) < params.EDGE - eps(Float64)
+        return _Θedge(w, a, e, model, params)
     end
 
-    dr = radius_from_anomaly_derivative(u, a, e)
-    vr = radial_velocity(u, a, e, model, params)
+    dr = radius_from_anomaly_derivative(w, a, e, model, params)
+    vr = radial_velocity(w, a, e, model, params)
 
     if vr == 0.0
         # go back to the expansion -- or should we return 0.0?
@@ -125,9 +125,9 @@ function Θ(
 end
 
 """
-    _Θedge(u, a, e, model, params)
+    _Θedge(w, a, e, model, params)
 
-same as `Θ(...)` for u close to +1,-1 (curing the 0/0 limit at peri/apocentre)
+same as `Θ(...)` for w close to +1,-1 (curing the 0/0 limit at peri/apocentre)
 
 @IMPROVE: right now, Hénon anomaly is hard-coded.
 @IMPROVE: the expansion is trying both Taylor expansion and, if fails, extrapolation with 
@@ -137,7 +137,7 @@ particular care need at boundary switch. Fix it to use only one.
 Henon anomaly !
 """
 function _Θedge(
-    u::Float64,
+    w::Float64,
     a::Float64,
     e::Float64,
     model::Potential,
@@ -145,17 +145,17 @@ function _Θedge(
 )::Float64
 
     # which boundary are we close to?
-    ul = (u > 0.) ? 1.0 : -1.0
+    wl = (w > 0.) ? 1.0 : -1.0
     # compute the corresponding radius value
-    rl = radius_from_anomaly(ul, a, e)
+    rl = radius_from_anomaly(wl, a, e, model, params)
     # compute energy and angular momentum from the potential (allow for expansions)
     _, L = EL_from_ae(a, e, model, params)
     # compute the derivatives of the effective potential
     dψeffl, d2ψeffl = _dψeffdr(rl, L, model), _d2ψeffdr2(rl, L, model)
     # compute the derivatives of the Henon f function
-    d2fl, d3fl, d4fl = _henond2f(ul), _henond3f(ul), _henond4f(ul)
+    d2fl, d3fl, d4fl = _henond2f(wl), _henond3f(wl), _henond4f(wl)
     # define the prefactor
-    pref = - ul * a * e
+    pref = - wl * a * e
     # this denominator can be negative?
     combination = - a * e * dψeffl * d2fl
 
@@ -164,18 +164,18 @@ function _Θedge(
     # combination = - Inf
     if combination <= 0.
         # Switch to
-        # extension of the function close to the border u ~ ul using the
-        # linear interpolation between using the points ul ± tolu and ul ± 2*tolu
-        u1 = ul * (1 - params.EDGE)
-        u2 = ul * (1 - 2*params.EDGE)
-        u3 = ul * (1 - 3*params.EDGE)
+        # extension of the function close to the border w ~ wl using the
+        # linear interpolation between using the points wl ± tolw and wl ± 2*tolw
+        w1 = wl * (1 - params.EDGE)
+        w2 = wl * (1 - 2*params.EDGE)
+        w3 = wl * (1 - 3*params.EDGE)
 
-        Θ1 = Θ(u1, a, e, model, params)
-        Θ2 = Θ(u2, a, e, model, params)
-        Θ3 = Θ(u3, a, e, model, params)
+        Θ1 = Θ(w1, a, e, model, params)
+        Θ2 = Θ(w2, a, e, model, params)
+        Θ3 = Θ(w3, a, e, model, params)
 
         # It in fact is an extrapolation
-        return _interpolate_order_2(u, u1, Θ1, u2, Θ2, u3, Θ3)
+        return _interpolate_order_2(w, w1, Θ1, w2, Θ2, w3, Θ3)
     end
 
     # if >0, sqrt is safe, proceed
@@ -191,7 +191,7 @@ function _Θedge(
         / (24 * dψeffl * d2fl)
     )
 
-    return pref / denom * (zeroorder + firstorder * (u - ul) + secondorder * (u - ul)^2)
+    return pref / denom * (zeroorder + firstorder * (w - wl) + secondorder * (w - wl)^2)
 end
 
 
@@ -202,7 +202,7 @@ end
 ########################################################################
 
 """
-    _Θ_derivatives_ae(u, a, e, model, params)
+    _Θ_derivatives_ae(w, a, e, model, params)
 
 numerical differentiation of Θ w.r.t. semimajor axis and eccentricity
 
@@ -212,7 +212,7 @@ in the OrbitalParameters structure (not only the steps)
 @IMPROVE: no used for now as frequency derivatives are taken through finite difference.
 """
 function _Θ_derivatives_ae(
-    u::Float64,
+    w::Float64,
     a::Float64,
     e::Float64,
     model::Potential,
@@ -220,7 +220,7 @@ function _Θ_derivatives_ae(
 )::Tuple{Float64,Float64}
 
     # Function to differentiate
-    fun(atmp::Float64, etmp::Float64) = Θ(u, atmp, etmp, model, params)
+    fun(atmp::Float64, etmp::Float64) = Θ(w, atmp, etmp, model, params)
     # Perform differentiation
     _, ∂Θ∂a, ∂Θ∂e = _derivatives_ae(fun, a, e, params)
 

@@ -5,6 +5,8 @@ using SpecialFunctions
 #   The tapered Mestel disc (Zang, see, e.g., Sellwood (2012), Fouvry+ (2015))
 #
 #####
+abstract type MestelDistribution <: EnergyRazorDistribution end
+
 
 #####
 # Constants dependencies Mestel DF
