@@ -48,6 +48,8 @@ export ae_to_frequencies_jacobian
 export αβ_from_frequencies, frequencies_from_αβ
 export αβ_from_frequencies_derivatives, frequencies_from_αβ_derivatives
 export αβ_to_frequencies_jacobian, frequencies_to_αβ_jacobian
+# angles gradient
+export angles_gradient
 
 # Resonant mappings structures
 export Resonance
@@ -56,6 +58,8 @@ export resonance_number, frequency_extrema
 export v_boundaries
 export αβ_from_uv, uv_from_αβ
 export uv_to_αβ_jacobian
+export v_from_vp, vp_from_v
+export v_from_vp_derivative
 # Resonance lines helpers
 export actions_resonance_line, actions_resonance_line!
 

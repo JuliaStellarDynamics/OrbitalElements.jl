@@ -194,6 +194,56 @@ function _Θedge(
     return pref / denom * (zeroorder + firstorder * (w - wl) + secondorder * (w - wl)^2)
 end
 
+########################################################################
+#
+# Canonical angles gradient w.r.t. anomaly `w``
+#
+########################################################################
+"""
+    angles_gradient(w, a, e, model, params; L=0.0, Ω1=0.0, Ω2=0.0)
+
+Compute the gradient of the canonical angles (`θ1`, `θ2-ϕ`) with respect to 
+the anomaly `w` for a given orbit.
+
+# Arguments
+- `w::Float64`: Anomaly.
+- `a::Float64`: Semi-major axis.
+- `e::Float64`: Eccentricity.
+- `model::Potential`: Stellar potential model.
+- `params::OrbitalParameters`: Orbital parameters.
+- `L::Float64=0.0`: Angular momentum (optional).
+- `Ω1::Float64=0.0`: Radial frequency (optional).
+- `Ω2::Float64=0.0`: Azimuthal frequency (optional).
+
+# Returns
+- `Tuple{Float64,Float64}`: Gradient of the angles (dθ1/dw, d(θ2-ϕ)/dw).
+"""
+function angles_gradient(
+    w::Float64,
+    a::Float64,
+    e::Float64,
+    model::Potential,
+    params::OrbitalParameters;
+    L::Float64=0.0,
+    Ω1::Float64=0.0,
+    Ω2::Float64=0.0
+)::Tuple{Float64,Float64}
+    if L == 0.0
+        # need angular momentum
+        _, L = EL_from_ae(a, e, model, params)
+    end
+    if Ω1 == 0.0 || Ω2 == 0.0
+        # need frequencies
+        Ω1, Ω2 = frequencies_from_ae(a, e, model, params)
+    end
+    # Current location of the radius, r=r(w)
+    rval = radius_from_anomaly(w, a, e, model, params)
+    # Current value of the radial frequency integrand (almost dθ/dw)
+    gval = Θ(w, a, e, model, params)
+    # Angles gradient (dθ1/dw, dθ2/dw)
+    return Ω1*gval, (Ω2 - L/(rval^(2)))*gval
+end
+
 
 ########################################################################
 #
