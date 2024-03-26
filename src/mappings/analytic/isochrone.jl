@@ -103,7 +103,7 @@ function Θ(
 
     # Analytical expression of (dr/du)(1/vr), that is always well-posed
     return (
-        3xr * sqrt(
+        3x * sqrt(
             (s + sp) 
             * (s + sa) 
             * (sp + sa)
