@@ -87,14 +87,14 @@ the analytic expression for Theta for the isochrone profile are given in
 Fouvry, Hamilton, Rozier, Pichon eq. (G10). It has the major advantage of 
 always being well-posed for -1<u<1
 """
-function Θ(
-    u::Float64,
+function _Θ(
+    w::Float64,
     a::Float64,
     e::Float64,
     model::AnalyticIsochrone,
     params::OrbitalParameters=OrbitalParameters()
 )
-    r = radius_from_anomaly(u, a, e, model, params)
+    r = radius_from_anomaly(w, a, e, model, params)
     rp, ra = rpra_from_ae(a, e)
     # dimensionless pericentre, apocentre, and radius
     x, xp, xa = (r, rp, ra) ./ radial_scale(model)
@@ -109,7 +109,7 @@ function Θ(
             * (sp + sa)
             / (x + xp) 
             / (x + xa) 
-            / (4 - u^2)
+            / (4 - w^2)
         )
         / (sqrt(2) * frequency_scale(model))
     )

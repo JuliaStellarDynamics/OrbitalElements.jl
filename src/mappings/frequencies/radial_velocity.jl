@@ -89,16 +89,16 @@ end
 #
 ########################################################################
 """
-    Θ(w, a, e, model[, params])
+    _Θ(w, a, e, model[, params])
 
-cured inverse radial velocity, Θ(u) = (dr/du)/v_rad, at anomaly `u` on orbit `(a,e)`.
+cured inverse radial velocity, _Θ(w) = (dr/dw)/v_rad, at anomaly `w` on orbit `(a,e)`.
 
 @IMPROVE: right now, Hénon anomaly is hard-coded.
 @IMPROVE: the expansion is trying both Taylor expansion and if fails, extrapolation with 
 particular care need at boundary switch. Fix it to use only one.
 @IMPROVE: find a better name
 """
-function Θ(
+function _Θ(
     w::Float64,
     a::Float64,
     e::Float64,
@@ -127,7 +127,7 @@ end
 """
     _Θedge(w, a, e, model, params)
 
-same as `Θ(...)` for w close to +1,-1 (curing the 0/0 limit at peri/apocentre)
+same as `_Θ(...)` for w close to +1,-1 (curing the 0/0 limit at peri/apocentre)
 
 @IMPROVE: right now, Hénon anomaly is hard-coded.
 @IMPROVE: the expansion is trying both Taylor expansion and, if fails, extrapolation with 
@@ -170,9 +170,9 @@ function _Θedge(
         w2 = wl * (1 - 2*params.EDGE)
         w3 = wl * (1 - 3*params.EDGE)
 
-        Θ1 = Θ(w1, a, e, model, params)
-        Θ2 = Θ(w2, a, e, model, params)
-        Θ3 = Θ(w3, a, e, model, params)
+        Θ1 = _Θ(w1, a, e, model, params)
+        Θ2 = _Θ(w2, a, e, model, params)
+        Θ3 = _Θ(w3, a, e, model, params)
 
         # It in fact is an extrapolation
         return _interpolate_order_2(w, w1, Θ1, w2, Θ2, w3, Θ3)
@@ -223,7 +223,7 @@ function angles_gradient(
     a::Float64,
     e::Float64,
     model::Potential,
-    params::OrbitalParameters;
+    params::OrbitalParameters=OrbitalParameters();
     L::Float64=0.0,
     Ω1::Float64=0.0,
     Ω2::Float64=0.0
@@ -239,7 +239,7 @@ function angles_gradient(
     # Current location of the radius, r=r(w)
     rval = radius_from_anomaly(w, a, e, model, params)
     # Current value of the radial frequency integrand (almost dθ/dw)
-    gval = Θ(w, a, e, model, params)
+    gval = _Θ(w, a, e, model, params)
     # Angles gradient (dθ1/dw, dθ2/dw)
     return Ω1*gval, (Ω2 - L/(rval^(2)))*gval
 end
@@ -247,14 +247,14 @@ end
 
 ########################################################################
 #
-# Θ(u) derivatives w.r.t. a and e
+# Θ(w) derivatives w.r.t. a and e
 #
 ########################################################################
 
 """
     _Θ_derivatives_ae(w, a, e, model, params)
 
-numerical differentiation of Θ w.r.t. semimajor axis and eccentricity
+numerical differentiation of `_Θ` w.r.t. semimajor axis and eccentricity
 
 @IMPROVE: right now the derivative procedure is hard-coded. Should incorparate it 
 in the OrbitalParameters structure (not only the steps)
@@ -270,7 +270,7 @@ function _Θ_derivatives_ae(
 )::Tuple{Float64,Float64}
 
     # Function to differentiate
-    fun(atmp::Float64, etmp::Float64) = Θ(w, atmp, etmp, model, params)
+    fun(atmp::Float64, etmp::Float64) = _Θ(w, atmp, etmp, model, params)
     # Perform differentiation
     _, ∂Θ∂a, ∂Θ∂e = _derivatives_ae(fun, a, e, params)
 

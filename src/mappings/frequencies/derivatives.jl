@@ -11,7 +11,7 @@
 """
     αβ_from_ae_internal_derivatives(a, e, model, params)
 
-use the defined function Θ(u) to compute frequency ratios integrals
+use the defined function _Θ(w) to compute frequency ratios integrals
 AND DERIVATIVES
 """
 function αβ_from_ae_internal_derivatives(
@@ -20,7 +20,7 @@ function αβ_from_ae_internal_derivatives(
     model::Potential,
     params::OrbitalParameters=OrbitalParameters()
 )::Tuple{Float64,Float64,Float64,Float64,Float64,Float64}
-    tola, tole = params.TOLA, _eccentricity_tolerance(a, params.rc, params.TOLECC)
+    tola, tole = params.TOLA, _eccentricity_tolerance(a/params.rc, params.TOLECC)
     if (a < tola) || (e < tole) || (e > 1.0-tole)
         # For edge cases: Derivation outside the integral
         # Function to differentiate
@@ -35,11 +35,12 @@ function αβ_from_ae_internal_derivatives(
         return α, β, ∂α∂a, ∂β∂a, ∂α∂e, ∂β∂e
     end
     # Derivation inside the integral
-    # using Θ calculations to compute frequencies: leans heavily on Θ from Ufunc.jl
+    # using Θ calculations to compute frequencies: leans heavily on _Θ from 
+    # radial_velocity.jl
     # @IMPROVE: EDGE could be adaptive based on circularity and small-ness of rperi
 
-    # WARNING !! Strong assumption:
-    # r(u) = a(1+e * _henonf(w))
+    # @WARNING !! Strong assumption:
+    # r(w) = a(1+e * _henonf(w))
     function w6func(w::Float64)
         # push integration forward on eight different quantities:
         # 1. Θ                          → α
@@ -49,7 +50,7 @@ function αβ_from_ae_internal_derivatives(
         # 5. ∂Θ/∂a/r^2                  → ∂β∂a
         # 6. (∂Θ/∂e - 2af(w)Θ/r )/r^2   → ∂β∂e
 
-        integrand = Θ(w, a, e, model, params)
+        integrand = _Θ(w, a, e, model, params)
         ∂Θ∂a, ∂Θ∂e = _Θ_derivatives_ae(w, a, e, model, params)
 
         r = radius_from_anomaly(w, a, e, model, params)

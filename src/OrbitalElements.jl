@@ -48,7 +48,8 @@ export ae_to_frequencies_jacobian
 export αβ_from_frequencies, frequencies_from_αβ
 export αβ_from_frequencies_derivatives, frequencies_from_αβ_derivatives
 export αβ_to_frequencies_jacobian, frequencies_to_αβ_jacobian
-# angles gradient
+# Angle to radius and anomaly
+export radius_from_anomaly
 export angles_gradient
 
 # Resonant mappings structures

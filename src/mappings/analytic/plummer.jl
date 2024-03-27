@@ -95,7 +95,7 @@ always being well-posed for -1<u<1
 
 @QUESTION: is `w` hard-coded as Hénon's anomaly here ?
 """
-function Θ(
+function _Θ(
     w::Float64,
     a::Float64,
     e::Float64,
@@ -150,7 +150,7 @@ function _radial_action_from_ae(
     end
     # Generic computations
     function action_integrand(w::Float64)::Float64
-        drdw_over_vrad = Θ(w, a, e, model, params)
+        drdw_over_vrad = _Θ(w, a, e, model, params)
         vrad = radial_velocity(w, a, e, model, params)
         return drdw_over_vrad * vrad^2
     end

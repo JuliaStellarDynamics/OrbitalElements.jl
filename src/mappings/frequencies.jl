@@ -150,16 +150,16 @@ function αβ_from_ae(
         return res
     end
     # Generic computations
-    # 1/α = Ω₀ / π * \int_{-1}^1 du Θ(u); β = L / π * \int_{-1}^1 du Θ(u) / [r(u)]^2
-    # using Θ calculations to compute frequencies: leans heavily on Θ from 
+    # 1/α = Ω₀ / π * \int_{-1}^1 dw Θ(w); β = L / π * \int_{-1}^1 dw Θ(w) / [r(w)]^2
+    # using Θ calculations to compute frequencies: leans heavily on _Θ from 
     # frequencies/anomaly.jl
     # @IMPROVE: EDGE could be adaptive based on circularity and small-ness of rperi
     # currently using Simpson's 1/3 rule only (hard-coded)
     # @IMPROVE: free the integration scheme, i.e., make it a parameter
-    function invαβ_integrands(u::Float64)::Tuple{Float64,Float64}
-        # push integration forward on two different quantities: Θ(u), Θ(u)/r^2(u)
-        integrand = Θ(u, a, e, model, params)
-        r = radius_from_anomaly(u, a, e, model, params)
+    function invαβ_integrands(w::Float64)::Tuple{Float64,Float64}
+        # push integration forward on two different quantities: Θ(w), Θ(w)/r^2(w)
+        integrand = _Θ(w, a, e, model, params)
+        r = radius_from_anomaly(w, a, e, model, params)
         return integrand, integrand / r^2
     end
     accum1, accum2 = _integrate_simpson(invαβ_integrands, params.NINT)
