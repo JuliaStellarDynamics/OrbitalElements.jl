@@ -76,8 +76,6 @@ export OrbitalParameters
 #####################################
 # potentials models
 include("potentials/potentials.jl")
-# Include distribution functions
-include("distributions/distributions.jl")
 # Include mappings
 include("mappings/mappings.jl")
 
