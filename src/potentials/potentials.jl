@@ -93,3 +93,4 @@ end
 include("isochrone.jl")
 include("plummer.jl")
 include("mestelzang.jl")
+include("kuzminkutuzov.jl")
