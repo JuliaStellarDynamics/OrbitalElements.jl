@@ -36,7 +36,7 @@ function AnalyticKuzminKutuzov(; G::Float64=1., M::Float64=1., a::Float64=0.5, c
     # Check for positive mass and radius
     if M < 0; throw(DomainError(M, "Negative mass")); end
     if a <= 0; throw(DomainError(a, "Non-positive characteristic radius a")); end
-    if c <= 0; throw(DomainError(c, "Non-positive characteristic radius c")); end
+    if c < 0; throw(DomainError(c, "Non-positive characteristic radius c")); end
 
     # Calculate ta and tc based on a and c
     ta = a / (a + c)
@@ -57,25 +57,44 @@ end
 #####################################
 # Potential methods for Kuzminkutuzov
 #####################################
+
+"""
+    ψ(R::Float64, z::Float64, model::KuzminKutuzovPotential) -> Float64
+
+Compute the gravitational potential ψ at a given cylindrical coordinate (R, z) for a Kuzmin-Kutuzov potential model.
+
+# Arguments
+- `R::Float64`: The radial distance from the z-axis. Must be non-negative.
+- `z::Float64`: The height above the equatorial plane.
+- `model::KuzminKutuzovPotential`: The Kuzmin-Kutuzov potential model containing parameters `a`, `c`, `G`, and `M`.
+
+# Returns
+- `Float64`: The gravitational potential at the specified coordinates.
+
+# Throws
+- `DomainError`: If `R` is negative.
+
+# Notes
+- This version not stable for R=0.,z=0.
+"""
 function ψ(R::Float64,z::Float64,model::KuzminKutuzovPotential)
+
+    # Check for positive radius
+    if R<0; throw(DomainError(R, "Negative radius")); end
 
     lambda,nu = lambda_nu_from_R_z(R,z,model.a,model.c)
 
-    # Check for positive radius
-    if lambda<0; throw(DomainError(lambda, "Negative radius")); end
-    if nu<0; throw(DomainError(nu, "Negative radius")); end
-
     scale = model.G*model.M # Scale
     return - scale / (sqrt(lambda) + sqrt(nu)) 
+
 end
 
 function dψ(R::Float64,z::Float64,model::KuzminKutuzovPotential)
 
+    # Check for positive radius
+    if R<0; throw(DomainError(R, "Negative radius")); end
+
     lambda,nu = lambda_nu_from_R_z(R,z,model.a,model.c)
-    # Check for positive radius
-    # Check for positive radius
-    if lambda<0; throw(DomainError(lambda, "Negative radius")); end
-    if nu<0; throw(DomainError(nu, "Negative radius")); end
 
     scale = model.G*model.M
 
@@ -114,7 +133,7 @@ end
 for Kuzminkutuzov, see Tep+ 25 (equation 20).
 """
 function momentum_scale(model::KuzminKutuzovPotential)
-    return sqrt(model.G*model.M*model.bc)
+    return sqrt(model.G*model.M*(model.a+model.c))
 end
 
 function radial_scale(model::KuzminKutuzovPotential)

@@ -100,7 +100,7 @@ Calculate the spheroidal coordinates (lambda, nu) from the parameters (u, v).
 function lambda_nu_from_R_z(R::Float64, z::Float64, a::Float64, c::Float64)
 
     Delta = sqrt(a^2-c^2)
-    u,v = u_v_from_R_z(R::Float64, z::Float64)
+    u,v = u_v_from_R_z(R,z,Delta)
 
     lambda, nu = lambda_nu_from_u_v(u,v,a,c)
 
