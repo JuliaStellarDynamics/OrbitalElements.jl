@@ -92,5 +92,6 @@ end
 #####################################
 include("isochrone.jl")
 include("plummer.jl")
+include("hernquist.jl")
 include("mestelzang.jl")
 include("kuzminkutuzov.jl")

@@ -17,6 +17,7 @@ using SpecialFunctions          # potentials/distributions
 export Potential, CentralPotential, CentralCorePotential, CentralCuspPotential
 export IsochronePotential, AnalyticIsochrone, NumericalIsochrone
 export PlummerPotential, NumericalPlummer, SemiAnalyticPlummer
+export HernquistPotential, NumericalHernquist
 export MestelPotential, TaperedMestel
 export KuzminKutuzovPotential, AnalyticKuzminKutuzov
 # potential functions
