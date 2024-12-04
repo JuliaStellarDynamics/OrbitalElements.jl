@@ -8,7 +8,7 @@ The plummer potential definitions
 #####################################
 # Plummer structures
 #####################################
-abstract type PlummerPotential <: CentralCorePotential end
+abstract type PlummerPotential <: TwoIntegralCentralCorePotential end
 struct NumericalPlummer <: PlummerPotential
     G::Float64      # Gravitational constant
     M::Float64      # Total mass

@@ -17,8 +17,9 @@ using SpecialFunctions          # potentials/distributions
 export Potential, CentralPotential, CentralCorePotential, CentralCuspPotential
 export IsochronePotential, AnalyticIsochrone, NumericalIsochrone
 export PlummerPotential, NumericalPlummer, SemiAnalyticPlummer
+export HernquistPotential, NumericalHernquist
 export MestelPotential, TaperedMestel
-export KuzminKuzutovPotential, AnalyticKuzminKutuzov
+export KuzminKutuzovPotential, AnalyticKuzminKutuzov
 # potential functions
 export ψ, dψ, d2ψ
 export energy_scale, momentum_scale, frequency_scale, radial_scale

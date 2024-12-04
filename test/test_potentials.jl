@@ -142,7 +142,34 @@
             # this is equal to the 2d kuzmin disc
             model = AnalyticKuzminKutuzov(a=1.0,c=0.0)
         end
-        
-
+    end
+    @testset "hernquist" begin
+        @testset "numerical" begin
+            # Wrong model characteristic values
+            @test_throws DomainError NumericalHernquist(M=-1.)
+            @test_throws DomainError NumericalHernquist(bc=0.)
+            # Plummer potential with default values
+            # supposedly G=1, M=1, bc=1
+            model = NumericalHernquist()
+            @test_throws DomainError ψ(-1.,model)
+            @test ψ(0.,model) ≈ -1.
+            @test ψ(1.,model) ≈ -0.5
+            @test ψ(Inf,model) == 0.
+            # Check first derivative
+            @test_throws DomainError dψ(-1.,model)
+            @test dψ(0.,model) == 1.0
+            @test dψ(1.,model) ≈ 0.25
+            @test dψ(Inf,model) == 0.
+            # Check second derivative
+            @test_throws DomainError d2ψ(-1.,model)
+            @test d2ψ(0.,model) == -2.
+            @test d2ψ(1.,model) ≈ -0.25
+            @test d2ψ(Inf,model) == 0.
+            # Check scale functions
+            @test frequency_scale(model) ≈ 1.
+            @test energy_scale(model) ≈ -1.
+            @test momentum_scale(model) ≈ 1.
+            @test radial_scale(model) ≈ 1.
+        end
     end
 end

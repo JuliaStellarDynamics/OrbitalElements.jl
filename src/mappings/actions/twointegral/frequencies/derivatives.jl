@@ -17,7 +17,7 @@ AND DERIVATIVES
 function αβ_from_ae_internal_derivatives(
     a::Float64,
     e::Float64,
-    model::Potential,
+    model::TwoIntegralPotential,
     params::OrbitalParameters=OrbitalParameters()
 )::Tuple{Float64,Float64,Float64,Float64,Float64,Float64}
     tola, tole = params.TOLA, _eccentricity_tolerance(a/params.rc, params.TOLECC)

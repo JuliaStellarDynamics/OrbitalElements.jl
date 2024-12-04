@@ -11,7 +11,7 @@ Most equations can be found in Fouvry, Hamilton, Rozier & Pichon (2021), Appendi
 # Isochrone structures
 #####################################
 
-abstract type IsochronePotential <: CentralCorePotential end
+abstract type IsochronePotential <: TwoIntegralCentralCorePotential end
 struct NumericalIsochrone <: IsochronePotential
     G::Float64      # Gravitational constant
     M::Float64      # Total mass

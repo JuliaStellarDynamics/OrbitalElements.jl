@@ -10,6 +10,7 @@ See BT08 eq. 3.242 (pg. 227)
 - `R::Float64`: The cylindrical radius.
 - `z::Float64`: The vertical height.
 - `Delta::Float64`: The spheroidal scale parameter.
+
 # Returns
 - `Tuple{Float64, Float64}`: A tuple containing the radial coordinate `u` and the vertical coordinate `v`.
 """
@@ -23,6 +24,7 @@ function u_v_from_R_z(R::Float64, z::Float64, Delta::Float64)
 
     u = acosh(prefac*(term1+term2))
     v = acos(prefac*(term1-term2))
+
 
     return u,v
 end 
@@ -101,6 +103,7 @@ function lambda_nu_from_R_z(R::Float64, z::Float64, a::Float64, c::Float64)
 
     Delta = sqrt(a^2-c^2)
     u,v = u_v_from_R_z(R,z,Delta)
+
 
     lambda, nu = lambda_nu_from_u_v(u,v,a,c)
 

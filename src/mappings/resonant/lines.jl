@@ -52,7 +52,7 @@ function actions_resonance_line!(
     result::AbstractMatrix{Float64},
     ω::Float64,
     resonance::Resonance,
-    model::Potential,
+    model::TwoIntegralPotential,
     params::OrbitalParameters=OrbitalParameters();
     vmapn::Int64=DEFAULT_VMAPN
 )
@@ -107,7 +107,7 @@ same as `actions_resonance_line!` but allocating.
 function actions_resonance_line(
     ω::Float64,
     resonance::Resonance,
-    model::Potential,
+    model::TwoIntegralPotential,
     params::OrbitalParameters=OrbitalParameters();
     Kv::Int64=DEFAULT_KV,
     vmapn::Int64=DEFAULT_VMAPN,

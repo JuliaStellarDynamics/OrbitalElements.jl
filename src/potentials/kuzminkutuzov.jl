@@ -6,7 +6,8 @@ The Kuzmin-Kutuzov potential definitions
 #####################################
 # Kuzmin-Kutuzov structures
 #####################################
-abstract type KuzminKutuzovPotential <: CentralCorePotential end
+
+abstract type KuzminKutuzovPotential <: ThreeIntegralCentralCorePotential end
 
 struct AnalyticKuzminKutuzov <: KuzminKutuzovPotential
     G::Float64      # Gravitational constant
@@ -36,7 +37,7 @@ function AnalyticKuzminKutuzov(; G::Float64=1., M::Float64=1., a::Float64=0.5, c
     # Check for positive mass and radius
     if M < 0; throw(DomainError(M, "Negative mass")); end
     if a <= 0; throw(DomainError(a, "Non-positive characteristic radius a")); end
-    if c < 0; throw(DomainError(c, "Non-positive characteristic radius c")); end
+    if c <= 0; throw(DomainError(c, "Non-positive characteristic radius c")); end
 
     # Calculate ta and tc based on a and c
     ta = a / (a + c)
@@ -87,6 +88,7 @@ function ψ(R::Float64,z::Float64,model::KuzminKutuzovPotential)
     scale = model.G*model.M # Scale
     return - scale / (sqrt(lambda) + sqrt(nu)) 
 
+
 end
 
 function dψ(R::Float64,z::Float64,model::KuzminKutuzovPotential)
@@ -95,6 +97,7 @@ function dψ(R::Float64,z::Float64,model::KuzminKutuzovPotential)
     if R<0; throw(DomainError(R, "Negative radius")); end
 
     lambda,nu = lambda_nu_from_R_z(R,z,model.a,model.c)
+
 
     scale = model.G*model.M
 
@@ -134,6 +137,7 @@ for Kuzminkutuzov, see Tep+ 25 (equation 20).
 """
 function momentum_scale(model::KuzminKutuzovPotential)
     return sqrt(model.G*model.M*(model.a+model.c))
+
 end
 
 function radial_scale(model::KuzminKutuzovPotential)
