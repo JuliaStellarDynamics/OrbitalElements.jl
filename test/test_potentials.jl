@@ -140,7 +140,7 @@
         end
         @testset "2d limit" begin
             # this is equal to the 2d kuzmin disc
-            model = AnalyticKuzminKutuzov(a=1.0,c=0.0)
+            model = AnalyticKuzminKutuzov(a=1.0-1.e-6,c=1.e-6)
         end
     end
     @testset "hernquist" begin
