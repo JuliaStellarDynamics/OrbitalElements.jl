@@ -126,7 +126,7 @@
             @test radial_scale(model) ≈ 1.
         end
     end
-    @testset "plummer" begin
+    @testset "hernquist" begin
         @testset "numerical" begin
             # Wrong model characteristic values
             @test_throws DomainError NumericalHernquist(M=-1.)

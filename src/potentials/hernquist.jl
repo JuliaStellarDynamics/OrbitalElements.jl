@@ -7,7 +7,7 @@ The Hernquist potential definitions
 
 =#
 
-abstract type HernquistPotential <: CentralCuspPotential end
+abstract type HernquistPotential <: TwoIntegralCentralCuspPotential end
 struct NumericalHernquist <: HernquistPotential
     G::Float64      # Gravitational constant
     M::Float64      # Total mass

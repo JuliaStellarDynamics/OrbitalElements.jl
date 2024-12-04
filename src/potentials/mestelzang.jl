@@ -11,7 +11,7 @@
 """
 Mestel potential structure
 """
-struct MestelPotential <: CentralCuspPotential 
+struct MestelPotential <: TwoIntegralCentralCuspPotential 
     R0::Float64
     V0::Float64
 end
@@ -83,7 +83,7 @@ end
 """
 Tapered Mestel potential structure
 """
-struct TaperedMestel <: CentralCorePotential 
+struct TaperedMestel <: TwoIntegralCentralCorePotential 
     R0::Float64
     V0::Float64
     ε0::Float64

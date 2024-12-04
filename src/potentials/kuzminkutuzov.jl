@@ -6,7 +6,7 @@ The Kuzmin-Kutuzov potential definitions
 #####################################
 # Kuzmin-Kutuzov structures
 #####################################
-abstract type KuzminKutuzovPotential <: CentralCorePotential end
+abstract type KuzminKutuzovPotential <: ThreeIntegralCentralCorePotential end
 
 struct AnalyticKuzminKutuzov <: KuzminKutuzovPotential
     G::Float64      # Gravitational constant

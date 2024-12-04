@@ -14,7 +14,7 @@ maximal and minimal considered radial (dimensionless) frequency
 
 @ASSUMPTION: [`αcircular`](@ref) is a decreasing function of radius
 """
-function αminmax(model::Potential, params::OrbitalParameters)::Tuple{Float64,Float64}
+function αminmax(model::TwoIntegralPotential, params::OrbitalParameters)::Tuple{Float64,Float64}
     # Assumption :
     # Ω1circular is a decreasing function of radius
     return _αcircular(params.rmax, model, params), _αcircular(params.rmin, model, params)
@@ -31,7 +31,7 @@ minimal and maximal (dimensionless) "frequency" for a given resonance `ωmin, ω
 function frequency_extrema(
     n1::Int64,
     n2::Int64,
-    model::Potential,
+    model::TwoIntegralPotential,
     params::OrbitalParameters=OrbitalParameters()
 )::Tuple{Float64,Float64}
     # For resonance number (0, 0)
@@ -99,7 +99,7 @@ end
 function Resonance(
     n1::Int64, 
     n2::Int64, 
-    model::Potential, 
+    model::TwoIntegralPotential, 
     params::OrbitalParameters=OrbitalParameters()
 )
     ωmin, ωmax = frequency_extrema(n1, n2, model, params)
@@ -122,7 +122,7 @@ for a given resonance, at a specific value of u, find the v coordinate boundarie
 function v_boundaries(
     u::Float64,
     res::Resonance,
-    model::CentralPotential,
+    model::TwoIntegralCentralPotential,
     params::OrbitalParameters=OrbitalParameters()
 )::Tuple{Float64,Float64}
     rmin, rmax = params.rmin, params.rmax
@@ -276,7 +276,7 @@ function _α_inner_extremum(
     res::Resonance,
     rmin::Float64,
     rmax::Float64,
-    model::Potential,
+    model::TwoIntegralPotential,
     params::OrbitalParameters=OrbitalParameters()
 )::Float64
     # define the function to extremise, i.e., the adimensional resonant frequency along 

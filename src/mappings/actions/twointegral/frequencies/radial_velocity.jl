@@ -11,7 +11,7 @@ the effective potential.
 
 @IMPROVE: not safe close to L=0 and r=0.
 """
-function _ψeff(r::Float64, L::Float64, model::Potential)::Float64
+function _ψeff(r::Float64, L::Float64, model::TwoIntegralPotential)::Float64
     if L == 0.
         return ψ(r, model)
     end
@@ -26,7 +26,7 @@ the derivative of the effective potential.
 
 @IMPROVE: not safe close to L=0 and r=0.
 """
-function _dψeffdr(r::Float64, L::Float64, model::Potential)::Float64
+function _dψeffdr(r::Float64, L::Float64, model::TwoIntegralPotential)::Float64
     if L == 0. # Not good, just prevents errors (r=0 implies L=0)
         return dψ(r, model)
     end
@@ -41,7 +41,7 @@ the second derivative of the effective potential.
 
 @IMPROVE: not safe close to L=0 and r=0.
 """
-function _d2ψeffdr2(r::Float64, L::Float64, model::Potential)::Float64
+function _d2ψeffdr2(r::Float64, L::Float64, model::TwoIntegralPotential)::Float64
     if L == 0. # Not good, just prevents errors (r=0 implies L=0)
         return d2ψ(r, model)
     end
@@ -65,7 +65,7 @@ function radial_velocity(
     w::Float64,
     a::Float64,
     e::Float64,
-    model::Potential,
+    model::TwoIntegralPotential,
     params::OrbitalParameters=OrbitalParameters()
 )::Float64
 
@@ -102,7 +102,7 @@ function _Θ(
     w::Float64,
     a::Float64,
     e::Float64,
-    model::Potential,
+    model::TwoIntegralPotential,
     params::OrbitalParameters=OrbitalParameters()
 )::Float64
 
@@ -140,7 +140,7 @@ function _Θedge(
     w::Float64,
     a::Float64,
     e::Float64,
-    model::Potential,
+    model::TwoIntegralPotential,
     params::OrbitalParameters=OrbitalParameters()
 )::Float64
 
@@ -222,7 +222,7 @@ function angles_gradient(
     w::Float64,
     a::Float64,
     e::Float64,
-    model::Potential,
+    model::TwoIntegralPotential,
     params::OrbitalParameters=OrbitalParameters();
     L::Float64=0.0,
     Ω1::Float64=0.0,
@@ -265,7 +265,7 @@ function _Θ_derivatives_ae(
     w::Float64,
     a::Float64,
     e::Float64,
-    model::Potential,
+    model::TwoIntegralPotential,
     params::OrbitalParameters=OrbitalParameters()
 )::Tuple{Float64,Float64}
 

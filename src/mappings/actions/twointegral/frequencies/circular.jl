@@ -15,7 +15,7 @@ derivatives.
 """
 function _Ω1circular(
     r::Float64,
-    model::Potential,
+    model::TwoIntegralPotential,
     params::OrbitalParameters=OrbitalParameters()
 )::Float64
     if r == 0
@@ -30,7 +30,7 @@ end
 """
 function _Ω2circular(
     r::Float64,
-    model::Potential,
+    model::TwoIntegralPotential,
     params::OrbitalParameters=OrbitalParameters()
 )::Float64
     if r == 0
@@ -50,7 +50,7 @@ from the epicyclic approximation
 """
 function _αcircular(
     r::Float64,
-    model::Potential,
+    model::TwoIntegralPotential,
     params::OrbitalParameters=OrbitalParameters()
 )::Float64
     return _Ω1circular(r, model, params) / frequency_scale(model)
@@ -69,7 +69,7 @@ Careful treatment implemented for `a == Inf`. (0/0 limit)
 """
 function _βcircular(
     r::Float64,
-    model::Potential,
+    model::TwoIntegralPotential,
     params::OrbitalParameters=OrbitalParameters()
 )::Float64
     if r == 0
@@ -105,7 +105,7 @@ mapping from dimensionless radial frequency `α to frequency ratio `β` for circ
 """
 function _β_from_α_circular(
     α::Float64,
-    model::Potential,
+    model::TwoIntegralPotential,
     params::OrbitalParameters=OrbitalParameters()
 )::Float64
     # get the radius corresponding to the circular orbit
@@ -133,7 +133,7 @@ backward method parameters)
 """
 function _radius_from_αcircular(
     α::Float64,
-    model::Potential,
+    model::TwoIntegralPotential,
     params::OrbitalParameters=OrbitalParameters(),
     tolr::Float64=1000.0*eps(Float64),
     tolf::Float64=1000.0*eps(Float64)
