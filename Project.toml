@@ -6,6 +6,7 @@ version = "2.0.0dev-5"
 HDF5 = "f67ccb44-e63f-5c2f-98bd-6dc0ccc4ba2f"
 HypergeometricFunctions = "34004b35-14d8-5ef3-9330-4cdb6864b03a"
 SpecialFunctions = "276daf66-3868-5448-9aa4-cd146d93841b"
+SphericalHarmonics = "c489a379-e885-57ff-9236-bd896d33c250"
 
 [compat]
 julia = "1.6.7" # Equivalent to "^1.6.7", will allow any 1.a.b version with a.b>=6.7
