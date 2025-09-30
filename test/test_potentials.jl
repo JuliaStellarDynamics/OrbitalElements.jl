@@ -126,6 +126,23 @@
             @test radial_scale(model) ≈ 1.
         end
     end
+    @testset "kuzminkutuzov" begin
+        # Wrong model characteristic values
+        @test_throws DomainError AnalyticKuzminKutuzov(M=-1.)
+        @test_throws DomainError AnalyticKuzminKutuzov(a=-1.)
+
+        @testset "3d limit" begin
+            # this is equal to the isochrone potential (the default)
+            model = AnalyticKuzminKutuzov(a=0.500001,c=0.499999)
+            @test_throws DomainError ψ(-1.,0.0,model)
+            compmodel = AnalyticIsochrone(bc=0.5)
+            @test ψ(0.01,0.0,model) ≈ ψ(0.01,compmodel)
+        end
+        @testset "2d limit" begin
+            # this is equal to the 2d kuzmin disc
+            model = AnalyticKuzminKutuzov(a=1.0-1.e-6,c=1.e-6)
+        end
+    end
     @testset "hernquist" begin
         @testset "numerical" begin
             # Wrong model characteristic values
