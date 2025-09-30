@@ -13,6 +13,8 @@
 
 `OrbitalElements` is a package written in Julia to compute numerical elements for astronomical orbits to high precision, for arbitrary potentials.
 
+*This is version 2.0. If you are looking for backward compatibility, please see the branch v1.9.1.*
+
 ---
 ## Quick installation and use test
 
