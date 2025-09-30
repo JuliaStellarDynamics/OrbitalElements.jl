@@ -5,15 +5,13 @@
 [![image](https://img.shields.io/badge/docs-dev-blue.svg)](https://juliastellardynamics.github.io/OrbitalElements.jl/dev/)
 [![image](https://github.com/JuliaStellarDynamics/OrbitalElements.jl/actions/workflows/devCI.yml/badge.svg?branch=v2.0)](https://github.com/JuliaStellarDynamics/OrbitalElements.jl/actions/workflows/devCI.yml)
 [![image](https://img.shields.io/badge/julia-stable-blue)](https://github.com/JuliaStellarDynamics/OrbitalElements.jl/actions/workflows/devCI.yml)
-[![codecov](https://codecov.io/gh/JuliaStellarDynamics/OrbitalElements.jl/branch/v2.0/graph/badge.svg?token=TTEGFWZH7E)](https://codecov.io/gh/JuliaStellarDynamics/OrbitalElements.jl)
+[![image](http://codecov.io/gh/JuliaStellarDynamics/OrbitalElements.jl/coverage.svg?branch=v2.0)](http://app.codecov.io/gh/JuliaStellarDynamics/OrbitalElements.jl?branch=2.0)
 [![image](http://img.shields.io/badge/license-MIT-brightgreen.svg)](https://github.com/JuliaStellarDynamics/OrbitalElements.jl/blob/v2.0/LICENSE)
 [![image](http://img.shields.io/badge/DOI-10.48550/arXiv.2311.10630-blue.svg)](http://dx.doi.org/10.48550/arXiv.2311.10630)
 
 
 
 `OrbitalElements` is a package written in Julia to compute numerical elements for astronomical orbits to high precision, for arbitrary potentials.
-
-*This is version 2.0. If you are looking for backward compatibility, please see the branch v1.9.1.*
 
 ---
 ## Quick installation and use test
@@ -46,11 +44,11 @@ This example will first install some required libraries (`Plots`, `LaTeXStrings`
 
 The resulting plots will be created in the same folder as the test code under the names `IsochroneFrequencies.png`
 
-![`Isochrone frequencies`](examples/IsochroneFrequencies_original.png)
+
 
 and `ForwardBackwardErrors.png`.
 
-![`Forward+backward errors`](examples/ForwardBackwardErrors_original.png)
+
 
 ---
 ### Known issues
@@ -77,7 +75,7 @@ Then, for every command line invoking Julia, use `julia --project=/path/to/my_en
 
 If you prefer interactive Jupyter notebooks, you will need to install `IJulia` following these [instructions](https://github.com/JuliaLang/IJulia.jl).
 
-An interactive introduction example is then in [`examples/test_OrbitalElements.ipynb`](examples/test_OrbitalElements.ipynb).
+An interactive introduction example is then in examples/test_OrbitalElements.ipynb.
 
 ---
 ### Without installing Julia

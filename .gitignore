@@ -1,18 +1,8 @@
 
-
-# IJulia notebook checkpoints
-**/.ipynb_checkpoints/*
-
-# OSX hidden files
+Manifest.toml
+*.cov
+*.ipynb_checkpoints/
 *.DS_Store
-**/*.DS_Store
+*.vscode
 
-ValidationData*
-tests/Plummer*
-tests/Theta*
-tests/Isochrone*
-tests/Basis*
-tests/*Validation*
-
-# Documentation (avoid committing generated content)
-docs/build/
+docs/build/*

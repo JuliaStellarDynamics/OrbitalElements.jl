@@ -1,29 +1,43 @@
 # OrbitalElements.jl
 
-*Galactic dynamics orbits in Julia*
+*Conversions between orbital constants for galactic dynamics in Julia.*
 
 ---
-## Sample potentials
+## Purpose and Scope
 
-`OrbitalElements` ships with a handful of simple potentials and distribution functions for testing purposes. These are located in `src/Potential`: (1) the 3d Isochrone potential, (2) the 3d Plummer potential, (3) the 2d Mestel-Zang disc, and (4) the 2d Kuzmin-Toomre disc. Corresponding distribution functions are located in `src/DistributionFunctions`.
+`OrbitalElements` provides changes of variables between various orbital constant/integrals in self-gravitating systems.
+It is tailored for a specific set of systems, focusing on scenarios for linear response computations. 
+By narrowing its scope, the library maintains clarity and efficiency in handling orbital dynamics within these systems. 
+While it may not offer the generality of other related libraries ([galpy](https://www.galpy.org), [AGAMA](https://github.com/GalacticDynamics-Oxford/Agama/tree/master)...), it excels in its targeted application domain.
 
----
-## Obtaining Orbital Frequencies
-
-The principal use for `OrbitalElements` is to provide descriptions of orbits. This means
-1. Conversion from (semimajor axis, eccentricity) to (pericentre, apocentre) to (energy, angular momentum), to coordinates aligned with resonance vectors.
-2. Additional support for actions and angles.
-
-`ComputeFrequenciesAE(ψ,dψ,d2ψ,a,e)` will compute frequencies (Ω₁,Ω₂) given a potential (ψ) plus two derivatives (dψ,d2ψ), for an orbit described by semimajor axis and eccentricity.
+For now, `OrbitalElements` specializes in handling orbits confined to a plane, such as in razor-thin discs or spherical systems, within central potentials. 
+While its primary focus lies in these specific systems, it will be extended to encompass other systems in the future.
 
 ---
-## Mapping to Resonance Space
+## Planar orbits
 
-For a given potential, one can also compute the resonance mappings, called (u,v). See `src/Resonance` for associated conversions.
-`UVFromαβ(α,β,n₁,n₂,ωmin,ωmax)` will compute the resonant mappings (u,v) for a given frequency pair (α,β), resonance vector (n₁,n₂), and frequency limits.
+### Constants of motion
 
----
-## Notes
-By default, `OrbitalElements` uses semimajor axis and eccentricity. If you want to use pericentre and apocentre, transformations are available. `AEFromRpRa(rp,ra)` will return semimajor axis and eccentricity from pericentre and apocentre.
+Given a central potential model, `OrbitalElements` provides mapping functions and jacobians 
+between the following constants of motion
++ Model-independent constants
+    - semi-major axis and eccentricity: $(a,e)$
+    - pericentre and apocentre: $(r_p,r_a)$
++ "Analytic" constants
+    - energy and angular momentum: $(E,L)$
++ "Integrated" constants
+    - actions: $(J,L)$
+    - frequency ratios: $(\alpha,\beta)$
+    - frequencies: $(\Omega_1,\Omega_2)$
 
-`OrbitalElements` also uses the Henon (1971) technique to cure radial velocity divergences at peri- and apocentre.
+While [explicit formulae](formulae.md) for actions are often given as a function of $(r_p,r_a)$, the $(a,e)$-domain is more suitable to handle close-to-the-edge cases (near circular or near radial orbits) and to cure divergences in frequency computations.
+
+Semi-major axis and eccentricity are therefore used as base constants, so that, e.g., going from actions to frequencies would in practice require performing $(J,L)\!\to\!(a,e)\!\to\!(\Omega_1,\Omega_2)$ (as no explicit formulae exists to generically convert actions in frequencies).
+
+
+
+### Resonance variables
+
+For a given potential, one can also compute the resonance mappings, called $(u,v)$, defined in [Fouvry & Prunet (2022)](https://doi.org/10.1093/mnras/stab3020). 
+These mappings depend on the resonance vector $(n_1,n_2)$ and prove particularly useful for linear response' computations.
+See `src/mappings/Resonance` for associated conversions.

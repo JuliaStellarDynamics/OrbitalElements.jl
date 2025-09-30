@@ -1,0 +1,7 @@
+comment: false
+ignore:
+# Ignore "documentation only" files
+# @WARNING Make sure they contain only non testable functions
+  - src/potentials/potentials.jl
+# @WARNING ignoring non included functions (to remove when added to the usable code base)
+  - src/mappings/frequencies/derivatives.jl
