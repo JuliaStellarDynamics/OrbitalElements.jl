@@ -1,5 +1,7 @@
 
-# OrbitalElements.jl
+# OrbitalElements.jl v1.9.1
+
+*This version of OrbitalElements.jl is maintained for backward compatibility only.*
 
 [![image](https://github.com/JuliaStellarDynamics/OrbitalElements.jl/actions/workflows/documentation.yml/badge.svg)](https://juliastellardynamics.github.io/OrbitalElements.jl/)
 
