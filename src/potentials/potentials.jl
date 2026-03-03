@@ -109,6 +109,7 @@ include("isochrone.jl")
 include("plummer.jl")
 include("hernquist.jl")
 include("mestelzang.jl")
+include("toomre.jl")
 
 # three integral potentials
 include("kuzminkutuzov.jl")
