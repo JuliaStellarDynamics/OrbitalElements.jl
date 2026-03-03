@@ -11,8 +11,7 @@
 """
 Toomre potential structure
 """
-abstract type ToomrePotential <:  TwoIntegralCentralCorePotential  end
-struct AnalyticToomre <: ToomrePotential
+struct ToomrePotential <:  TwoIntegralCentralCorePotential  end
     G::Float64      # Gravitational constant
     M::Float64      # Total mass
     bc::Float64     # Characteristic radius
@@ -23,8 +22,8 @@ end
 
 Create a Toomre potential structure. 
 """
-function AnalyticToomre(;G::Float64=1.,M::Float64=1.,bc::Float64=1.)
-    return AnalyticToomre(G,M,bc)
+function ToomrePotential(;G::Float64=1.,M::Float64=1.,bc::Float64=1.)
+    return ToomrePotential(G,M,bc)
 end
 
 #####################################
