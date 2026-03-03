@@ -11,7 +11,7 @@
 """
 Toomre potential structure
 """
-struct ToomrePotential <:  TwoIntegralCentralCorePotential  end
+struct ToomrePotential <: TwoIntegralCentralCorePotential
     G::Float64      # Gravitational constant
     M::Float64      # Total mass
     bc::Float64     # Characteristic radius
