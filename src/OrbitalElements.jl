@@ -19,6 +19,7 @@ export IsochronePotential, AnalyticIsochrone, NumericalIsochrone
 export PlummerPotential, NumericalPlummer, SemiAnalyticPlummer
 export HernquistPotential, NumericalHernquist
 export MestelPotential, TaperedMestel
+export ToomrePotential, AnalyticToomre
 export KuzminKutuzovPotential, AnalyticKuzminKutuzov
 # potential functions
 export ψ, dψ, d2ψ
