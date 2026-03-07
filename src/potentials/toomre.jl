@@ -69,7 +69,7 @@ end
 # Scales for Toomre
 #####################################
 function frequency_scale(model::ToomrePotential)
-    return sqrt(model.G*model.M/(model.bc^3))
+    return 2*sqrt(model.G*model.M/(model.bc^3))
 end
 
 function radial_scale(model::ToomrePotential)
