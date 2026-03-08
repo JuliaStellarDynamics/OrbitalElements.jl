@@ -6,3 +6,8 @@ Manifest.toml
 *.vscode
 
 docs/build/*
+
+tests/
+tests/*.eps
+tests/*.png
+tests/*.h5
