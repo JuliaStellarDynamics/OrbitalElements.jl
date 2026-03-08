@@ -170,7 +170,12 @@ function _Ω1circular(
 )::Float64
     x = r / radial_scale(model) # dimensionless radius
     s = _s_from_r(r, model, params)
-    return frequency_scale(model) * sqrt(4 + x^2) / (2 * s^(5/2))
+    
+    if (r == Inf) # Necessary to avoid a NaN at r=Inf
+        return 0.0
+    else
+        return frequency_scale(model) * sqrt(4 + x^2) / (2 * s^(5/2))
+    end
 end
 
 function _Ω2circular(
