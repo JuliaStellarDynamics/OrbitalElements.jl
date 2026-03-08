@@ -19,10 +19,13 @@ function _Ω1circular(
     params::OrbitalParameters=OrbitalParameters()
 )::Float64
     if r == 0
-        return 2 * sqrt(abs(d2ψ(r, model)))
+        _d2ψval = d2ψ(r, model)
+        @assert _d2ψval >= -1e-10 "d2ψ unexpectedly negative: $_d2ψval"
+        return 2 * sqrt(max(0.0, _d2ψval))
     end
 
-    return sqrt(abs(d2ψ(r, model) + 3 * dψ(r, model) / r))
+    _dψval = (d2ψ(r, model) + 3 * dψ(r, model) / r)
+    return sqrt(max(0.0, _dψval))
 end
 
 """
@@ -34,10 +37,14 @@ function _Ω2circular(
     params::OrbitalParameters=OrbitalParameters()
 )::Float64
     if r == 0
-        return sqrt(abs(d2ψ(r, model)))
+        _d2ψval = d2ψ(r, model)
+        @assert _d2ψval >= -1e-10 "d2ψ unexpectedly negative: $_d2ψval"
+        return sqrt(max(0.0, _d2ψval))
     end
 
-    return sqrt(abs(dψ(r, model) / r))
+    _dψval = dψ(r, model)
+    @assert _dψval >= -1e-10 "dψ unexpectedly negative: $_dψval"
+    return sqrt(max(0.0, _dψval / r))
 end
 
 """
