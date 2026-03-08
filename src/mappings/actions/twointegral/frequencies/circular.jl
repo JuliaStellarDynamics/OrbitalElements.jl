@@ -22,7 +22,7 @@ function _Ω1circular(
         return 2 * sqrt(abs(d2ψ(r, model)))
     end
 
-    return sqrt(d2ψ(r, model) + 3 * dψ(r, model) / r)
+    return sqrt(abs(d2ψ(r, model) + 3 * dψ(r, model) / r))
 end
 
 """
@@ -37,7 +37,7 @@ function _Ω2circular(
         return sqrt(abs(d2ψ(r, model)))
     end
 
-    return sqrt(dψ(r, model) / r)
+    return sqrt(abs(dψ(r, model) / r))
 end
 
 """

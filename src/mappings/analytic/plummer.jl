@@ -21,7 +21,7 @@ function EL_from_ae(
     rp, ra = rpra_from_ae(a, e)
     sp, sa = _spsa_from_rpra(rp, ra, model, params) # extremal anomalies on the orbit
     Ẽ = 1 / sp - (sa^2 - 1) / (sa * sp * (sa + sp)) # dimensionless energy
-    L̃ = sqrt(2 * (sp^2 - 1) * (sa^2 - 1) / (sa * sp * (sa + sp))) # dimensionless momentum
+    L̃ = sqrt(abs(2 * (sp^2 - 1) * (sa^2 - 1) / (sa * sp * (sa + sp)))) # dimensionless momentum
     return energy_scale(model) * Ẽ, momentum_scale(model) * L̃ 
 end
 
@@ -192,7 +192,7 @@ function _βcircular(
     params::OrbitalParameters=OrbitalParameters()
 )::Float64
     x = r / radial_scale(model) 
-    return sqrt(1 - 3 / (4 + x^2))
+    return sqrt(abs(1 - 3 / (4 + x^2)))
 end
 
 function _β_from_α_circular(

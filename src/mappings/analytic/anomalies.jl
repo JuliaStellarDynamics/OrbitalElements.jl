@@ -38,7 +38,7 @@ function _r_from_s(
     if 1 - tol < s < 1
         return 0.0
     end
-    x = sqrt(s^2 - 1) # dimensionless radius
+    x = sqrt(abs(s^2 - 1)) # dimensionless radius
     return radial_scale(model) * x
 end
 
@@ -58,7 +58,7 @@ function _r_from_s_derivative(
     if 1 - tol < s < 1
         return 0.0
     end
-    dxds = s / sqrt(s^2 - 1) # dimensionless radius derivative
+    dxds = s / sqrt(abs(s^2 - 1)) # dimensionless radius derivative
     return radial_scale(model) * dxds
 end
 

@@ -274,7 +274,7 @@ function _EL_from_αβ(
 )
     return (
         energy_scale(model) * α^(2/3) / 2, 
-        momentum_scale(model) * (2β - 1) / (sqrt(β * (1 - β)))
+        momentum_scale(model) * (2β - 1) / (sqrt(abs(β * (1 - β))))
     )
 end
 
