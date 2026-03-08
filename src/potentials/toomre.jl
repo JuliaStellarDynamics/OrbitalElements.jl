@@ -11,19 +11,44 @@
 """
 Toomre potential structure
 """
-struct ToomrePotential <: TwoIntegralCentralCorePotential
+abstract type ToomrePotential <: TwoIntegralCentralCorePotential end
+struct NumericalToomre <: ToomrePotential
+    G::Float64      # Gravitational constant
+    M::Float64      # Total mass
+    bc::Float64     # Characteristic radius
+end
+struct SemiAnalyticToomre <: ToomrePotential
     G::Float64      # Gravitational constant
     M::Float64      # Total mass
     bc::Float64     # Characteristic radius
 end
 
 """
-    ToomrePotential([, R0, V0])
+    NumericalToomre([, G, M, bc])
 
-Create a Toomre potential structure. 
+This Toomre model will use the default numerical computations
 """
-function ToomrePotential(;G::Float64=1.,M::Float64=1.,bc::Float64=1.)
-    return ToomrePotential(G,M,bc)
+function NumericalToomre(;G::Float64=1.,M::Float64=1.,bc::Float64=1.)
+    # Check for positive mass and radius
+    if M<0; throw(DomainError(M, "Negative mass")); end
+    if bc≤0; throw(DomainError(bc, "Negative characteristic radius")); end
+
+    return NumericalToomre(G,M,bc)
+end
+
+"""
+    SemiAnalyticToomre([, G, M, bc])
+
+This Toomre model will use the semi-analytic mappings with an anomaly 
+such that the frequency integrand [`Θ(u, a, e, ...)`](@ref) is known.
+The frequencies are still computed through numerical integration of this integrand.
+"""
+function SemiAnalyticToomre(;G::Float64=1.,M::Float64=1.,bc::Float64=1.)
+    # Check for positive mass and radius
+    if M<0; throw(DomainError(M, "Negative mass")); end
+    if bc≤0; throw(DomainError(bc, "Negative characteristic radius")); end
+
+    return SemiAnalyticToomre(G,M,bc)
 end
 
 #####################################
