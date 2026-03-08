@@ -205,5 +205,5 @@ function _β_from_α_circular(
     # α = (1 - β^2)^(3/4) / (2 * 3^(3/4) * β^(5/2))
     # use bisection on this function directly
     rootequation(β::Float64) = (1 - β^2)^(3/4) / (2 * 3^(3/4) * β^(5/2)) - α
-    return _bisection(rootequation, 1/2, 1)
+    return _bisection(rootequation, 1/2, 1.0)
 end
