@@ -1,6 +1,7 @@
 #
 #
 # This follows K.Tep implementation in CARP
+# The Toomre potential in the disk plane is the same as the Plummer potential
 #
 #
 
@@ -10,12 +11,12 @@
 #
 ########################################################################
 """
-for Plummer analytical version, see equation @ADDREFERENCE
+for Toomre analytical version, see equation @ADDREFERENCE
 """
 function EL_from_ae(
     a::Float64,
     e::Float64,
-    model::SemiAnalyticPlummer,
+    model::SemiAnalyticToomre,
     params::OrbitalParameters=OrbitalParameters()
 )
     rp, ra = rpra_from_ae(a, e)
@@ -26,13 +27,13 @@ function EL_from_ae(
 end
 
 """    
-for Plummer semi-analytical version, can be found by 1D-bisection instead of 
+for Toomre analytical version, can be found by 1D-bisection instead of 
 2D inversion scheme.
 """
 function ae_from_EL(
     E::Float64,
     L::Float64,
-    model::SemiAnalyticPlummer,
+    model::SemiAnalyticToomre,
     params::OrbitalParameters=OrbitalParameters()
 )
     sp, sa = _spsa_from_EL(E, L, model, params)
@@ -43,7 +44,7 @@ end
 function _spsa_from_EL(
     E::Float64,
     L::Float64,
-    model::SemiAnalyticPlummer,
+    model::SemiAnalyticToomre,
     params::OrbitalParameters=OrbitalParameters()
 )
     Ẽ = E / energy_scale(model) # dimensionless energy
@@ -99,7 +100,7 @@ function _Θ(
     w::Float64,
     a::Float64,
     e::Float64,
-    model::SemiAnalyticPlummer,
+    model::SemiAnalyticToomre,
     params::OrbitalParameters=OrbitalParameters()
 )
     rp, ra = rpra_from_ae(a, e) # peri and apocentre
@@ -134,7 +135,7 @@ end
 function _radial_action_from_ae(
     a::Float64,
     e::Float64,
-    model::SemiAnalyticPlummer,
+    model::SemiAnalyticToomre,
     params::OrbitalParameters=OrbitalParameters()
 )::Float64
     # Edge cases
@@ -164,7 +165,7 @@ end
 ########################################################################
 function _Ω1circular(
     r::Float64,
-    model::SemiAnalyticPlummer,
+    model::SemiAnalyticToomre,
     params::OrbitalParameters=OrbitalParameters()
 )::Float64
     x = r / radial_scale(model) # dimensionless radius
@@ -179,7 +180,7 @@ end
 
 function _Ω2circular(
     r::Float64,
-    model::SemiAnalyticPlummer,
+    model::SemiAnalyticToomre,
     params::OrbitalParameters=OrbitalParameters()
 )::Float64
     s = _s_from_r(r, model)
@@ -188,7 +189,7 @@ end
 
 function _βcircular(
     r::Float64,
-    model::SemiAnalyticPlummer,
+    model::SemiAnalyticToomre,
     params::OrbitalParameters=OrbitalParameters()
 )::Float64
     x = r / radial_scale(model) 
@@ -197,7 +198,7 @@ end
 
 function _β_from_α_circular(
     α::Float64,
-    model::SemiAnalyticPlummer,
+    model::SemiAnalyticToomre,
     params::OrbitalParameters=OrbitalParameters()
 )::Float64
     # Circular orbits: 

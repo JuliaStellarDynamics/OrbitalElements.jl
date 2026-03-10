@@ -5,6 +5,9 @@
 #
 ########################################################################
 const AnalyticIsochronePlummer = Union{AnalyticIsochrone, SemiAnalyticPlummer}
+const AnalyticIsochronePlummerToomre = Union{AnalyticIsochrone, SemiAnalyticPlummer, SemiAnalyticToomre}
+const AnalyticPlummerToomre = Union{SemiAnalyticPlummer, SemiAnalyticToomre}
+
 """
     _s_from_r(r, model[, params])
 
@@ -12,7 +15,7 @@ effective radius.
 """
 function _s_from_r(
     r::Float64,
-    model::AnalyticIsochronePlummer,
+    model::AnalyticIsochronePlummerToomre,
     params::OrbitalParameters=OrbitalParameters()
 )
     x = r / radial_scale(model) # dimensionless radius
@@ -26,7 +29,7 @@ radius as a function of effective radius.
 """
 function _r_from_s(
     s::Float64,
-    model::AnalyticIsochronePlummer,
+    model::AnalyticIsochronePlummerToomre,
     params::OrbitalParameters=OrbitalParameters()
 )
     # Cure for unexpected effective radius (close to 1, otherwise let the sqrt throw 
@@ -35,7 +38,7 @@ function _r_from_s(
     if 1 - tol < s < 1
         return 0.0
     end
-    x = sqrt(s^2 - 1) # dimensionless radius
+    x = sqrt(abs(s^2 - 1)) # dimensionless radius
     return radial_scale(model) * x
 end
 
@@ -46,7 +49,7 @@ derivative of radius w.r.t. effective radius.
 """
 function _r_from_s_derivative(
     s::Float64,
-    model::AnalyticIsochronePlummer,
+    model::AnalyticIsochronePlummerToomre,
     params::OrbitalParameters=OrbitalParameters()
 )
     # Cure for unexpected effective radius (close to 1, otherwise let the sqrt throw 
@@ -55,7 +58,7 @@ function _r_from_s_derivative(
     if 1 - tol < s < 1
         return 0.0
     end
-    dxds = s / sqrt(s^2 - 1) # dimensionless radius derivative
+    dxds = s / sqrt(abs(s^2 - 1)) # dimensionless radius derivative
     return radial_scale(model) * dxds
 end
 
@@ -76,14 +79,14 @@ function _spsa_from_rpra(
 end
 
 """
-    _rpra_from_spsa(sp, sa, model::PlummerPotential)
+    _rpra_from_spsa(sp, sa, model::AnalyticPlummerToomre)
 
 the orbit pericentre `rp` and apocentre `ra` from extremal anomalies.
 """
 function _rpra_from_spsa(
     sp::Float64,
     sa::Float64,
-    model::SemiAnalyticPlummer,
+    model::AnalyticPlummerToomre,
     params::OrbitalParameters=OrbitalParameters()
 )
     # Broadcast the anomaly over peri and apocenter (allocation-free)
@@ -122,7 +125,7 @@ function radius_from_anomaly(
     w::Float64,
     a::Float64,
     e::Float64,
-    model::AnalyticIsochronePlummer,
+    model::AnalyticIsochronePlummerToomre,
     params::OrbitalParameters=OrbitalParameters()
 )::Float64
     a_eff, e_eff = _effective_ae_from_ae(a, e, model, params)
@@ -134,7 +137,7 @@ function radius_from_anomaly_derivative(
     w::Float64,
     a::Float64,
     e::Float64,
-    model::AnalyticIsochronePlummer,
+    model::AnalyticIsochronePlummerToomre,
     params::OrbitalParameters=OrbitalParameters()
 )::Float64
     a_eff, e_eff = _effective_ae_from_ae(a, e, model, params)

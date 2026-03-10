@@ -11,3 +11,6 @@ tests/
 tests/*.eps
 tests/*.png
 tests/*.h5
+
+# speculative things
+src/mappings/actions/threeintegral

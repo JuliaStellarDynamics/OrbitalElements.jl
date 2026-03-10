@@ -316,4 +316,80 @@
             end
         end
     end
+    #################################
+    # Toomre Semi-Analytical vs Numerical
+    # Same as Plummer in practice
+    #################################
+    @testset "Toomre" begin
+        # Compare analytical to numerical results in the isochrone
+        anapot = SemiAnalyticToomre()
+        numpot = NumericalToomre()
+        # For semi-analytical computations (K.Tep's CARP-like)
+        # use an increased tolerance on eccentricity to prevent wrong computations of
+        # the frequency ratio β close to radial orbits.
+        anaparams = OrbitalParameters(rc=radial_scale(anapot), TOLECC=0.1)
+        numparams = OrbitalParameters(rc=radial_scale(numpot))
+        @testset "forward" begin
+            for (mapping, fun) in [
+                ("EL", EL_from_ae),
+                ("actions", actions_from_ae),
+                ("frequencies", frequencies_from_ae)
+            ]
+                @testset "$mapping" begin
+                    # Defining the mappings to compare
+                    ana(a, e) = fun(a, e, anapot, anaparams)
+                    num(a, e) = fun(a, e, numpot, numparams)
+                    @testset "regular" begin
+                        tol =  1.e-3
+                        compare_mappings(ana, num, aregular, eregular; atol=tol, rtol=tol)
+                    end
+                    @testset "borders" begin
+                        tol =  1.e-3
+                        # compare_mappings(ana, num, aborder, eregular; atol=tol, rtol=tol)
+                        # compare_mappings(ana, num, aregular, eborders; atol=tol, rtol=tol)
+                        # compare_mappings(ana, num, aborder, eborders; atol=tol, rtol=tol)
+                    end
+                end
+            end
+        end
+        @testset "backward" begin
+            for (version, pot, params) in [
+                ("analytic", anapot, anaparams), 
+                ("numerical", numpot, numparams)
+            ]
+                @testset "$version" begin
+                    for (mapping, forwardfun, backwardfun) in [
+                        ("EL", EL_from_ae, ae_from_EL),
+                        ("actions", actions_from_ae, ae_from_actions),
+                        ("frequencies", frequencies_from_ae, ae_from_frequencies)
+                    ]
+                        @testset "$mapping" begin
+                            # Defining the mappings to compare
+                            forward(a, e) = forwardfun(a, e, pot, params)
+                            backward(E, L) = backwardfun(E, L, pot, params)
+                            @testset "regular" begin
+                                tol =  1.e-3
+                                test_backwardmapping(
+                                    forward, backward, aregular, eregular, tol
+                                )
+                            end
+                            @testset "borders" begin
+                                tol =  1.e-3
+                                # test_backwardmapping(
+                                #     forward, backward, aregular, eborders, tol
+                                # )
+                                # @IMPROVE: for now still issues in the centre !
+                                # test_backwardmapping(
+                                #     forward, backward, aborder, eregular, tol
+                                # )
+                                # test_backwardmapping(
+                                #     forward, backward, aborder, eborders, tol
+                                # )
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
 end

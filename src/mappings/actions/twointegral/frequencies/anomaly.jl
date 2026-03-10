@@ -56,7 +56,7 @@ _henond4f(x::Float64)::Float64 = 0.
 mapping from anomaly to radius. Default is Henon anomaly.
 
 @IMPROVE: right now, Hénon anomaly is hard-coded. (except for AnalyticIsochrone and 
-SemiAnalyticPlummer, for which it is redefined using specific anomaly)
+SemiAnalyticPlummer and SemiAnalyticToomre, for which it is redefined using specific anomaly)
 """
 function radius_from_anomaly(
     w::Float64,
@@ -74,7 +74,7 @@ end
 derivative of the mapping from anomaly to radius. Default is Henon anomaly.
 
 @IMPROVE: right now, Hénon anomaly is hard-coded. (except for AnalyticIsochrone and 
-SemiAnalyticPlummer, for which it is redefined using specific anomaly)
+SemiAnalyticPlummer and SemiAnalyticToomre, for which it is redefined using specific anomaly)
 """
 function radius_from_anomaly_derivative(
     w::Float64,
