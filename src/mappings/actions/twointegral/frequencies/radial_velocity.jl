@@ -79,7 +79,7 @@ function radial_velocity(
         return 0.0
     end
         
-    return sqrt(vrSQ)
+    return sqrt(abs(vrSQ))
 end
 
 
