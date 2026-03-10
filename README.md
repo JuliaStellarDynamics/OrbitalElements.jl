@@ -4,7 +4,7 @@
 [![image](https://github.com/JuliaStellarDynamics/OrbitalElements.jl/actions/workflows/documentation.yml/badge.svg)](https://juliastellardynamics.github.io/OrbitalElements.jl/)
 [![image](https://img.shields.io/badge/docs-dev-blue.svg)](https://juliastellardynamics.github.io/OrbitalElements.jl/dev/)
 [![image](https://github.com/JuliaStellarDynamics/OrbitalElements.jl/actions/workflows/ci.yml/badge.svg)](https://github.com/JuliaStellarDynamics/OrbitalElements.jl/actions/workflows/ci.yml)
-[![image](https://img.shields.io/badge/julia-stable-blue)](https://github.com/JuliaStellarDynamics/OrbitalElements.jl/actions/workflows/devCI.yml)
+[![image](https://img.shields.io/badge/julia-stable-blue)](https://github.com/JuliaStellarDynamics/OrbitalElements.jl/actions/workflows/ci.yml)
 [![codecov](https://codecov.io/gh/JuliaStellarDynamics/OrbitalElements.jl/branch/v2.0/graph/badge.svg?token=TTEGFWZH7E)](https://codecov.io/gh/JuliaStellarDynamics/OrbitalElements.jl)
 [![image](http://img.shields.io/badge/license-MIT-brightgreen.svg)](https://github.com/JuliaStellarDynamics/OrbitalElements.jl/blob/v2.0/LICENSE)
 [![image](http://img.shields.io/badge/DOI-10.48550/arXiv.2311.10630-blue.svg)](http://dx.doi.org/10.48550/arXiv.2311.10630)
