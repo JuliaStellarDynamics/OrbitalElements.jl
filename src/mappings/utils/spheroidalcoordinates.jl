@@ -16,14 +16,15 @@ See BT08 eq. 3.242 (pg. 227)
 """
 function u_v_from_R_z(R::Float64, z::Float64, Delta::Float64)
 
-    if Delta > 0
-        u = asinh(sqrt(R^2 + z^2 + Delta^2)/Delta)
-    else
-        u = asin(sqrt(R^2 + z^2)/abs(z))
-    end
+    zDeltaplus = z+Delta
+    zDeltaminus = z-Delta
+    term1 = sqrt(R^2+zDeltaplus^2)
+    term2 = sqrt(R^2+zDeltaminus^2)
+    prefac = 1/(2Delta)
 
-    u = asinh(sqrt(R^2 + z^2 - Delta^2)/Delta)
-    v = atan(R/Delta)
+    u = acosh(prefac*(term1+term2))
+    v = acos(prefac*(term1-term2))
+
 
     return u,v
 end 
@@ -101,7 +102,8 @@ Calculate the spheroidal coordinates (lambda, nu) from the parameters (u, v).
 function lambda_nu_from_R_z(R::Float64, z::Float64, a::Float64, c::Float64)
 
     Delta = sqrt(a^2-c^2)
-    u,v = u_v_from_R_z(R::Float64, z::Float64)
+    u,v = u_v_from_R_z(R,z,Delta)
+
 
     lambda, nu = lambda_nu_from_u_v(u,v,a,c)
 
