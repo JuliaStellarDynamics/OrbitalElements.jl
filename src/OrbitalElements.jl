@@ -14,7 +14,7 @@ using SpecialFunctions          # potentials/distributions
 # Potentials
 #####
 # potentials structures
-export Potential, CentralPotential, CentralCorePotential, CentralCuspPotential
+export Potential, CentralPotential, TwoIntegralCentralCorePotential, CentralCuspPotential
 export IsochronePotential, AnalyticIsochrone, NumericalIsochrone
 export PlummerPotential, NumericalPlummer, SemiAnalyticPlummer
 export HernquistPotential, NumericalHernquist
